@@ -1,0 +1,99 @@
+
+R version 3.2.0 (2015-04-16) -- "Full of Ingredients"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # Script to extract monthly output from ED and put it into a netcdf 
+> 
+> path.base <- '/projectnb/dietzelab/paleon/ED_runs/MIP2_Region'
+> 
+> source(file.path(path.base, "0_setup", "model2netcdf.ED2.paleon.R"), chdir = TRUE)
+
+Attaching package: 'zoo'
+
+The following objects are masked from 'package:base':
+
+    as.Date, as.Date.numeric
+
+> 
+> 
+> site='lat42.75lon-72.25'
+> sitelat <- as.numeric(substr(site,4,8)) # lat from SAS run
+> sitelon <- as.numeric(substr(site,12,17)) # insert site longitude(s) here
+> block.yr=100 # number of years you want to write into each file
+> 
+> 
+> raw.dir <- '/projectnb/dietzelab/paleon/ED_runs/MIP2_Region/4_runs/phase2_runs.v1/lat42.75lon-72.25'
+> new.dir <- '/projectnb/dietzelab/paleon/ED_runs/MIP2_Region/4_runs/runs_qaqc.v1/lat42.75lon-72.25'
+> 
+> if(!dir.exists(new.dir)) dir.create(new.dir)
+> 
+> flist <- dir(file.path(raw.dir, "analy/"),"-E-") # Getting a list of what has been done
+>   
+> # Getting a list of years that have been completed
+> yr <- rep(NA,length(flist)) # create empty vector the same length as the file list
+> 
+> for(i in 1:length(flist)){
++     index <- gregexpr("-E-",flist[i])[[1]] # Searching for the monthly data marker (-E-); returns 3 bits of information: 1) capture.start (4); 2) capture.length (3); 3) capture.names (TRUE)
++     index <- index[1] # indexing off of just where the monthly flag starts
++     yr[i] <- as.numeric(substr(flist[i],index+3,index+6)) # putting in the Years, indexed off of where the year starts & ends
++ }  
+>   
+> start.run <- as.Date(paste0(min(yr), "-01-01"), "%Y-%m-%d")
+> end.run <- as.Date(paste0(max(yr), "-01-01"), "%Y-%m-%d")
+> bins <- c(as.numeric(strftime(start.run, '%Y')), seq(from=as.numeric(paste0(substr(as.numeric(strftime(start.run, "%Y"))+block.yr, 1, 2), "00")), to=as.numeric(strftime(end.run, '%Y')), by=block.yr)) # Creating a vector with X year bins for the time period of interest
+> 
+> print(paste0("----------  Processing Site: ", site, "  ----------")) 
+[1] "----------  Processing Site: lat42.75lon-72.25  ----------"
+>   
+> model2netcdf.ED2.paleon(site, raw.dir, new.dir, sitelat, sitelon, start.run, end.run, bins)
+[1] "----------  Processing Bin: 1850 - 1899  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 1900 - 1999  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2000 - 2099  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2100 - 2199  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2200 - 2299  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2300 - 2399  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2400 - 2499  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2500 - 2599  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2600 - 2699  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2700 - 2799  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+[1] "----------  Processing Bin: 2800 - 2883  ----------"
+[1] "----------  Data organized  ----------"
+[1] "----------  Creating ncdf File  ----------"
+There were 50 or more warnings (use warnings() to see the first 50)
+> 
+> proc.time()
+    user   system  elapsed 
+4845.253   13.099 5129.928 
