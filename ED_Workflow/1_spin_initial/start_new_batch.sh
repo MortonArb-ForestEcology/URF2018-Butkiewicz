@@ -34,10 +34,10 @@
 BU_base_spin=/projectnb/dietzelab/paleon/ED_runs/MIP2_Region # The base original file paths in all of my scripts
 BU_base_EDI=/projectnb/dietzelab/EDI/ # The location of basic ED Inputs on the BU server
 
-file_base=/home/crollinson/ED_PalEON/MIP2_Region # whatever you want the base output file path to be
-EDI_base=/home/crollinson/ED_inputs/ # The location of basic ED Inputs for you
+file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
+EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 
-ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
+ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
 file_dir=${file_base}/1_spin_initial/phase2_spininit.v1/ # Where everything will go
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
 site_file=${setup_dir}/Paleon_MIP_Phase2_ED_Order_Status.csv # # Path to list of ED sites w/ status
@@ -47,12 +47,8 @@ site_file=${setup_dir}/Paleon_MIP_Phase2_ED_Order_Status.csv # # Path to list of
 # git fetch --all
 # git checkout origin/master -- $site_file
 
-file_clay=/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/soil/paleon_soil_t_clay.nc # Location of percent clay file
-file_sand=/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/soil/paleon_soil_t_sand.nc # Location of percent sand file
-file_depth=/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/soil/paleon_soil_soil_depth.nc # Location of soil depth file
-
-finalyear=2851
-finalfull=2850
+finalyear=1800
+finalfull=1829
 n=1
 
 # Make sure the file paths on the Met Header have been updated for the current file structure
@@ -80,6 +76,10 @@ do
 
 	# -----------------------------------------------------------------------------
 	# Extracting and setting soil  parameters
+	# #######
+	# NOTE: THIS NEEDS TO BE UPDATED TO WORK WITH NEW WORKFLOW; WILL PULL SOIL PARAMTERS FROM
+	#       CORI'S SETTINGS SPREADSHEET
+	# #######
 	# 1) extract and store as a temporary clay & sand .nc file
 	# 2) extract those single values and store it as an object
 	# 3) convert percentages into fraction; cm to m
@@ -95,26 +95,26 @@ do
 
 
 	# Get cell bounding box 
-	lat_min=$(bc<<<"$lat_now-0.25")
-	lat_max=$(bc<<<"$lat_now+0.25")
-	lon_min=$(bc<<<"$lon_now-0.25")
-	lon_max=$(bc<<<"$lon_now+0.25")
-
-	# 1) extract and store as a temporary clay & sand .nc file	
-	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_clay clay_temp.nc 
-	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_sand sand_temp.nc 
-	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_depth depth_temp.nc 
-
-	# 2) extract those single values and store it as an object
-	clay=$(ncdump clay_temp.nc |awk '/t_clay =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
-	sand=$(ncdump sand_temp.nc |awk '/t_sand =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
-	depth=$(ncdump depth_temp.nc |awk '/soil_depth =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
-
-	# 3) convert percentages into fraction; cm to m
-	clay=$(bc<<<"$clay*0.01")
-	sand=$(bc<<<"$sand*0.01")
-	depth=$(bc<<<"$depth*-0.01")
-
+# 	lat_min=$(bc<<<"$lat_now-0.25")
+# 	lat_max=$(bc<<<"$lat_now+0.25")
+# 	lon_min=$(bc<<<"$lon_now-0.25")
+# 	lon_max=$(bc<<<"$lon_now+0.25")
+# 
+# 	# 1) extract and store as a temporary clay & sand .nc file	
+# 	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_clay clay_temp.nc 
+# 	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_sand sand_temp.nc 
+# 	ncea -O -d latitude,$lat_min,$lat_max -d longitude,$lon_min,$lon_max $file_depth depth_temp.nc 
+# 
+# 	# 2) extract those single values and store it as an object
+# 	clay=$(ncdump clay_temp.nc |awk '/t_clay =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
+# 	sand=$(ncdump sand_temp.nc |awk '/t_sand =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
+# 	depth=$(ncdump depth_temp.nc |awk '/soil_depth =/ {nextline=NR+1}{if(NR==nextline){print $1}}')
+# 
+# 	# 3) convert percentages into fraction; cm to m
+# 	clay=$(bc<<<"$clay*0.01")
+# 	sand=$(bc<<<"$sand*0.01")
+# 	depth=$(bc<<<"$depth*-0.01")
+# 
 	# ---------------------------------------------
 	# 4) subsetting soil layers based on soil depth; deepest layer = soil_depth
 	# ---------------------------------------------
