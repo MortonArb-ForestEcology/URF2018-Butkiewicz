@@ -23,17 +23,17 @@
 
 # Define constants & file paths for the scripts
 # Note: do not need to re
-file_base=/home/crollinson/ED_PalEON/MIP2_Region # whatever you want the base output file path to be
+file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
-ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
+ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
 init_dir=${file_base}/1_spin_initial/phase2_spininit.v1/ # Directory of initial spin files
 SAS_dir=${file_base}/2_SAS/SAS_init_files.v1/ # Directory of SAS initialization files
 finish_dir=${file_base}/3_spin_finish/phase2_spinfinish.v1/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
 
-finalyear=2351 # The year on which the models should top on Jan 1
-finalfull=2350 # The last year we actually care about (probably the year before finalyear)
-finalinit=2851
+finalyear=2301 # The year on which the models should top on Jan 1
+finalfull=2300 # The last year we actually care about (probably the year before finalyear)
+finalinit=1800
 
 n=3
 
@@ -81,12 +81,12 @@ do
 
 		# ED2IN Changes	    
 	    sed -i "s,$init_dir,$finish_dir,g" ED2IN #change the baseline file path everywhere
-        sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'PalEON Spin Finish'/" ED2IN # change the experiment name
+        sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'URF Spin Finish'/" ED2IN # change the experiment name
 		sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'INITIAL'/" ED2IN # change from bare ground to .css/.pss run
-        sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = 1850/" ED2IN # Set first year
+        sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = 1800/" ED2IN # Set first year
         sed -i "s/NL%IMONTHA  = .*/NL%IMONTHA  = 06/" ED2IN # Set first month
         sed -i "s/NL%IDATEA   = .*/NL%IDATEA   = 01/" ED2IN # Set first day
-		sed -i "s/NL%IYEARH   = .*/NL%IYEARH   = 1850/" ED2IN # Set first year
+		sed -i "s/NL%IYEARH   = .*/NL%IYEARH   = 1800/" ED2IN # Set first year
 		sed -i "s/NL%IMONTHH  = .*/NL%IMONTHH  = 06/" ED2IN # Set first month
 		sed -i "s/NL%IDATEH   = .*/NL%IDATEH   = 01/" ED2IN # Set first day
 
@@ -94,57 +94,39 @@ do
         sed -i "s/NL%IMONTHZ  = .*/NL%IMONTHZ  = 01/" ED2IN # Set last month
         sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
 
-        sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 3/" ED2IN # change from bare ground to .css/.pss run
+        sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
         sed -i "s,SFILIN   = .*,SFILIN   = '${SAS_dir}${SITE}/${SITE}',g" ED2IN # set initial file path to the SAS spin folder
+        
+        # Change Fire Params HERE
         sed -i "s/NL%INCLUDE_FIRE    = 0.*/NL%INCLUDE_FIRE    = 2/" ED2IN # turn on fire
         sed -i "s/NL%SM_FIRE         = 0.*/NL%SM_FIRE         = 0.007/" ED2IN # adjust fire threshold
         sed -i "s/NL%TREEFALL_DISTURBANCE_RATE  = 0.*/NL%TREEFALL_DISTURBANCE_RATE  = 0.004/" ED2IN # turn on treefall
-
-		# submission script changes
-	    sed -i "s,$init_dir,$finish_dir,g" paleon_ed2_smp_geo.sh # change the baseline file path in submit
-		sed -i "s/omp .*/omp 12/" paleon_ed2_smp_geo.sh # run the spin finish on 12 cores (splits by patch)
-		sed -i "s/OMP_NUM_THREADS=.*/OMP_NUM_THREADS=12/" paleon_ed2_smp_geo.sh # run the spin finish on 12 cores (splits by patch)
-        sed -i "s/h_rt=.*/h_rt=40:00:00/" paleon_ed2_smp_geo.sh # Sets the run time around what we should need
 
 		# spin spawn start changes -- 
 		# Note: spins require a different first script because they won't have any 
 		#       histo files to read
 		cp ${setup_dir}spawn_startloops_spinstart.sh .
-		cp ${setup_dir}sub_spawn_restarts_spinstart.sh .
 		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops_spinstart.sh
 		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops_spinstart.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops_spinstart.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops_spinstart.sh # set the file path
 	    sed -i "s,sub_post_process.sh,sub_post_process_spinfinish.sh,g" spawn_startloops_spinstart.sh # set the file path
-	    sed -i "s,/dummy/path,${file_path},g" sub_spawn_restarts_spinstart.sh # set the file path
-	    sed -i "s,TEST,check_${SITE},g" sub_spawn_restarts_spinstart.sh # change job name
-        sed -i "s/h_rt=.*/h_rt=48:00:00/" sub_spawn_restarts_spinstart.sh # Sets the run time around what we should need
 
 		# spawn restarts changes
 		cp ${setup_dir}spawn_startloops.sh .
-		cp ${setup_dir}sub_spawn_restarts.sh .
 		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops.sh
 		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops.sh # set the file path
 	    sed -i "s,sub_post_process.sh,sub_post_process_spinfinish.sh,g" spawn_startloops.sh # set the file path
-	    sed -i "s,/dummy/path,${file_path},g" sub_spawn_restarts.sh # set the file path
-	    sed -i "s,TEST,check_${SITE},g" sub_spawn_restarts.sh # change job name
-        sed -i "s/h_rt=.*/h_rt=48:00:00/" sub_spawn_restarts.sh # Sets the run time around what we should need
 
 		# adjust integration step changes
 		cp ${setup_dir}adjust_integration_restart.sh .
-		cp ${setup_dir}sub_adjust_integration.sh .
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
 		sed -i "s/SITE=.*/SITE=${SITE}/" adjust_integration_restart.sh 		
-	    sed -i "s,/dummy/path,${file_path},g" sub_adjust_integration.sh # set the file path
-	    sed -i "s,TEST,adjust_${SITE},g" sub_adjust_integration.sh # change job name
-        sed -i "s/h_rt=.*/h_rt=24:00:00/" sub_adjust_integration.sh # Sets the run time around what we should need
 		
 		# post-processing
 		cp ../../post_process_spinfinish.sh .
-		cp ../../sub_post_process_spinfinish.sh .
-		cp ${setup_dir}submit_ED_extraction.sh .
 		cp ${setup_dir}extract_output_paleon.R .
 		paleon_out=${file_path}/${SITE}_paleon		
 	    sed -i "s,TEST,post_${SITE},g" sub_post_process_spinfinish.sh # change job name
@@ -153,24 +135,15 @@ do
 		sed -i "s/job_name=.*/job_name=extract_${SITE}/" post_process_spinfinish.sh 		
 		sed -i "s,/dummy/path,${paleon_out},g" post_process_spinfinish.sh # set the file path
 
-	    sed -i "s,TEST,extract_${SITE},g" submit_ED_extraction.sh # change job name
-	    sed -i "s,/dummy/path,${file_path},g" submit_ED_extraction.sh # set the file path
 		sed -i "s/site=.*/site='${SITE}'/" extract_output_paleon.R
 	    sed -i "s,/dummy/path,${file_path},g" extract_output_paleon.R # set the file path
 	    
 	    
 		# Clean up the spin initials since we don't need them anymore
 		cp ${setup_dir}cleanup_spininit.sh .
-		cp ${setup_dir}sub_cleanup_spininit.sh .
 	    sed -i "s,/DUMMY/PATH,${init_dir}${SITE}/,g" cleanup_spininit.sh # set the file path
 		sed -i "s/SITE=.*/SITE=${SITE}/" cleanup_spininit.sh 		
 	    sed -i "s/lastyear=.*/lastyear=${finalinit}/" cleanup_spininit.sh 		
-	    sed -i "s,/dummy/path,${file_path},g" sub_cleanup_spininit.sh # set the file path
-	    sed -i "s,TEST,clean_${SITE}_spininit,g" sub_cleanup_spininit.sh # change job name
-
- 		#qsub sub_spawn_restarts_spinstart.sh
- 		
- 		#qsub sub_cleanup_spininit.sh
 
 	popd
 
