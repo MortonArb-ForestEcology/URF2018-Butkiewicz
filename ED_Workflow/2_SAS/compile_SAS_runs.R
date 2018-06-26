@@ -178,8 +178,8 @@ for(s in 1:length(sites)){
  # 	.css and .pss files for each site
  #---------------------------------------
   #create an emtpy storage for the patch info
-  pss.big <- matrix(nrow=length(yrs),ncol=14) # save every X yrs according to chunks specified above
-  colnames(pss.big) <- c("site","year","patch","dst","age","area","water","fsc","stsc","stsl",
+  pss.big <- matrix(nrow=length(yrs),ncol=13) # save every X yrs according to chunks specified above
+  colnames(pss.big) <- c("time","patch","trk","age","area","water","fsc","stsc","stsl",
                          "ssc","psc","msn","fsn")
 
 	#---------------------------------------  
@@ -266,17 +266,18 @@ for(s in 1:length(sites)){
       # Note: all cohorts from a time slice are assigned to a single patch representing a stand of age X
       #---------------------------------------
       css.tmp <- matrix(nrow=length(ipft),ncol=10)
-      css.tmp[,1] <- rep(yeara,length(ipft))
-      css.tmp[,2] <- rep(floor((y-yeara)/blckyr)+1,length(ipft))
-      css.tmp[,3] <- 1:length(ipft)
-      css.tmp[,4] <- ncvar_get(now,'DBH')
-      css.tmp[,5] <- ncvar_get(now,'HITE')
-      css.tmp[,6] <- ipft
-      css.tmp[,7] <- ncvar_get(now,'NPLANT')
-      css.tmp[,8] <- ncvar_get(now,'BDEAD')
-      css.tmp[,9] <- ncvar_get(now,'BALIVE')
-      css.tmp[,10] <- rep(-999,length(ipft))
-      colnames(css.tmp) <- c("year","patch","cohort","dbh","ht","pft","n","bdead","balive","Avgrg")
+      colnames(css.tmp) <- c("time", "patch", "cohort", "dbh", "hite", "pft", "n", "bdead", "balive", "Avgrg")
+      
+      css.tmp[,"time"  ] <- rep(yeara,length(ipft))
+      css.tmp[,"patch" ] <- rep(floor((y-yeara)/blckyr)+1,length(ipft))
+      css.tmp[,"cohort"] <- 1:length(ipft)
+      css.tmp[,"dbh"   ] <- ncvar_get(now,'DBH')
+      css.tmp[,"hite"  ] <- ncvar_get(now,'HITE')
+      css.tmp[,"pft"   ] <- ipft
+      css.tmp[,"n"     ] <- ncvar_get(now,'NPLANT')
+      css.tmp[,"bdead" ] <- ncvar_get(now,'BDEAD')
+      css.tmp[,"balive"] <- ncvar_get(now,'BALIVE')
+      css.tmp[,"Avgrg" ] <- rep(0,length(ipft))
       
       #save big .css matrix
       if(y==yrs[1]){
@@ -291,21 +292,20 @@ for(s in 1:length(sites)){
       # save .pss variables (Patches)
 	  # NOTE: patch AREA needs to be adjusted to be equal to the probability of a stand of age x on the landscape
       #---------------------------------------
-      pss.big[ind,1]  <- 1
-      pss.big[ind,2]  <- 1850
-      pss.big[ind,3] <- floor((y-yeara)/blckyr)+1
-      pss.big[ind,4]   <- 1
-      pss.big[ind,5]   <- y-yeara
+      pss.big[ind,"time"]  <- 1800
+      pss.big[ind,"patch"] <- floor((y-yeara)/blckyr)+1
+      pss.big[ind,"trk"]   <- 1
+      pss.big[ind,"age"]   <- y-yeara
 	  # Note: the following are just place holders that will be overwritten post-SAS
       # pss.big[ind,6]  <- ncvar_get(now,"AREA")
-      pss.big[ind,7]  <- 0.5 
-      pss.big[ind,8]  <- ncvar_get(now,"FAST_SOIL_C")
-      pss.big[ind,9]  <- ncvar_get(now,"STRUCTURAL_SOIL_C")
-      pss.big[ind,10] <- ncvar_get(now,"STRUCTURAL_SOIL_L")
-      pss.big[ind,11] <- ncvar_get(now,"SLOW_SOIL_C")
-      pss.big[ind,12] <- 0
-      pss.big[ind,13] <- ncvar_get(now,"MINERALIZED_SOIL_N")
-      pss.big[ind,14] <- ncvar_get(now,"FAST_SOIL_N")
+      pss.big[ind,"water"]  <- 0.5 
+      pss.big[ind,"fsc"]  <- ncvar_get(now,"FAST_SOIL_C")
+      pss.big[ind,"stsc"]  <- ncvar_get(now,"STRUCTURAL_SOIL_C")
+      pss.big[ind,"stsl"] <- ncvar_get(now,"STRUCTURAL_SOIL_L")
+      pss.big[ind,"ssc"] <- ncvar_get(now,"SLOW_SOIL_C")
+      pss.big[ind,"psc"] <- 0
+      pss.big[ind,"msn"] <- ncvar_get(now,"MINERALIZED_SOIL_N")
+      pss.big[ind,"fsn"] <- ncvar_get(now,"FAST_SOIL_N")
                   
       nc_close(now)
   }
@@ -493,7 +493,7 @@ for(s in 1:length(sites)){
 	# -------------------
     fsc_ss <- fsc_in_y[length(fsc_in_y)]/(fsc_loss * A_decomp)
     ssl_ss <- ssl_in_y[length(ssl_in_y)]/(ssl_loss * A_decomp * Lc) # Structural soil C
-	ssc_ss <- ((ssl_loss * A_decomp * Lc * ssl_ss)*(1 - r_stsc))/(ssc_loss * A_decomp )
+    ssc_ss <- ((ssl_loss * A_decomp * Lc * ssl_ss)*(1 - r_stsc))/(ssc_loss * A_decomp )
     fsn_ss <- fsn_in_y[length(fsn_in_y)]/(fsc_loss * A_decomp)
 	# -------------------
 
@@ -523,14 +523,14 @@ for(s in 1:length(sites)){
 	p.use <- 1
 
     # write the values to file
-    pss.big[,3]  <- 1:nrow(pss.big)
-    pss.big[,6]  <- area.dist
-    pss.big[,8]  <- rep(fsc_ss[p.use],nrow(pss.big)) # fsc
-    pss.big[,9]  <- rep(ssl_ss[p.use],nrow(pss.big)) # stsc
-    pss.big[,10] <- rep(ssl_ss[p.use],nrow(pss.big)) # stsl (not used)
-    pss.big[,11] <- rep(ssc_ss[p.use],nrow(pss.big)) # ssc
-    pss.big[,13] <- rep(msn_ss[p.use],nrow(pss.big)) # msn
-    pss.big[,14] <- rep(fsn_ss[p.use],nrow(pss.big)) # fsn
+    pss.big[,"patch"]  <- 1:nrow(pss.big)
+    pss.big[,"area"]  <- area.dist
+    pss.big[,"fsc"]  <- rep(fsc_ss[p.use],nrow(pss.big)) # fsc
+    pss.big[,"stsc"]  <- rep(ssl_ss[p.use],nrow(pss.big)) # stsc
+    pss.big[,"stsl"] <- rep(ssl_ss[p.use],nrow(pss.big)) # stsl (not used)
+    pss.big[,"ssc"] <- rep(ssc_ss[p.use],nrow(pss.big)) # ssc
+    pss.big[,"msn"] <- rep(msn_ss[p.use],nrow(pss.big)) # msn
+    pss.big[,"fsn"] <- rep(fsn_ss[p.use],nrow(pss.big)) # fsn
 	# *************************************
   #---------------------------------------
 
