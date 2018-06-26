@@ -413,7 +413,7 @@ $ED_NL
    !           into a single layer, so if you are running for places where it doesn't snow !
    !           a lot, leave this set to 1.  One value for all grids.                       ! 
    !---------------------------------------------------------------------------------------!
-   NL%NZG = 12
+   NL%NZG = 10
    NL%NZS = 4
    !---------------------------------------------------------------------------------------!
 
@@ -528,9 +528,9 @@ $ED_NL
    !               2 = porosity (saturation)                                               !
    ! STGOFF  - initial temperature offset (soil temperature = air temperature + offset)    !
    !---------------------------------------------------------------------------------------!
-   NL%SLZ     = -4.00, -3.00, -2.17, -1.50, -1.10, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06
-   NL%SLMSTR  =  1.00.  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00
-   NL%STGOFF  =  0.00.  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00
+   NL%SLZ     = -2.17, -1.50, -1.10, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06
+   NL%SLMSTR  =  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00,  1.00
+   NL%STGOFF  =  0.00.  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00
    !---------------------------------------------------------------------------------------!
 
 
@@ -1156,7 +1156,7 @@ $ED_NL
    !                   2.  Fire will be triggered with enough biomass and the total soil   !
    !                       water at the top 75 cm falls below a threshold.                 !
    !                   3.  Fire will be triggered with enough biomass and accumulated      !
-   !                       water deficit exceeds the threshold given by SM_FIRE times.     !
+   !                       water deficit exceeds the threshold given by SM_FIRE times      !
    !                       the total precipitation of the past 12 months.  This method     !
    !                       does not directly depend on soil texture.                       !
    ! FIRE_PARAMETER -- If fire happens, this will control the intensity of the disturbance !
