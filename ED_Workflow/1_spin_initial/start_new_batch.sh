@@ -67,9 +67,9 @@ lon=($(awk -F ',' 'NR>1 && $6=="" {print $4}' ${site_file}))
 met=($(awk -F ',' 'NR>1 && $6=="" {print $5}' ${site_file}))
 sand=($(awk -F ',' 'NR>1 && $6=="" {print $6}' ${site_file}))
 clay=($(awk -F ',' 'NR>1 && $6=="" {print $7}' ${site_file}))
-inc_fire=($(awk -F ',' 'NR>1 && $6=="" {print $8}' ${site_file})) # INCLUDE_FIRE
-sm_fire=($(awk -F ',' 'NR>1 && $6=="" {print $10}' ${site_file})) # SM_FIRE
-fire_int=($(awk -F ',' 'NR>1 && $6=="" {print $11}' ${site_file})) # FIRE_INTENSITY
+inc_fire=($(awk -F ',' 'NR>1 && $6=="" {print $9}' ${site_file})) # INCLUDE_FIRE
+sm_fire=($(awk -F ',' 'NR>1 && $6=="" {print $11}' ${site_file})) # SM_FIRE
+fire_int=($(awk -F ',' 'NR>1 && $6=="" {print $12}' ${site_file})) # FIRE_INTENSITY
 
 
 # for FILE in $(seq 0 (($n-1)))
