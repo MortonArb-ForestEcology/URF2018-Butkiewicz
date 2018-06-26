@@ -11,20 +11,29 @@ source("met2model.ED2.R")
 
 
 in.base="~/met_ensemble/data/met_ensembles/GLSP.v1/1hr/ensembles"
-outfolder="'/home/models/ED_MET/GLSP.v1"
+outfolder="/home/models/ED_MET/GLSP.v1"
 met.base="/home/models/ED_MET/WILLOWCREEK.v2"
+path.co2 = "/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/co2"
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
 ed.order <- read.csv("Met_EnsembleOrder.csv")
-summary(ed.order)
-head(ed.order)
 
-# Convert LDAS Raw
-for(i in 1:nrow(ed.order)){
-  met2model.ED2(in.path=file.path(in.base, ed.order$metEns[i]), 
-                in.prefix=ed.order$metEns[i], 
-                outfolder=file.path(outfolder, ed.order$runID[i]), 
-                header_folder = file.path(met.base, ed.order$runID[i]),
-                start_date="1999-01-01", 
-                end_date="2014-12-31")
+# Clean up the GCM strings
+ed.order2 <- stringr::str_split(ed.order$ensemble, "_")
+ed.order2 <- data.frame(matrix(unlist(ed.order2), ncol=length(ed.order2[[1]]), byrow=T))
+names(ed.order2) <- c("GCM", "ens")
+ed.order2$GCM <- as.factor(gsub("[.]", "-", ed.order2$GCM))
+ed.order2$EnsID <- as.factor(paste(ed.order2$GCM, ed.order2$ens, sep="_"))
+# summary(ed.order2)
+# head(ed.order2)
+
+# Convert Met Ensemble
+for(i in 1:nrow(ed.order2)){
+  met2model.ED2(in.path=file.path(in.base, ed.order2$GCM[i], ed.order2$EnsID[i]), 
+                in.prefix=ed.order2$EnsID[i], 
+                path_co2=path.co2,
+                outfolder=file.path(outfolder, ed.order2$EnsID[i]), 
+                header_folder = file.path(met.base, ed.order2$EnsID[i]),
+                start_date="1800-01-01", 
+                end_date="2015-12-31")
 }

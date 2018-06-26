@@ -17,6 +17,7 @@
 #' @export
 #' @param in.path location on disk where inputs are stored
 #' @param in.prefix prefix of input and output files
+#' @param path_co2 location on disk where we can pull CO2 data from and coerce into the right format
 #' @param outfolder location on disk where outputs will be stored
 #' @param start_date the start date of the data to be downloaded (will only use the year part of the date)
 #' @param end_date the end date of the data to be downloaded (will only use the year part of the date)
@@ -24,7 +25,7 @@
 #' @param overwrite should existing files be overwritten
 #' @param verbose should the function be very verbose
 #' @param leap_year Enforce Leap-years? If set to TRUE, will require leap years to have 366 days. If set to false, will require all years to have 365 days. Default = TRUE.
-met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_date, end_date, lst = 0, lat = NA,
+met2model.ED2 <- function(in.path, in.prefix, path_co2=NULL, outfolder, header_folder, start_date, end_date, lst = 0, lat = NA,
                           lon = NA, overwrite = FALSE, verbose = FALSE, leap_year = TRUE, ...) {
   
   overwrite <- as.logical(overwrite)
@@ -134,6 +135,40 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
       }
     }
     useCO2 <- is.numeric(CO2)
+    
+    # if CO2 isn't already in our met file, and we have a location for it, grab it and pull it
+    if(!useCO2 & !is.null(path_co2)){
+      files.co2 <- dir(path_co2, ".nc")
+      
+      # Checking for numeric years or paleon driver format
+      # Note: Case for years not implemented yet
+      co2.names <- stringr::str_split(files.co2, "_")
+      co2.names <- matrix(unlist(co2.names), ncol=length(co2.names[[1]]), byrow=T)
+      
+      if("monthly" %in% co2.names[,2]){
+        # The PalEON dataset put uniform values for the whole region and goes 850-2010
+        years.paleon <- rep(850:2010, each=12)
+        yr.start <- ifelse(year %in% years.paleon, min(which(years.paleon==year)), min(which(years.paleon==2010)))
+        
+        nc.co2 <- ncdf4::nc_open(file.path(path_co2, files.co2[which(co2.names[,2]=="monthly")]))
+        CO2.mo <- ncdf4::ncvar_get(nc.co2, "co2", start=c(yr.start), count=c(12))
+        ncdf4::nc_close(nc.co2)
+        
+        # Changing monthly data into hourly
+        dpm <- lubridate::days_in_month(1:12)
+        dpm[2] <- ifelse(leap_year & length(Tair)/24==366, 29, 28) # If we already have leap day in what we extracted, do it now
+        hpm <- dpm*24
+        
+        CO2 <- vector()
+        for(i in 1:length(CO2.mo)){
+          CO2 <- c(CO2, rep(CO2.mo[i], hpm[i]))
+        }
+        
+        useCO2 <- length(CO2)==length(Tair)
+        
+      }
+      
+    }
 
     ## convert time to seconds
     sec <- udunits2::ud.convert(sec, unlist(strsplit(nc$dim$time$units, " "))[1], "seconds")
@@ -154,7 +189,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     pres <- c(rep(pres[1], toff), pres)[slen]
     SW   <- c(rep(SW[1], toff), SW)[slen]
     LW   <- c(rep(LW[1], toff), LW)[slen]
-    if (useCO2) {
+    if (useCO2) { 
       CO2 <- c(rep(CO2[1], toff), CO2)[slen]
     }
 
@@ -234,8 +269,10 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     vgrdA <- V  # meridional wind [m/s]
     shA    <- Qair  # specific humidity [kg_H2O/kg_air]
     tmpA   <- Tair  # temperature [K]
-    if (useCO2) {
+    if (useCO2 & is.null(path_co2)) { # Note: PalEON driver already in ppm
       co2A <- CO2 * 1e+06  # surface co2 concentration [ppm] converted from mole fraction [kg/kg]
+    } else {
+      co2A <- CO2
     }
 
     ## create directory if(system(paste('ls',froot),ignore.stderr=TRUE)>0)
