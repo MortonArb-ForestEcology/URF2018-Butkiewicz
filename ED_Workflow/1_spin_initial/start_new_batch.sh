@@ -36,9 +36,10 @@ BU_base_EDI=/projectnb/dietzelab/EDI/ # The location of basic ED Inputs on the B
 
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
+met_base=/home/models/ED_MET/GLSP.v1
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_spin_initial/phase2_spininit.v1/ # Where everything will go
+file_dir=${file_base}/1_spin_initial/URF2018_spininit.v1/ # Where everything will go
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
 RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
 
@@ -57,19 +58,19 @@ sed -i "s,$BU_base_spin,$file_base,g" ${file_base}/0_setup/PL_MET_HEADER
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
 
-# Extract the file names of sites that haven't been started yet
-sites_done=($(awk -F ',' 'NR>1 && $6!="" {print $14}' ${site_file})) # Get sites that have a location
-cells=($(awk -F ',' 'NR>1 && $6=="" {print $14}' ${site_file}))
-lat=($(awk -F ',' 'NR>1 && $6=="" {print $3}' ${site_file}))
-lon=($(awk -F ',' 'NR>1 && $6=="" {print $4}' ${site_file}))
+# Extract the file names of RUNs that haven't been started yet
+RUNs_done=($(awk -F ',' 'NR>1 && 14!="" {print $2}' ${RUN_file})) # Get RUNs that have a location
+runs=($(awk -F ',' 'NR>1 && $14=="" {print $2}' ${RUN_file}))
+lat=($(awk -F ',' 'NR>1 && $14=="" {print $4}' ${RUN_file}))
+lon=($(awk -F ',' 'NR>1 && $14=="" {print $3}' ${RUN_file}))
 
 # These will need to get updated with the proper column numbers
-met=($(awk -F ',' 'NR>1 && $6=="" {print $5}' ${site_file}))
-sand=($(awk -F ',' 'NR>1 && $6=="" {print $6}' ${site_file}))
-clay=($(awk -F ',' 'NR>1 && $6=="" {print $7}' ${site_file}))
-inc_fire=($(awk -F ',' 'NR>1 && $6=="" {print $9}' ${site_file})) # INCLUDE_FIRE
-sm_fire=($(awk -F ',' 'NR>1 && $6=="" {print $11}' ${site_file})) # SM_FIRE
-fire_int=($(awk -F ',' 'NR>1 && $6=="" {print $12}' ${site_file})) # FIRE_INTENSITY
+met=($(awk -F ',' 'NR>1 && $14=="" {print $5}' ${RUN_file}))
+sand=($(awk -F ',' 'NR>1 && $14=="" {print $6}' ${RUN_file}))
+clay=($(awk -F ',' 'NR>1 && $14=="" {print $7}' ${RUN_file}))
+inc_fire=($(awk -F ',' 'NR>1 && $14=="" {print $9}' ${RUN_file})) # INCLUDE_FIRE
+sm_fire=($(awk -F ',' 'NR>1 && $14=="" {print $11}' ${RUN_file})) # SM_FIRE
+fire_int=($(awk -F ',' 'NR>1 && $14=="" {print $12}' ${RUN_file})) # FIRE_INTENSITY
 
 
 # for FILE in $(seq 0 (($n-1)))
@@ -97,7 +98,7 @@ do
     newbase=${file_dir}/$RUN
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${RUN}
+	met_path=${met_base}/${MET}
 
 
 	file_path=${file_dir}/${RUN}/
@@ -109,10 +110,13 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ../../ED2IN_SpinInit_Base ED2IN
-		cp ${setup_dir}PalEON_Phase2.v1.xml .
-		cp ${setup_dir}paleon_ed2_smp_geo.sh .
+# 		cp ${setup_dir}PalEON_Phase2.v1.xml .
 
 		# ED2IN Changes	    
+		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
+		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
+	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
+
 	    sed -i "s,$BU_base_spin,$file_base,g" ED2IN #change the baseline file path everywhere
 	    sed -i "s,$BU_base_EDI,$EDI_base,g" ED2IN #change the baseline file path for ED Inputs
 
@@ -150,14 +154,10 @@ do
 		
 		# post-processing
 		cp ../../post_process_spininit.sh .
-		cp ${setup_dir}extract_output_paleon.R .
 		paleon_out=${file_path}/${RUN}_paleon
 		sed -i "s/RUN=.*/RUN=${RUN}/" post_process_spininit.sh 		
 		sed -i "s/job_name=.*/job_name=extract_${RUN}/" post_process_spininit.sh 		
 		sed -i "s,/dummy/path,${paleon_out},g" post_process_spininit.sh # set the file path
-
-		sed -i "s/RUN=.*/RUN='${RUN}'/" extract_output_paleon.R
-	    sed -i "s,/dummy/path,${file_path},g" extract_output_paleon.R # set the file path
 
 
 #  		sh spawn_startloops_spinstart.sh

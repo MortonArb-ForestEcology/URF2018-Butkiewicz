@@ -26,13 +26,13 @@
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-init_dir=${file_base}/1_spin_initial/phase2_spininit.v1/ # Directory of initial spin files
+init_dir=${file_base}/1_spin_initial/URF2018_spininit.v1/ # Directory of initial spin files
 SAS_dir=${file_base}/2_SAS/SAS_init_files.v1/ # Directory of SAS initialization files
-finish_dir=${file_base}/3_spin_finish/phase2_spinfinish.v1/ # Where the transient runs will go
+finish_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v1/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
 
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
-RUN_file=${setup_dir}/URF2018_ExperimentDesign.csv # # Path to list of ED RUNs w/ status
+RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
 
 finalyear=2301 # The year on which the models should top on Jan 1
 finalfull=2300 # The last year we actually care about (probably the year before finalyear)
