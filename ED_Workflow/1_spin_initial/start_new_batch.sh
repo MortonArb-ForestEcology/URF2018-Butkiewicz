@@ -93,10 +93,7 @@ do
 	# File Paths
     new_analy="'${file_dir}${RUN}/analy/${RUN}'"
     new_histo="'${file_dir}${RUN}/histo/${RUN}'"
-    old_analy="'${file_dir}TEST/analy/TEST'"
-    old_histo="'${file_dir}TEST/histo/TEST'"
     newbase=${file_dir}/$RUN
-    oldbase=${file_dir}/TEST
 	oldname=TESTinit
 	met_path=${met_base}/${MET}
 
@@ -115,14 +112,9 @@ do
 		# ED2IN Changes	    
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
-	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
-
-	    sed -i "s,$BU_base_spin,$file_base,g" ED2IN #change the baseline file path everywhere
-	    sed -i "s,$BU_base_EDI,$EDI_base,g" ED2IN #change the baseline file path for ED Inputs
+	    sed -i "s,TEST,${RUN},g" ED2IN #change site ID
 
         sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = $finalyear/" ED2IN # Set last year
-	    sed -i "s,$old_analy,$new_analy,g" ED2IN #change output paths
-	    sed -i "s,$old_histo,$new_histo,g" ED2IN #change output paths
         sed -i "s/POI_LAT  =.*/POI_LAT  = $LAT/" ED2IN # set RUN latitude
         sed -i "s/POI_LON  =.*/POI_LON  = $LON/" ED2IN # set RUN longitude
         sed -i "s/SLXCLAY =.*/SLXCLAY = $CLAY/" ED2IN # set fraction soil clay
@@ -137,7 +129,6 @@ do
 		sed -i "s/RUN=.*/RUN=${RUN}/" spawn_startloops_spinstart.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops_spinstart.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops_spinstart.sh # set the file path
-	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops_spinstart.sh # set the file path
 
 		# spawn restarts changes
 		cp ${setup_dir}spawn_startloops.sh .
@@ -145,7 +136,6 @@ do
 		sed -i "s/RUN=.*/RUN=${RUN}/" spawn_startloops.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops.sh # set the file path
-	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops.sh # set the file path
 
 		# adjust integration step changes
 		cp ${setup_dir}adjust_integration_restart.sh .
