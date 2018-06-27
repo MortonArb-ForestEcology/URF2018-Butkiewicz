@@ -1,4 +1,4 @@
-PDSI.GLSP <- read.csv("./PDSI_AllMembers.csv") #Reading in the CSV, and called it PDSI (for the name of the drought index) .GLSP (for Glacial Lakes state park).
+PDSI.GLSP <- read.csv("data_raw/met/month/PDSI_AllMembers.csv") #Reading in the CSV, and called it PDSI (for the name of the drought index) .GLSP (for Glacial Lakes state park).
 class(PDSI.GLSP)
 ncol(PDSI.GLSP) #This should tell me the number of columns. I want to add a new column, so that's how this will work. There should be 201 columns. 
 # Each column is a different weather. 
@@ -18,7 +18,7 @@ summary(PDSI.GLSP$year)
 PDSI.GLSP_29yr <- subset(PDSI.GLSP,subset=year<=1829)
 
 #The following just checks to make sure that the column is correct. 
-summary(PDSI.GLSP_29yr) #Just to make sure all of the columns are in order. 
+summary(PDSI.GLSP_29yr[,190:ncol(PDSI.GLSP_29yr)]) #Just to make sure all of the columns are in order. 
 nrow(PDSI.GLSP_29yr) #Should be 360. 
 min(PDSI.GLSP_29yr$year) #Should be 1800. 
 max(PDSI.GLSP_29yr$year) #Should be 1829.
@@ -46,6 +46,16 @@ summary(averages) #A check to make sure this did what I wanted it to do.
 averages <- data.frame(averages)
 nrow(averages) #Since there's only 30 years in the dataset there should only be 30 rows in averages, one for each year. 
 
+# # How Christy would have done it
+# # Find the annual means
+# pdsi.ann <- aggregate(PDSI.GLSP_29yr_JJA[,2:(ncol(PDSI.GLSP_29yr_JJA)-2)], by=list(PDSI.GLSP_29yr_JJA$year), FUN=mean)
+# names(pdsi.ann)
+# dim(pdsi.ann)
+# 
+# # Find the climatological mean
+# pdsi.mean <- apply(pdsi.ann[,2:ncol(pdsi.ann)], 2,  FUN=mean)
+# pdsi.mean[which(pdsi.mean==max(pdsi.mean))] # highest mean PDSI
+# pdsi.mean[which(pdsi.mean==min(pdsi.mean))] # lowest mean PDSI
 
 #Average the columns across the years to get the total average PDSI during the growing season from 1800-1829 for each weather. Right now everything is stored in a new variable. If I get a chance to clean this up the variables will be overwritten, but for now this works too. 
 
