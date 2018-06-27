@@ -66,7 +66,9 @@ averages_yr.rownames <- rownames(averages_yr) #I couldn't figure a way to get a 
 averages_yr.rownames #Just to make sure that everything's here. 
 averages_yr.rownames <- averages_yr.rownames[-c(1,202,203)] #Subset the vector. 
 averages_yr.rownames #Check again. 
-averages_yr.test <- data.frame(weather=averages_yr.rownames,PDSI=averages_yr.PDSI) 
+averages_yr.test <- data.frame(PDSI=averages_yr.PDSI) 
+# averages_yr.test <- data.frame(weather=averages_yr.rownames,PDSI=averages_yr.PDSI) 
+##  The above code is commented out--if the row names disappear when you use it use the second bit of code instead.
 averages_yr.test
 
 #Find the column with the maximum average PDSI for June, July, and August--the wettest weather. 
