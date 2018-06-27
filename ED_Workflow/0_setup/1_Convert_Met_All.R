@@ -1,6 +1,6 @@
 # Define pecan file path
-path.pecan <- "~/Desktop/Research/pecan"
-# path.pecan <- "~/pecan/"
+# path.pecan <- "~/Desktop/Research/pecan"
+path.pecan <- "~/pecan/"
 
 # Source PEcAn ED conversion file
 source(file.path(path.pecan, "base/utils/R/seconds_in_year.R"))
