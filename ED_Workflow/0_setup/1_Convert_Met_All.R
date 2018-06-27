@@ -13,7 +13,7 @@ source("met2model.ED2.R")
 
 in.base="~/met_ensemble/data/met_ensembles/GLSP.v1/1hr/ensembles"
 outfolder="/home/models/ED_MET/GLSP.v1"
-met.base="/home/models/ED_MET/WILLOWCREEK.v2"
+met.base="/home/models/ED_MET/GLSP.v1"
 path.co2 = "/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/co2"
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
