@@ -1,22 +1,22 @@
 #!bin/bash
-# This file starts the next cells from the PalEON Regional ED Runs
+# This file starts the next runs from the PalEON Regional ED Runs
 # Christy Rollinson, crollinson@gmail.com
 
 # Things to specify
-# n          = Number of sites to start
+# n          = Number of RUNs to start
 # ED2IN_Base = template ED2IN to be modified
-# file.dir   = spininit directory; used to find what sites have been done
+# file.dir   = spininit directory; used to find what RUNs have been done
 # soil.path  = path of percent clay and percent sand to query for
 #              SLXCLAY & SLXSAND, respectively
-# grid.order = .csv file with the order sites should be run in to determine 
-#              what sites should be done next
+# grid.order = .csv file with the order RUNs should be run in to determine 
+#              what RUNs should be done next
 
 
 # Order of Operations
-# 1) Sync file with order sites & status/location 
-# 2) Add file directories for any sites that are remote so we don't repeat them
-# 3) loop through the next n cells and adjust base ED2IN for specific characters
-#    Things to be Modified per site:
+# 1) Sync file with order RUNs & status/location 
+# 2) Add file directories for any RUNs that are remote so we don't repeat them
+# 3) loop through the next n runs and adjust base ED2IN for specific characters
+#    Things to be Modified per RUN:
 #     -  NL%POI_LAT  =  
 #     -  NL%POI_LON  = 
 #     -  NL%FFILOUT = '~/ED_PalEON/MIP2_Region/1_spin_initial/phase2_spininit.v1/XXXXX/analy/XXXXX'
@@ -40,12 +40,12 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
 file_dir=${file_base}/1_spin_initial/phase2_spininit.v1/ # Where everything will go
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
-site_file=${setup_dir}/URF2018_ExperimentDesign.csv # # Path to list of ED sites w/ status
+RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
 
 # # Lets double check and make sure the order status file is up to date
 # # Note: need to make sure you don't have to enter a password for this to work right
 # git fetch --all
-# git checkout origin/master -- $site_file
+# git checkout origin/master -- $RUN_file
 
 finalyear=2801
 finalfull=2800
@@ -75,8 +75,8 @@ fire_int=($(awk -F ',' 'NR>1 && $6=="" {print $12}' ${site_file})) # FIRE_INTENS
 # for FILE in $(seq 0 (($n-1)))
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
-	# Site Name and Lat/Lon
-	SITE=${cells[FILE]}
+	# RUN Name and Lat/Lon
+	RUN=${runs[FILE]}
 	LAT=${lat[FILE]}
 	LON=${lon[FILE]}	
 	MET=${met[FILE]}
@@ -86,21 +86,21 @@ do
 	SM_FIRE=${sm_fire[FILE]}
 	FIRE_INT=${fire_intensity[FILE]}
 	
-	echo $SITE
+	echo $RUN
 
 	
 	# File Paths
-    new_analy="'${file_dir}${SITE}/analy/${SITE}'"
-    new_histo="'${file_dir}${SITE}/histo/${SITE}'"
+    new_analy="'${file_dir}${RUN}/analy/${RUN}'"
+    new_histo="'${file_dir}${RUN}/histo/${RUN}'"
     old_analy="'${file_dir}TEST/analy/TEST'"
     old_histo="'${file_dir}TEST/histo/TEST'"
-    newbase=${file_dir}/$SITE
+    newbase=${file_dir}/$RUN
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${SITE}
+	met_path=${met_base}/${RUN}
 
 
-	file_path=${file_dir}/${SITE}/
+	file_path=${file_dir}/${RUN}/
 
 	mkdir -p ${file_path} 
 	
@@ -119,8 +119,8 @@ do
         sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = $finalyear/" ED2IN # Set last year
 	    sed -i "s,$old_analy,$new_analy,g" ED2IN #change output paths
 	    sed -i "s,$old_histo,$new_histo,g" ED2IN #change output paths
-        sed -i "s/POI_LAT  =.*/POI_LAT  = $LAT/" ED2IN # set site latitude
-        sed -i "s/POI_LON  =.*/POI_LON  = $LON/" ED2IN # set site longitude
+        sed -i "s/POI_LAT  =.*/POI_LAT  = $LAT/" ED2IN # set RUN latitude
+        sed -i "s/POI_LON  =.*/POI_LON  = $LON/" ED2IN # set RUN longitude
         sed -i "s/SLXCLAY =.*/SLXCLAY = $CLAY/" ED2IN # set fraction soil clay
         sed -i "s/SLXSAND =.*/SLXSAND = $SAND/" ED2IN # set fraction soil sand
    		sed -i "s/FIRE_PARAMETER  =.*/FIRE_PARAMETER  = $FIRE_INT/" ED2IN # Set the fire parameter for later
@@ -130,7 +130,7 @@ do
 		#       histo files to read
 		cp ${setup_dir}spawn_startloops_spinstart.sh .
 		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops_spinstart.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops_spinstart.sh 		
+		sed -i "s/RUN=.*/RUN=${RUN}/" spawn_startloops_spinstart.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops_spinstart.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops_spinstart.sh # set the file path
 	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops_spinstart.sh # set the file path
@@ -138,7 +138,7 @@ do
 		# spawn restarts changes
 		cp ${setup_dir}spawn_startloops.sh .
 		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops.sh 		
+		sed -i "s/RUN=.*/RUN=${RUN}/" spawn_startloops.sh 		
 		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops.sh 		
 	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops.sh # set the file path
 	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops.sh # set the file path
@@ -146,17 +146,17 @@ do
 		# adjust integration step changes
 		cp ${setup_dir}adjust_integration_restart.sh .
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" adjust_integration_restart.sh 		
+		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 		
 		
 		# post-processing
 		cp ../../post_process_spininit.sh .
 		cp ${setup_dir}extract_output_paleon.R .
-		paleon_out=${file_path}/${SITE}_paleon
-		sed -i "s/SITE=.*/SITE=${SITE}/" post_process_spininit.sh 		
-		sed -i "s/job_name=.*/job_name=extract_${SITE}/" post_process_spininit.sh 		
+		paleon_out=${file_path}/${RUN}_paleon
+		sed -i "s/RUN=.*/RUN=${RUN}/" post_process_spininit.sh 		
+		sed -i "s/job_name=.*/job_name=extract_${RUN}/" post_process_spininit.sh 		
 		sed -i "s,/dummy/path,${paleon_out},g" post_process_spininit.sh # set the file path
 
-		sed -i "s/site=.*/site='${SITE}'/" extract_output_paleon.R
+		sed -i "s/RUN=.*/RUN='${RUN}'/" extract_output_paleon.R
 	    sed -i "s,/dummy/path,${file_path},g" extract_output_paleon.R # set the file path
 
 
