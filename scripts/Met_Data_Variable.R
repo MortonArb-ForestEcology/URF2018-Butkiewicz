@@ -22,7 +22,7 @@ summary(PDSI.GLSP_29yr[,190:ncol(PDSI.GLSP_29yr)]) #Just to make sure all of the
 nrow(PDSI.GLSP_29yr) #Should be 360. 
 min(PDSI.GLSP_29yr$year) #Should be 1800. 
 max(PDSI.GLSP_29yr$year) #Should be 1829.
-PDSI.GLSP_29yr$year #Should print a list, the first number being 1800 and the last being 1829, which should each be repeated 12 times. 
+PDSI.GLSP$year[1:13] #Should print a list, the first number being 1800 and the last being 1801, with all of the values in between being 1800. This means that each year was repeated 12 and only 12 times, one for each month. 
 
 # Subset the table for June, July, and August. 
 PDSI.GLSP_29yr_JJA <- subset(PDSI.GLSP_29yr,subset=month>=6)
