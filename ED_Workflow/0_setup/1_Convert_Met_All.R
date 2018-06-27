@@ -1,5 +1,6 @@
 # Define pecan file path
-path.pecan <- "~/pecan/"
+path.pecan <- "~/Desktop/Research/pecan"
+# path.pecan <- "~/pecan/"
 
 # Source PEcAn ED conversion file
 source(file.path(path.pecan, "base/utils/R/seconds_in_year.R"))
@@ -16,10 +17,10 @@ met.base="/home/models/ED_MET/WILLOWCREEK.v2"
 path.co2 = "/home/crollinson/ED_PalEON/MIP2_Region/phase2_env_drivers_v2/co2"
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
-ed.order <- read.csv("Met_EnsembleOrder.csv")
+ed.order <- read.csv("ExperimentalDesign.csv")
 
 # Clean up the GCM strings
-ed.order2 <- stringr::str_split(ed.order$ensemble, "_")
+ed.order2 <- stringr::str_split(unique(ed.order$climate), "_")
 ed.order2 <- data.frame(matrix(unlist(ed.order2), ncol=length(ed.order2[[1]]), byrow=T))
 names(ed.order2) <- c("GCM", "ens")
 ed.order2$GCM <- as.factor(gsub("[.]", "-", ed.order2$GCM))
