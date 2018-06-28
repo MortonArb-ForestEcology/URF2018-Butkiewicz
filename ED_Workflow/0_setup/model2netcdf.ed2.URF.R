@@ -84,7 +84,7 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
   #      for now I'm going with this, do failed runs also provide information on parameters?
   year.check <- unique(unlist(ylist))
   if(max(year.check) < end_year){
-    stop("Run failed with some outputs.")
+    warning("Run failed with some outputs.")
     # rundir <- gsub("/out/", "/run/", outdir)
     # readme <- file(paste0(rundir,"/README.txt"))
     # runtype <- readLines(readme, n=1)
@@ -184,34 +184,55 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
   print(paste0("*** Reading -E- file ***"))
   
   # add
-  add <- function(dat, col) {
+  add <- function(dat, var.name) {
     
     dims <- dim(dat)
     
     if (is.null(dims)) {
       if (length(dat) == 1) {
-        if (length(out) < col) {
-          out[[col]] <- array(dat, dim = 1)
+        if (!var.name %in% names(out)) {
+          out[[var.name]] <- array(dat, dim = 1)
         } else {
-          out[[col]] <- abind::abind(out[[col]], array(dat, dim = 1), along = 1)
+          out[[var.name]] <- abind::abind(out[[var.name]], array(dat, dim = 1), along = 1)
         }
       } else {
         warning("expected a single value")
       }
     } else if(length(dims)==1){
-      if(length(out) < col){
-        out[[col]] <- array(dat)
+      if(!var.name %in% names(out)){
+        out[[var.name]] <- array(dat)
       } else {
-        out[[col]] <- cbind(out[[col]], array(dat))
+        # Check to see if we need to add rows so we can store cohort-level data
+        if(dim(out[[var.name]])[1] == length(dat)){
+          out[[var.name]] <- cbind(out[[var.name]], array(dat))
+        } else {
+          row.fill <- abs(length(dat) - nrow(out[[var.name]]))
+          if(nrow(out[[var.name]])>length(dat)){
+            dat.fill <- array(0, dim=row.fill)
+            out[[var.name]] <- cbind(out[[var.name]], c(array(dat), dat.fill))
+          } else {
+            if(length(dim(out[[var.name]]))==1){
+              dat.fill <- array(0, dim=row.fill)
+              out[[var.name]] <- cbind(c(out[[var.name]], dat.fill), array(dat))
+            } else {  
+              col.fill <- ncol(out[[var.name]])
+              dat.fill <- array(0, dim=c(row.fill, col.fill))
+              out[[var.name]] <- cbind(rbind(out[[var.name]], dat.fill), array(dat))
+            }
+          }
+          
+
+        }
+        
       }
     } else if (length(dims)==2) {
       dat <- t(dat)
       dims <- dim(dat)
       # dat <- dat[1:(nrow(dat)), ]
-      if (length(out) < col) {
-        out[[col]] <- dat
+      if (! var.name %in% names(out)) {
+        out[[var.name]] <- dat
       } else {
-        out[[col]] <- abind::abind(out[[col]], dat, along = 1)
+        out[[var.name]] <- abind::abind(out[[var.name]], dat, along = 1)
       }
     } else {
       stop("can't handle arrays with >2 dimensions yet")
@@ -219,8 +240,8 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     return(out)
   
     ## finally make sure we use -999 for invalid values
-    out[[col]][is.null(out[[col]])] <- -999
-    out[[col]][is.na(out[[col]])] <- -999
+    out[[var.name]][is.null(out[[var.name]])] <- -999
+    out[[var.name]][is.na(out[[var.name]])] <- -999
     
     return(out)
   } # end add-function
@@ -254,7 +275,6 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
   row <- 1
     
   # note that there is always one Tower file per year
-  ## ## NEED TO SET THIS UP TO LOOP THROUGH YSEL!
   # pb <- txtProgressBar(min=0, max=length(ysel), style=3)
   for(i in seq_along(ysel)){
     # setTxtProgressBar(pb, i)
@@ -262,7 +282,8 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     
     ## determine timestep from HDF5 file
     # block <- 60*60 # We presecribed 1 hour
-    block <- ncT$dim$phony_dim_0$len
+    # block <- ncT$dim$phony_dim_0$len
+    block=1
     dat.blank <- array(rep(-999, block)) # This is a little different from Pecan, but makes sure everything has same dims
     
     # block = 86400/(60*60)
@@ -277,33 +298,115 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     }
     
     ## Check for which version of ED2 we are using.
-    ED2vc <- CheckED2Version(ncT)
+    # ED2vc <- CheckED2Version(ncT)
     
     ## store for later use, will only use last data
     dz <- diff(slzdata)
     dz <- dz[dz != 0]
     
+    # --------------------------
+    # Site-Scale drivers (1 per timestep)
+    # --------------------------
+    # -------
+    # Drivers
+    # -------
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_CO2_PY"), "CO2air")  ## CO2air
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "Lwdown")  ## Lwdown
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PRSS_PY"), "Psurf")  ## Psurf
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_SHV_PY"), "Qair")  ## Qair
+    out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "Swdown")  ## Swdown
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
+    out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
+    # -------
+    
+    # -------
+    # Site-Level Disturbance information
+    # -------
+    # Site-level
+    out <-  add(getHdf5Data(ncT, "IGNITION_RATE"), "Fire_flux")  ## Fire_flux -- need to convert to kgC m-2 s-1
+    # -------
+    
+    # -------
+    # Site-Level Carbon & Water Fluxes
+    # -------
+    out$SLZ <- slzdata
+    
+    out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "AutoResp")  ## AutoResp
+    out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), "CO2CAS")  ## CO2CAS
+    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), "GPP")  ## GPP
+    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), "HeteroResp")  ## HeteroResp
+    out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
+                 getHdf5Data(ncT, "MMEAN_RH_PY"), "NEE")  ## NEE
+    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
+    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "TotalResp")  ## TotalResp
+    
+    out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
+    out <- add(getHdf5Data(ncT, "MMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "MMEAN_VAPOR_WC_PY") + 
+                 getHdf5Data(ncT, "MMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Evap")  ## Evap
+
+    # Site-level variables related to water & carbon stress
+    out <- add(getHdf5Data(ncT, "MMEAN_AVAILABLE_WATER_PY"), "WaterAvail")  ## WaterAvail=Available Water kg/m2
+    out <- add(getHdf5Data(ncT, "MMEAN_A_CLOSED_PY"), "A_Closed")  ## Minimum assimilation rate; umol/m2l/s
+    out <- add(getHdf5Data(ncT, "MMEAN_A_CO2_PY"), "A_CO2")  ## CO2-limited assimilation rate; umol/m2l/s
+    out <- add(getHdf5Data(ncT, "MMEAN_A_LIGHT_PY"), "A_Light")  ## Light-limited assimilation rate; umol/m2l/s
+    out <- add(getHdf5Data(ncT, "MMEAN_A_NET_PY"), "A_Net")  ## Actual assimilation rate; umol/m2l/s
+    out <- add(getHdf5Data(ncT, "MMEAN_A_OPEN_PY"), "A_Open")  ##  Assimilation rate (no soil moist. stress); umol/m2l/s
+    out <- add(getHdf5Data(ncT, "MMEAN_FSW_PY"), "MoistStress")  ## Moisture stress
+    out <- add(getHdf5Data(ncT, "MMEAN_FS_OPEN_PY"), "NetStress")  ## Net stress factor
+    out <- add(getHdf5Data(ncT, "MMEAN_PSI_OPEN_PY"), "Transp_StressMin")  ## Transpiration with no stress
+    out <- add(getHdf5Data(ncT, "MMEAN_PSI_CLOSED_PY"), "Transp_StressMax")  ## Transpiration at maximum stress
+    # -------
+    
+    # -------
+    # Site-Level Soil Characteristics by depth
+    # -------
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilWater")  ## SoilWater  **********
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
+    # -------
+    
+    # --------------------------
+    
+    
+    
+    # --------------------------
+    # Patch-scale output
+    # --------------------------
     # -------
     # Patch-level info
     # -------
-    npatch <- ncdf4::ncvar_get(ncT, "NPATCHES_GLOBAL")
-    patch.n <- ncdf4::ncvar_get(ncT, 'PACO_N') 
-    patch.start <- ncdf4::ncvar_get(ncT, 'PACO_ID')
-    patch.area <- ncdf4::ncvar_get(ncT, 'AREA')
+    out <- add(getHdf5Data(ncT, "NPATCHES_GLOBAL"), "NPatch")  ## Number Patches
+    out <- add(getHdf5Data(ncT, "PACO_ID"), "Patch_N_Cohort")  ## Number of cohorts in each patch
+    out <- add(getHdf5Data(ncT, "AREA"), "Patch")  ## Area of each Patches
+  
+    # Patch-level
+    out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
+    out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
+    out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
+    # 1 = clear cut (crop & pasture)
+    # 2 = forest plantation
+    # 3 = tree fall
+    # 4 = fire
+    # 5 = forest regrowth
+    # 6 = logged forest
     
-    patch.area.df <- data.frame(patch.area, 1:npatch); names(patch.area.df) <- c("area", "patch")
-    patch.area.df$area.rel <- patch.area.df$area/sum(patch.area.df$area)
-    total.area <- sum(patch.area)
+    # -------
+    # --------------------------
     
+    # --------------------------
+    # Cohort-scale output
+    # --------------------------
     # -------
     # Setting up a bunch of information at the co-hort level
     # -------
     ncohort <- ncdf4::ncvar_get(ncT, "NCOHORTS_GLOBAL")
-    nplant <- ncdf4::ncvar_get(ncT, "NPLANT") # Density for each cohort in stems/m2
-    pft <- ncdf4::ncvar_get(ncT, "PFT") # PFT for each cohort
-    pftT <- sort(unique(pft)) # listing the PFTs present, in order
-    
-    patch.co <- vector(length=ncohort)
+    patch.n <- ncdf4::ncvar_get(ncT, 'PACO_N') 
+    patch.start <- ncdf4::ncvar_get(ncT, 'PACO_ID')
+    nplant <- getHdf5Data(ncT, "NPLANT")
+
+    patch.co <- array(vector(length=ncohort))
     patch.area.co <- vector(length=ncohort)
     for(p in 1:length(patch.start)){
       if(patch.n[p]<=0) next
@@ -311,122 +414,37 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
       patch.co[patch.start[p]:(patch.start[p]+patch.n[p]-1)] <- p
       patch.area.co[patch.start[p]:(patch.start[p]+patch.n[p]-1)] <- patch.area[p]
     }
-
-    dens.co <- data.frame(density=nplant, pft=pft, patch=patch.co)
-    # -------
     
-    # -------
-    # Drivers
-    # -------
-    # TAIR
-    # PRECIP
-    # SWDOWN
-    # LWDOWN
-    # QAIR
-    # WIND
-    # PSURF
-    # -------
-    
-    
-    # -------
-    # Site-Level Disturbance information
-    # -------
-    # Site-level
-    ignit_rate <- ncdf4::ncvar_get(ncT, "IGNITION_RATE") 
-    
-    
-    # Patch-level
-    disturb <- ncdf4::ncvar_get(ncT, "DISTURBANCE_RATES") # Disturbance matrix to/from
-    disturb.type <- ncdf4::ncvar_get(ncT, "DIST_TYPE") # Disturbance type per patch
-    watdef <- ncdf4::ncvar_get(ncT, "AVG_MONTHLY_WATERDEF") 
-      # 1 = clear cut (crop & pasture)
-      # 2 = forest plantation
-      # 3 = tree fall
-      # 4 = fire
-      # 5 = forest regrowth
-      # 6 = logged forest
-    # -------
-    
-    # -------
-    # Site-Level Carbon & Water Fluxes
-    # -------
-    out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 1)  ## AutoResp
-    out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), 2)  ## CO2CAS
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), 3)  ## GPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), 4)  ## HeteroResp
-    out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
-                 getHdf5Data(ncT, "MMEAN_RH_PY"), 5)  ## NEE
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 6)  ## NPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 7)  ## TotalResp
-    
-    out <- add(getHdf5Data(ncT, "FMEAN_TRANSP_PY"), 8)  ## Tveg
-    out <- add(getHdf5Data(ncT, "FMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "FMEAN_VAPOR_WC_PY") + 
-                 getHdf5Data(ncT, "FMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "FMEAN_TRANSP_PY"), 9)  ## Evap
-    
-    # MMEAN_LAI_PY = LAI
-    # CARBON
-    # AVAILABLE_WATER_PY
-    # A_CLOSED_PY =  Minimum assimilation rate
-    # A_CO2 = CO2-limited assimilation rate
-    # A_LIGHT_PY = Light-limited assimilation rate
-    # A_NET_PY = Actual assimilation rate
-    # A_OPEN = Assimilation rate (no soil moist. stress)
-    # FSW_PY =  Moisture stress
-    # FS_OPEN = Net stress factor
-    
+    out <- add(nplant, "Cohort_Density") # Density for each cohort; stems/m2; need to weight by area
+    out <- add(getHdf5Data(ncT, "PFT"), "Cohort_PFT") # PFT ID for each COHORT
+    out <- add(patch.co, "Cohort_PatchID") # Patch ID for each cohort
     # -------
 
-    # -------
-    # Site-Level Soil Characteristics by depth
-    # -------
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), 10)  ## SoilWater  **********
-    ## out <- add(sum(soiltemp*dz)/-min(z),38) ## SoilTemp
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), 11)  ## SoilTemp
-    
-    # MMEAN_SOIL_MSTPOT_PY
-    # -------
 
     # -------
     # PFT-Level Veg information
     # -------
+    # Basics:
+    out <- add(getHdf5Data(ncT, "DBH"), "Cohort_AbvGrndBiom") #cm
+    out <- add(getHdf5Data(ncT, "BA_CO")*nplant, "Cohort_BasalArea") # cm2/m2
+    out <- add(getHdf5Data(ncT, "AGB_CO")*nplant, "Cohort_AbvGrndBiom") #kgC/m2
+    out <- add(getHdf5Data(ncT, "BALIVE")*nplant, "Cohort_TotLivBiom") # kgC /m2
+    out <- add(getHdf5Data(ncT, "BDEAD")*nplant, "Cohort_TotDeadBiom")
+    out <- add(getHdf5Data(ncT, "LAI_CO"), "Cohort_LAI")
+    out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
+
     # Water Stress
+    out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # Height in m
+    out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # Height in m
+    out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # Height in m
+    out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # Height in m
+    out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # Height in m
     # CB= CarbonBalance
     # CB_MoistMax = Carbon Balance with Full water availability
     # CB_LightMax = Carbon Balance with Full light availability
-    
-    # Basics:
-    # BA_CO = Basal Area by Cohort
-    # DBH = Diameter at Breast Height by Cohort
-    # AGB_CO = Aboveground biomass by cohort
-    # BALIVE = Total Live Biomass (no heartwood)
-    # BDEAD = Total Dead Biomass (heartwood)
-    # LAI_CO
-    # HITE
-    
-    
     # -------
-    
-    ## out <- add(getHdf5Data(ncT, 'TOTAL_AGB,1,row, yr) ## AbvGrndWood
-    out <- add(getHdf5Data(ncT, "MMEAN_BDEAD_PY"), 1)  ## AbvGrndWood
-    out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 2)  ## AutoResp
-    out <- add(dat.blank, 3)  ## CarbPools
-    out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), 4)  ## CO2CAS
-    out <- add(dat.blank, 5)  ## CropYield
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), 6)  ## GPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), 7)  ## HeteroResp
-    out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
-                                  getHdf5Data(ncT, "MMEAN_RH_PY"), 8)  ## NEE
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 9)  ## NPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), 10)  ## TotalResp
-    # out <- add(getHdf5Data(ncT, 'BDEAD + getHdf5Data(ncT, 'BALIVE'),11,row, yr) ## TotLivBiom
-    out <- add(dat.blank, 11)  ## TotLivBiom
-    out <- add(getHdf5Data(ncT, "FAST_SOIL_C_PY") + getHdf5Data(ncT, "STRUCT_SOIL_C_PY") + 
-                                  getHdf5Data(ncT, "SLOW_SOIL_C_PY"), 12)  ## TotSoilCarb
-    
-    out$SLZ <- slzdata
-    
-  
-    
+    # --------------------------
+
     ncdf4::nc_close(ncT)
     
   }
@@ -448,16 +466,16 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   Mc <- 12.017  #molar mass of C, g/mol
   umol2kg_C <- Mc * udunits2::ud.convert(1, "umol", "mol") * udunits2::ud.convert(1, "g", "kg")
   yr2s      <- udunits2::ud.convert(1, "s", "yr")
-  
+
   # TODO - remove this function and replace with ifelse statements inline below (SPS)
-  conversion <- function(col, mult) {
+  conversion <- function(var.name, mult) {
     ## make sure only to convert those values that are not -999
-    out[[col]][out[[col]] != -999] <- out[[col]][out[[col]] != -999] * mult
+    out[[var.name]][out[[var.name]] != -999] <- out[[var.name]][out[[var.name]] != -999] * mult
     return(out)
   }
   
-  checkTemp <- function(col) {
-    out[[col]][out[[col]] == 0] <- -999
+  checkTemp <- function(var.name) {
+    out[[var.name]][out[[var.name]] == 0] <- -999
     return(out)
   }
   
