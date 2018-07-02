@@ -143,8 +143,8 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     }
     
     # SLZ specific hack until I figure that out
-    if(!is.null(out_list[["-I-"]]$SLZ)){
-      out_list[["-I-"]]$SLZ <- NULL
+    if(!is.null(out_list[["-E-"]]$SLZ)){
+      out_list[["-E-"]]$SLZ <- NULL
     }
     
     # ----- write ncdf files
@@ -154,9 +154,9 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     out <- unlist(out_list, recursive = FALSE)
     nc <- ncdf4::nc_create(file.path(outdir, paste("ED2", y, "nc", sep = ".")), nc_var)
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
-    for (i in seq_along(nc_var)) {
-      ncdf4::ncvar_put(nc, nc_var[[i]], out[[i]])
-      cat(paste(nc_var[[i]]$name, nc_var[[i]]$longname), file = varfile, sep = "\n")
+    for (VAR in names(nc_var)) {
+      ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["E"]][[VAR]])
+      cat(paste(nc_var[[VAR]]$name, nc_var[[VAR]]$longname), file = varfile, sep = "\n")
     }
     close(varfile)
     ncdf4::nc_close(nc)
@@ -182,6 +182,15 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
 read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
   
   print(paste0("*** Reading -E- file ***"))
+  PFTs <- data.frame(Name=c("C4 grass", "Early tropical", "Mid Tropical", "Late tropical", "Temperate C3 Grass", "North Pine", "South Pine", "Late conifer", "Early hardwood", "Mid hardwood", "Late hardwood", "C3 crop", "C3 pasture", "C4 crop", "C4 pasture", "C3 grass", "Araucaria"))
+  disturbance <- data.frame(Type=c("Clear cut (crop/pasture)", "forest planation", "tree fall", "fire", "forest regrowth", "logged forest"))
+  # 1 = clear cut (crop & pasture)
+  # 2 = forest plantation
+  # 3 = tree fall
+  # 4 = fire
+  # 5 = forest regrowth
+  # 6 = logged forest
+  
   
   # add
   add <- function(dat, var.name) {
@@ -273,7 +282,10 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
   n <- length(ysel)
   out <- list()
   row <- 1
-    
+  
+  out[["PFT_Name"]] <- PFTs$Name
+  out[["Disturbance_Name"]] <- disturbance$Type
+  
   # note that there is always one Tower file per year
   # pb <- txtProgressBar(min=0, max=length(ysel), style=3)
   for(i in seq_along(ysel)){
@@ -311,11 +323,11 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # Drivers
     # -------
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_CO2_PY"), "CO2air")  ## CO2air
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "Lwdown")  ## Lwdown
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "LWdown")  ## Lwdown
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_PRSS_PY"), "Psurf")  ## Psurf
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_SHV_PY"), "Qair")  ## Qair
     out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "Swdown")  ## Swdown
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "SWdown")  ## Swdown
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
     out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
@@ -325,7 +337,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # Site-Level Disturbance information
     # -------
     # Site-level
-    out <-  add(getHdf5Data(ncT, "IGNITION_RATE"), "Fire_flux")  ## Fire_flux -- need to convert to kgC m-2 s-1
+    out <-  add(getHdf5Data(ncT, "IGNITION_RATE")*12, "Fire_flux")  ## Fire_flux -- *12 = per month to per year
     # -------
     
     # -------
@@ -362,7 +374,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # Site-Level Soil Characteristics by depth
     # -------
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilWater")  ## SoilWater  **********
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
     # -------
@@ -379,10 +391,10 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     out <- add(getHdf5Data(ncT, "NPATCHES_GLOBAL"), "NPatch")  ## Number Patches
     out <- add(getHdf5Data(ncT, "PACO_ID"), "Patch_N_Cohort")  ## Number of cohorts in each patch
-    out <- add(getHdf5Data(ncT, "AREA"), "Patch")  ## Area of each Patches
+    out <- add(getHdf5Data(ncT, "AREA"), "Patch_Area")  ## Area of each Patches
   
     # Patch-level
-    out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
+    # out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
     out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
     out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
     # 1 = clear cut (crop & pasture)
@@ -404,6 +416,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     ncohort <- ncdf4::ncvar_get(ncT, "NCOHORTS_GLOBAL")
     patch.n <- ncdf4::ncvar_get(ncT, 'PACO_N') 
     patch.start <- ncdf4::ncvar_get(ncT, 'PACO_ID')
+    patch.area <- ncdf4::ncvar_get(ncT, "AREA")
     nplant <- getHdf5Data(ncT, "NPLANT")
 
     patch.co <- array(vector(length=ncohort))
@@ -425,7 +438,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # PFT-Level Veg information
     # -------
     # Basics:
-    out <- add(getHdf5Data(ncT, "DBH"), "Cohort_AbvGrndBiom") #cm
+    out <- add(getHdf5Data(ncT, "DBH"), "Cohort_DBH") #cm
     out <- add(getHdf5Data(ncT, "BA_CO")*nplant, "Cohort_BasalArea") # cm2/m2
     out <- add(getHdf5Data(ncT, "AGB_CO")*nplant, "Cohort_AbvGrndBiom") #kgC/m2
     out <- add(getHdf5Data(ncT, "BALIVE")*nplant, "Cohort_TotLivBiom") # kgC /m2
@@ -434,11 +447,11 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
 
     # Water Stress
-    out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # Height in m
-    out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # Height in m
-    out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # Height in m
-    out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # Height in m
-    out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # Height in m
+    out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # kgC/pl
+    out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # kgC/pl
+    out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # kgC/pl
+    out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # kgC/pl
+    out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # kgC/pl
     # CB= CarbonBalance
     # CB_MoistMax = Carbon Balance with Full water availability
     # CB_LightMax = Carbon Balance with Full light availability
@@ -466,7 +479,8 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   Mc <- 12.017  #molar mass of C, g/mol
   umol2kg_C <- Mc * udunits2::ud.convert(1, "umol", "mol") * udunits2::ud.convert(1, "g", "kg")
   yr2s      <- udunits2::ud.convert(1, "s", "yr")
-
+  pl2m2 <- out$Cohort_Density
+  
   # TODO - remove this function and replace with ifelse statements inline below (SPS)
   conversion <- function(var.name, mult) {
     ## make sure only to convert those values that are not -999
@@ -483,8 +497,20 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   # ----- define ncdf dimensions
   
   t <- ncdf4::ncdim_def(name = "time", units = paste0("days since ", yr, "-01-01 00:00:00"), 
-                        vals = seq(begins, ends, length.out = length(out[[1]])), 
+                        vals = seq(begins, ends, length.out = length(out[["GPP"]])), 
                         calendar = "standard", unlim = TRUE)
+  pch <- ncdf4::ncdim_def(name = "npatch", units = "ID", 
+                          vals = seq(1:nrow(out[["Patch_Area"]])), 
+                          unlim = TRUE)
+  cht <- ncdf4::ncdim_def(name = "ncohort", units = "ID", 
+                          vals = seq(1:nrow(out[["Cohort_PFT"]])), 
+                          unlim = TRUE)
+  pft <- ncdf4::ncdim_def(name="pft", "", 1:length(out[["PFT_Name"]]),
+                   longname = "Plant Functional Type", create_dimvar=FALSE)                 
+  disturb <- ncdf4::ncdim_def(name = "disturbance", units = "", 
+                              vals = seq(1:length(out[["Disturbance_Type"]])), 
+                              create_dimvar=FALSE)
+  dim.string <- ncdf4::ncdim_def("names", "", 1:48, create_dimvar=FALSE)
   
   
   slzdata <- out$SLZ
@@ -495,95 +521,191 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   
   dims  <- list(lon = lon, lat = lat, time = t)
   dimsz <- list(lon = lon, lat = lat, time = t, nsoil = zg)
+  dimsp <- list(lon = lon, lat = lat, time = t, npatch = pch)
+  dimsc <- list(lon = lon, lat = lat, time = t, ncohort = cht)
+  dimsd <- list(lon = lon, lat = lat, time = t, ndisturb = disturb)
   
   # ----- fill list
   
-  out <- conversion(1, udunits2::ud.convert("AbvGrndWood", "t ha-1", "kg m-2"))  ## tC/ha -> kg/m2
-  nc_var[["AbvGrndWood"]] <- ncdf4::ncvar_def("AbvGrndWood", units = "kg C m-2", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Above ground woody biomass")
-  out <- conversion("AutoResp", umol2kg_C)  ## umol/m2 s-1 -> kg/m2 s-1
-  nc_var[["AutoResp"]] <- ncdf4::ncvar_def("AutoResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Autotrophic Respiration")
-  nc_var[["CarbPools"]] <- ncdf4::ncvar_def("CarbPools", units = "kg C m-2", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Size of each carbon pool")
-  nc_var[["CO2CAS"]] <- ncdf4::ncvar_def("CO2CAS", units = "ppmv", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "CO2CAS")
-  nc_var[["CropYield"]] <- ncdf4::ncvar_def("CropYield", units = "kg m-2", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Crop Yield")
-  out <- conversion("GPP", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["GPP"]] <- ncdf4::ncvar_def("GPP", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Gross Primary Productivity")
-  out <- conversion("HeteroResp", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["HeteroResp"]] <- ncdf4::ncvar_def("HeteroResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Heterotrophic Respiration")
-  out <- conversion("NEE", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["NEE"]] <-  ncdf4::ncvar_def("NEE", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Net Ecosystem Exchange")
-  out <- conversion("NPP", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["NPP"]] <- ncdf4::ncvar_def("NPP", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Net Primary Productivity")
-  out <- conversion("TotalResp", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["TotalResp"]] <- ncdf4::ncvar_def("TotalResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Total Respiration")
-  nc_var[["TotLivBiom"]] <- ncdf4::ncvar_def("TotLivBiom", units = "kg C m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Total living biomass")
-  nc_var[["TotSoilCarb"]] <- ncdf4::ncvar_def("TotSoilCarb", units = "kg C m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Total Soil Carbon")
+  nc_var[["PFT_Name"]] <- ncdf4::ncvar_def("PFT_name", units = "string", dim = list(dim.string, pft), prec="char",
+                                         longname = "Plant Functional Type name list")
+  
+  nc_var[["Disturbance_Name"]] <- ncdf4::ncvar_def("Disturbance_Type", units = "string", dim = list(dim.string, disturb), 
+                                                   prec="char", longname = "Disturbance Type name list")
+  
+  # -------
+  # Drivers
+  # -------
   nc_var[["CO2air"]] <- ncdf4::ncvar_def("CO2air", units = "umol mol-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Near surface CO2 concentration")
+                                         longname = "Near surface CO2 concentration")
   nc_var[["LWdown"]] <- ncdf4::ncvar_def("LWdown", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Surface incident longwave radiation")
+                                         longname = "Surface incident longwave radiation")
   nc_var[["Psurf"]] <- ncdf4::ncvar_def("Psurf", units = "Pa", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Surface pressure")
+                                        longname = "Surface pressure")
   nc_var[["Qair"]] <- ncdf4::ncvar_def("Qair", units = "kg kg-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Near surface specific humidity")
+                                       longname = "Near surface specific humidity")
   nc_var[["Rainf"]] <- ncdf4::ncvar_def("Rainf", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Rainfall rate")
+                                        longname = "Rainfall rate")
   nc_var[["SWdown"]] <- ncdf4::ncvar_def("SWdown", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Surface incident shortwave radiation")
+                                         longname = "Surface incident shortwave radiation")
   out <- checkTemp("Tair")
   nc_var[["Tair"]] <- ncdf4::ncvar_def("Tair", units = "K", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Near surface air temperature")
+                                       longname = "Near surface air temperature")
   nc_var[["Wind"]] <- ncdf4::ncvar_def("Wind", units = "m s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Near surface module of the wind")
+                                       longname = "Near surface module of the wind")
   nc_var[["LWnet"]] <- ncdf4::ncvar_def("LWnet", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Net Longwave Radiation")
-  nc_var[["Qg"]] <- ncdf4::ncvar_def("Qg", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Ground heat")
-  nc_var[["Qh"]] <- ncdf4::ncvar_def("Qh", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Sensible heat")
-  out <- conversion("Qle", get.lv())  ## kg m-2 s-1 -> W m-2
-  nc_var[["Qle"]] <- ncdf4::ncvar_def("Qle", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Latent heat")
-  nc_var[["SWnet"]] <- ncdf4::ncvar_def("SWnet", units = "W m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Net shortwave radiation")
-  nc_var[["RootMoist"]] <- mstmipvar("RootMoist", lat, lon, t, zg)   # not standard
-  nc_var[["Tveg"]] <- ncdf4::ncvar_def("TVeg", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Transpiration")
-  nc_var[["WaterTableD"]] <- mstmipvar("WaterTableD", lat, lon, t, zg) # not standard
+                                        longname = "Net Longwave Radiation")
+  # -------
   
-  nc_var[["fPAR"]] <- ncdf4::ncvar_def("fPAR", units = "", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Absorbed fraction incoming PAR")
-  nc_var[["LAI"]] <- ncdf4::ncvar_def("LAI", units = "m2 m-2", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Leaf Area Index")
+  # -------
+  # Site-Level Disturbance information
+  # -------
+  out <- conversion("Fire_flux", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
+  nc_var[["Fire_flux"]] <- ncdf4::ncvar_def("Fire_flux", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                        longname = "Fire emissions")
+  # -------
+  
+  # -------
+  # Site-Level Carbon & Water Fluxes
+  # -------
+  # Standard Carbon Fluxes
+  out <- conversion("AutoResp", umol2kg_C)  ## umol/m2 s-1 -> kg/m2 s-1
+  nc_var[["AutoResp"]] <- ncdf4::ncvar_def("AutoResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                           longname = "Autotrophic Respiration")
+  nc_var[["CO2CAS"]] <- ncdf4::ncvar_def("CO2CAS", units = "ppmv", dim = list(lon, lat, t), missval = -999, 
+                                         longname = "CO2CAS")
+  nc_var[["GPP"]] <- ncdf4::ncvar_def("GPP", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                      longname = "Gross Primary Productivity")
+  out <- conversion("HeteroResp", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
+  nc_var[["HeteroResp"]] <- ncdf4::ncvar_def("HeteroResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                             longname = "Heterotrophic Respiration")
+  out <- conversion("NEE", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
+  nc_var[["NEE"]] <-  ncdf4::ncvar_def("NEE", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                       longname = "Net Ecosystem Exchange")
+  out <- conversion("NPP", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
+  nc_var[["NPP"]] <- ncdf4::ncvar_def("NPP", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                      longname = "Net Primary Productivity")
+  out <- conversion("TotalResp", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
+  nc_var[["TotalResp"]] <- ncdf4::ncvar_def("TotalResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                            longname = "Total Respiration")
+  
+  # Water Fluxes
+  nc_var[["Tveg"]] <- ncdf4::ncvar_def("TVeg", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                       longname = "Transpiration")
+  nc_var[["Evap"]] <- ncdf4::ncvar_def("Evap", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                       longname = "Total Evaporation")
+  
+  # Non-Standard Carbon Fluxes & Stress Measures
+  nc_var[["WaterAvail"]] <- ncdf4::ncvar_def("WaterAvail", units = "kg m-2", dim = list(lon, lat, t), missval = -999, 
+                                             longname = "Available Water")
+  
+  out <- conversion("A_Closed", umol2kg_C)
+  nc_var[["A_Closed"]] <- ncdf4::ncvar_def("A_Closed", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                           longname = "Minimum assimilation rate")
+  out <- conversion("A_CO2", umol2kg_C)
+  nc_var[["A_CO2"]] <- ncdf4::ncvar_def("A_CO2", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                        longname = "CO2-limited assimilation rate")
+  out <- conversion("A_Light", umol2kg_C)
+  nc_var[["A_Light"]] <- ncdf4::ncvar_def("A_Light", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                          longname = "Light-limited assimilation rate")
+  out <- conversion("A_Net", umol2kg_C)
+  nc_var[["A_Net"]] <- ncdf4::ncvar_def("A_Net", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                        longname = "Acutal net assimilation rate")
+  out <- conversion("A_Open", umol2kg_C)
+  nc_var[["A_Open"]] <- ncdf4::ncvar_def("A_Open", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                         longname = "Non-moisture limited assimilation rate")
+  nc_var[["Tveg"]] <- ncdf4::ncvar_def("TVeg", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                       longname = "Transpiration")
+  nc_var[["MoistStress"]] <- ncdf4::ncvar_def("MoistStress", units = "fraction; 1 = no stress", dim = list(lon, lat, t), 
+                                              missval = -999, 
+                                              longname = "Moisture Stress Factor; 1 = no stress")
+  nc_var[["NetStress"]] <- ncdf4::ncvar_def("NetStress", units = "fraction; 1 = no stress", dim = list(lon, lat, t), 
+                                            missval = -999, 
+                                            longname = "Net Stress factor; 1 = no stress")
+  nc_var[["Transp_StressMin"]] <- ncdf4::ncvar_def("Transp_StressMin", units = "kg m-2 s-1", dim = list(lon, lat, t), 
+                                                   missval = -999, 
+                                                   longname = "Transpiration with no stress")
+  nc_var[["Transp_StressMax"]] <- ncdf4::ncvar_def("Transp_StressMax", units = "kg m-2 s-1", dim = list(lon, lat, t), 
+                                                   missval = -999, 
+                                                   longname = "Transpiration at maximum stress")
+  # -------
+  
+  # -------
+  # Site-Level Soil Characteristics by depth
+  # -------
   nc_var[["SoilMoist"]] <- ncdf4::ncvar_def("SoilMoist", units = "kg m-2", dim = list(lon, lat, zg, t), missval = -999, 
-                                     longname = "Average Layer Soil Moisture")
+                                            longname = "Average Layer Soil Moisture")
   out <- checkTemp("SoilTemp")
   nc_var[["SoilTemp"]] <- ncdf4::ncvar_def("SoilTemp", units = "K", dim = list(lon, lat, zg, t), missval = -999, 
-                                     longname = "Average Layer Soil Temperature")
-  nc_var[["SoilWet"]] <- ncdf4::ncvar_def("SoilWet", units = "", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Total Soil Wetness")
-  nc_var[["Albedo"]] <- mstmipvar("Albedo", lat, lon, t, zg)      # not standard
-  nc_var[["VegT"]] <- mstmipvar("VegT", lat, lon, t, zg)        # not standard
-  nc_var[["Evap"]] <- ncdf4::ncvar_def("Evap", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Total Evaporation")
-  nc_var[["Qs"]] <- ncdf4::ncvar_def("Qs", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Surface runoff")
-  nc_var[["Qsb"]] <- ncdf4::ncvar_def("Qsb", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                     longname = "Subsurface runoff")
-  out <- conversion("SoilResp", yr2s)  ## kg C m-2 yr-1 -> kg C m-2 s-1
-  nc_var[["SoilResp"]]<- ncdf4::ncvar_def("SoilResp", units = "kg C m-2 s-1", dim = list(lon, lat, t), missval = -999, 
-                                    longname = "Soil Respiration")
+                                           longname = "Average Layer Soil Temperature")
+  nc_var[["SoilMstPot"]] <- ncdf4::ncvar_def("SoilMstPot", units = "m", dim = list(lon, lat, zg, t), missval = -999, 
+                                           longname = "Average Layer Soil Matric Potential")
+  # -------
+
+  # -------
+  # Patch-scale output
+  # -------
+  nc_var[["NPatch"]] <- ncdf4::ncvar_def("NPatch", units = "count", dim = list(lon, lat, t), missval = -999, 
+                                             longname = "Total Number of Patches at each time")
+  nc_var[["Patch_N_Cohort"]] <- ncdf4::ncvar_def("Patch_N_Cohort", units = "count", dim = list(lon, lat, pch, t), missval = -999, 
+                                         longname = "Number of cohorts in each patch")
+  nc_var[["Patch_Area"]] <- ncdf4::ncvar_def("Patch_Area", units = "fraction", dim = list(lon, lat, pch, t), missval = -999, 
+                                                 longname = "fraction of total area in patch")
+  # nc_var[["Disturb_Rate"]] <- ncdf4::ncvar_def("Disturb_Rate", units = "fraction", dim = list(lon, lat, disturb, t), missval = -999, 
+                                             # longname = "Disturbance Transiton Matrix")
+  nc_var[["Disturb_Type"]] <- ncdf4::ncvar_def("Disturb_Type", units = "ID", dim = list(lon, lat, pch, t), missval = -999, 
+                                             longname = "Disturbance Identifier")
+  nc_var[["WaterDef"]] <- ncdf4::ncvar_def("WaterDef", units = "kg/m2", dim = list(lon, lat, pch, t), missval = -999, 
+                                             longname = "Average Water Deficit")
+  # -------
+
+  # -------
+  # Cohort-scale output
+  # -------
+  nc_var[["Cohort_PatchID"]] <- ncdf4::ncvar_def("Cohort_PatchID", units = "ID", dim = list(lon, lat, cht, t), 
+                                                 missval = -999, longname = "Cohort patch identifier")
+  nc_var[["Cohort_PFT"]] <- ncdf4::ncvar_def("Cohort_PFT", units = "ID", dim = list(lon, lat, cht, t), 
+                                                 missval = -999, longname = "Cohort plant functional type number")
+  nc_var[["Cohort_Density"]] <- ncdf4::ncvar_def("Cohort_Density", units = "plants m-2", dim = list(lon, lat, cht, t),
+                                                 missval = -999, longname = "Cohort plant desnity")
+  nc_var[["Cohort_DBH"]] <- ncdf4::ncvar_def("Cohort_DBH", units = "cm", dim = list(lon, lat, cht, t), 
+                                                    missval = -999, longname = "Cohort diameter at breast height")
+  out <- conversion("Cohort_BasalArea", pl2m2)  ## cm2/plant -> cm2/m2
+  nc_var[["Cohort_BasalArea"]] <- ncdf4::ncvar_def("TotLivBiom", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                   missval = -999, longname = "Cohort basal area")
+  
+  out <- conversion("Cohort_AbvGrndBiom", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_AbvGrndBiom"]] <- ncdf4::ncvar_def("Cohort_AbvGrndBiom", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                     missval = -999, longname = "Cohort above ground biomass")
+  out <- conversion("Cohort_TotLivBiom", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_TotLivBiom"]] <- ncdf4::ncvar_def("Cohort_TotLivBiom", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                    missval = -999, longname = "Cohort living biomass")
+  out <- conversion("Cohort_TotDeadBiom", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_TotDeadBiom"]] <- ncdf4::ncvar_def("Cohort_TotDeadBiom", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                     missval = -999, longname = "Total non-living biomass")
+  nc_var[["Cohort_LAI"]] <- ncdf4::ncvar_def("Cohort_LAI", units = "m2 m-2", dim = list(lon, lat, cht, t), 
+                                             missval = -999, longname = "Cohort Leaf Area Index")
+  nc_var[["Cohort_Height"]] <- ncdf4::ncvar_def("Cohort_Height", units = "m", dim = list(lon, lat, cht, t), 
+                                                missval = -999, longname = "Cohort Height")
+  out <- conversion("Cohort_CB", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_CB"]] <- ncdf4::ncvar_def("Cohort_CB", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                            missval = -999, longname = "Monthly Carbon Balance")
+  out <- conversion("Cohort_CB_MoistMax", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_CB_MoistMax"]] <- ncdf4::ncvar_def("Cohort_CB_MoistMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                     missval = -999, 
+                                                     longname = "Monthly Carbon Balance if no moisture limitation")
+  out <- conversion("Cohort_CB_LightMax", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_CB_LightMax"]] <- ncdf4::ncvar_def("Cohort_CB_LightMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                     missval = -999, 
+                                                     longname = "Monthly Carbon Balance if no light limitation")
+  out <- conversion("Cohort_CB_MLMax", pl2m2)  ## kgC/plant -> cm2/m2
+  nc_var[["Cohort_CB_MLMax"]] <- ncdf4::ncvar_def("Cohort_CB_MLMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+                                                  missval = -999, 
+                                                  longname = "Monthly Carbon Balance if no light or moisture limitation")
+  nc_var[["Cohort_CB_MeanRel"]] <- ncdf4::ncvar_def("Cohort_CB_MeanRel", units = "", dim = list(lon, lat, cht, t), 
+                                                    missval = -999, longname = "Relative carbon balance")
+  
+  # -------
   
   return(list(nc_var = nc_var, out = out))
   

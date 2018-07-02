@@ -14,7 +14,7 @@ end_date = "2800-12-31"
 ## Original
 runs.dir <- "URF2018_spininit.v1" # Where our output is
 all.runs <- dir(runs.dir) # Get a list of what's been run (at least partially)
-out.base <- "extracted_output/URF2018_spininit.v1" # Where we want to put our output
+out.base <- "extracted_output" # Where we want to put our output
 dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if it's not there yet
 
 # Get a list of what runs we need to extract
@@ -32,8 +32,7 @@ for(RUNID in runs.extract){
   outfiles <- dir(ed.dir, "-E-") # Listing the monthly files
   run.done <- any(as.numeric(substr(outfiles,18,21))==lubridate::year(end_date) & as.numeric(substr(outfiles,23,24))==lubridate::month(end_date))
   
-  if(!run.done) next # If the run's not done yet, go to the next one
-  
+
   outdir <- file.path(out.base, RUNID) # Where we want to save our output
   dir.create(outdir, recursive = T, showWarnings = F)
 
