@@ -103,6 +103,9 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     
     print(paste0("----- Processing year: ", y))
     
+    outfile <- file.path(outdir, paste("ED2", y, "nc", sep = "."))
+    if(file.exists(outfile)) next # Skip to next one if already done
+    
     # ----- read values from ED output files
     for(j in seq_along(out_list)){
       rflag <- ed.res.flag[j]
@@ -152,7 +155,7 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     print("*** Writing netCDF file ***")
     
     out <- unlist(out_list, recursive = FALSE)
-    nc <- ncdf4::nc_create(file.path(outdir, paste("ED2", y, "nc", sep = ".")), nc_var)
+    nc <- ncdf4::nc_create(outfile, nc_var)
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
     for (VAR in names(nc_var)) {
       ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["E"]][[VAR]])
@@ -160,6 +163,7 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     }
     close(varfile)
     ncdf4::nc_close(nc)
+    rm(nc, varfile)
     
   } # end year-loop
   
@@ -459,6 +463,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # --------------------------
 
     ncdf4::nc_close(ncT)
+    rm(ncT)
     
   }
   
