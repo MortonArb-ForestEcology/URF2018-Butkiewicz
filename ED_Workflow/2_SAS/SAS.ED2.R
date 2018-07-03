@@ -76,8 +76,8 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
     dslz[i] <- slz[i+1] - slz[i]    
   }
   
-  # nsoil=which(slz>= kh_active_depth)
-  nsoil=length(slz)
+  nsoil=which(slz>= kh_active_depth)  # Maximum depth for avg. temperature and moisture
+  # nsoil=length(slz)
   #---------------------------------------
   
   #---------------------------------------
@@ -88,26 +88,12 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
   pss.big <- matrix(nrow=length(yrs),ncol=13) # save every X yrs according to chunks specified above
   colnames(pss.big) <- c("time","patch","trk","age","area","water","fsc","stsc","stsl",
                          "ssc","psc","msn","fsn")
-  
-  #---------------------------------------  
-  # Calculate area distribution based on geometric decay based loosely on your disturbance rates
-  # Note: This one varies from Jackie's original in that it lets your oldest, undisturbed bin 
-  #       start a bit larger (everything leftover) to let it get cycled in naturally
-  #---------------------------------------
-  stand.age <- seq(yrs[1]-yeara,nrow(pss.big)*blckyr,by=blckyr)
-  area.dist <- vector(length=nrow(pss.big))
-  area.dist[1] <- sum(dgeom(0:(stand.age[2]-1), disturb))
-  for(i in 2:(length(area.dist)-1)){
-    area.dist[i] <- sum(dgeom((stand.age[i]):(stand.age[i+1]-1),disturb))
-  }
-  area.dist[length(area.dist)] <- 1 - sum(area.dist[1:(length(area.dist)-1)])
-  pss.big[,"area"] <- area.dist
-  #---------------------------------------  
-  
+
   #---------------------------------------
   # Finding the mean soil temp & moisture
   # NOTE:  I've been plyaing around with finding the best temp & soil moisture to initialize things
   #        with; if using the means from the spin met cycle work best, insert them here
+  # This will also be necessary for helping update disturbance parameter
   #---------------------------------------
   month.begin = 1
   month.end = 12
@@ -152,6 +138,35 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
   print(paste0("mean soil temp  : ", soil_tempk))
   print(paste0("mean soil moist : ", rel_soil_moist))
   #---------------------------------------
+  
+  #---------------------------------------  
+  # Calculate area distribution based on geometric decay based loosely on your disturbance rates
+  # Note: This one varies from Jackie's original in that it lets your oldest, undisturbed bin 
+  #       start a bit larger (everything leftover) to let it get cycled in naturally
+  #---------------------------------------
+  # ------
+  # Calculate the Rate of fire & total disturbance
+  # ------
+  # Calculated the fire rate (applied monthly!)
+  pfire=0
+  # pfire = f(sm_fire, soilmoist)
+  fire_rate <- pfire * fire_intensity
+  
+  # Total disturbance rate = treefall + fire
+  #  -- treefall = % area/yr
+  disturb <- treefall + fire_rate 
+  # ------
+  
+  stand.age <- seq(yrs[1]-yeara,nrow(pss.big)*blckyr,by=blckyr)
+  area.dist <- vector(length=nrow(pss.big))
+  area.dist[1] <- sum(dgeom(0:(stand.age[2]-1), disturb))
+  for(i in 2:(length(area.dist)-1)){
+    area.dist[i] <- sum(dgeom((stand.age[i]):(stand.age[i+1]-1),disturb))
+  }
+  area.dist[length(area.dist)] <- 1 - sum(area.dist[1:(length(area.dist)-1)])
+  pss.big[,"area"] <- area.dist
+  #---------------------------------------  
+  
   
   #---------------------------------------  
   # Extraction Loop Part 1: Cohorts!!
