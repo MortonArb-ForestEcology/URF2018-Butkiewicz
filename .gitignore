@@ -9,3 +9,5 @@ ED_Workflow/0_setup/Paleon_MIP_Phase2_ED_Order_Status.csv
 *.h5
 ED_Workflow/1_spin_initial/URF2018_spininit.v1/*
 ED_Workflow/1_spin_initial/extracted_output/*
+*.css
+*.pss

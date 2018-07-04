@@ -8,11 +8,12 @@
 ##'@description This functions approximates landscape equilibrium steady state for vegetation and 
 ##'             soil pools using the successional trajectory of a single patch modeled with disturbance
 ##'             off and the prescribed disturbance rates for runs (Xia et al. 2012 GMD 5:1259-1271). 
-##'             NOTE: Current implementation is for DECOMP_SCHEME=2 only (moisture limit = Moyano et al 2012)
 ##' @param dir.analy Location of ED2 analyis files; expects monthly and yearly output
 ##' @param dir.histo Location of ED2 history files (for vars not in analy); expects monthly
 ##' @param outdir Location to write SAS .css & .pss files
 ##' @param block Number of years between patch ages
+##' @param lat site latitude; used for file naming
+##' @param lon site longitude; used for file naming
 ##' @param yrs.met Number of years cycled in model spinup part 1
 ##' @param treefall Value to be used for TREEFALL_DISTURBANCE_RATE in ED2IN for full runs (disturbance on)
 ##' @param sm_fire Value to be used for SM_FIRE if INCLUDE_FIRE=2; defaults to 0 (fire off)
@@ -20,6 +21,8 @@
 ##' @param slxsand Soil percent sand; used to calculate expected fire return interval
 ##' @param slxclay Soil percent clay; used to calculate expected fire return interval
 ##' @param sufx ED2 out file suffix; used in constructing file names(default "g01.h5) 
+##' @param decomp_scheme Decomposition scheme specified in ED2IN
+##' @param kh_active_depth
 ##' @param Lc Used to compute nitrogen immpobilzation factor; ED default is 0.049787 (soil_respiration.f90)
 ##' @param c2n_slow Carbon to Nitrogen ratio, slow pool; ED Default 10.0
 ##' @param c2n_structural Carbon to Nitrogen ratio, structural pool. ED default 150.0
@@ -32,19 +35,31 @@
 ##' @param rh_decay_wet Param used for ED-1/CENTURY decomp schemes; ED default = 36.0
 ##' @param rh_dry_smoist Param used for ED-1/CENTURY decomp schemes; ED default = 0.48
 ##' @param rh_wet_smoist Param used for ED-1/CENTURY decomp schemes; ED default = 0.98
+##' @param resp_opt_water Param used for decomp schemes 0 & 3, ED default = 0.8938
+##' @param resp_water_below_opt Param used for decomp schemes 0 & 3, ED default = 5.0786
+##' @param resp_water_above_opt Param used for decomp schemes 0 & 3, ED default = 4.5139
+##' @param resp_temperature_increase Param used for decomp schemes 0 & 3, ED default = 0.0757
+##' @param rh_lloyd_1 Param used for decomp schemes 1 & 4 (Lloyd & Taylor 1994); ED default = 308.56
+##' @param rh_lloyd_2 Param used for decomp schemes 1 & 4 (Lloyd & Taylor 1994); ED default = 1/56.02
+##' @param rh_lloyd_3 Param used for decomp schemes 1 & 4 (Lloyd & Taylor 1994); ED default = 227.15
 ##' @export
 ##'
-SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30, 
+SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, block, yrs.met=30, 
                     treefall, sm_fire=0, fire_intensity=0, slxsand=0.33, slxclay=0.33,
                     sufx="g01.h5",
+                    decomp_scheme=2,
                     kh_active_depth = -0.20,
                     decay_rate_fsc=11, decay_rate_stsc=4.5, decay_rate_ssc=0.2,
                     Lc=0.049787, c2n_slow=10.0, c2n_structural=150.0, r_stsc=0.3, # Constants from ED
                     rh_decay_low=0.24, rh_decay_high=0.60, 
                     rh_low_temp=18.0+273.15, rh_high_temp=45.0+273.15,
-                    rh_decay_dry = 12.0, rh_decay_wet=36.0,
-                    rh_dry_smoist=0.48, rh_wet_smoist=0.98
+                    rh_decay_dry=12.0, rh_decay_wet=36.0,
+                    rh_dry_smoist=0.48, rh_wet_smoist=0.98,
+                    resp_opt_water=0.8938, resp_water_below_opt=5.0786, resp_water_above_opt=4.5139,
+                    resp_temperature_increase=0.0757,
+                    rh_lloyd_1=308.56, rh_lloyd_2=1/56.02, rh_lloyd_3=227.15
                     ) {
+  if(!decomp_scheme %in% 0:4) stop("Invalid decomp_scheme")
   # create a directory for the initialization files
   dir.create(outdir, recursive=T, showWarnings=F)
   
@@ -52,8 +67,8 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   # Setting up some specifics that vary by site (like soil depth)
   #---------------------------------------
   #Set directories
-  dat.dir    <- dir.analy
-  ann.files  <- dir(dat.dir, "-Y-") #yearly files only  
+  # dat.dir    <- dir.analy
+  ann.files  <- dir(dir.analy, "-Y-") #yearly files only  
   
   #Get time window
   # Note: Need to make this more flexible to get the thing after "Y"
@@ -67,7 +82,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   # Note: In ED there's a pain in the butt way of doing this with the energy, but we're going to approximate
   # slz  <- c(-5.50, -4.50, -2.17, -1.50, -1.10, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06)
   # dslz <- c(1.00,   2.33,  0.67,  0.40,  0.30,  0.20,  0.15,  0.15,  0.10,  0.08,  0.06,  0.06)
-  nc.temp <- ncdf4::nc_open(file.path(dat.dir, ann.files[1]))
+  nc.temp <- ncdf4::nc_open(file.path(dir.analy, ann.files[1]))
   slz <- ncdf4::ncvar_get(nc.temp, "SLZ")
   ncdf4::nc_close(nc.temp)
   
@@ -131,7 +146,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
                            ,hour.now,"-",sufx,sep="")
       
       # cat(" - Reading file :",file.now,"...","\n")
-      now <- ncdf4::nc_open(file.path(dat.dir,file.now))
+      now <- ncdf4::nc_open(file.path(dir.analy,file.now))
       
       air.temp.tmp  [m] <- ncdf4::ncvar_get(now, "MMEAN_ATM_TEMP_PY")
       soil.temp.tmp [m] <- sum(ncdf4::ncvar_get(now, "MMEAN_SOIL_TEMP_PY")[nsoil]*dslz[nsoil]/sum(dslz[nsoil]))
@@ -153,9 +168,12 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   soil_tempk     <- mean(tempk.soil)
   # rel_soil_moist <- mean(moist.soil)+.2
   rel_soil_moist <- mean(moist.soil/slmsts) # Relativizing by max moisture capacity
+  pfire = sum(nfire)/(length(nfire)*12)
+  fire_return = length(nfire)/length(which(nfire>0))
   
-  print(paste0("mean soil temp  : ", soil_tempk))
-  print(paste0("mean soil moist : ", rel_soil_moist))
+  print(paste0("mean soil temp  : ", round(soil_tempk, 2)))
+  print(paste0("mean soil moist : ", round(rel_soil_moist, 3)))
+  print(paste0("fire return interval (yrs) : ", fire_return))
   #---------------------------------------
   
   #---------------------------------------  
@@ -166,9 +184,6 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   # ------
   # Calculate the Rate of fire & total disturbance
   # ------
-  # Calculated the fire rate (applied monthly!)
-  pfire=0
-  # pfire = f(sm_fire, soilmoist)
   fire_rate <- pfire * fire_intensity
   
   # Total disturbance rate = treefall + fire
@@ -196,7 +211,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   #---------------------------------------  
   for (y in yrs){
     cat(" - Reading file :",ann.files[y-yeara+1],"...","\n")
-    now <- ncdf4::nc_open(paste(dat.dir,ann.files[y-yeara+1],sep=""))
+    now <- ncdf4::nc_open(file.path(dir.analy,ann.files[y-yeara+1]))
     ind <- which(yrs == y)
     
     #Grab variable to see how many cohorts there are
@@ -271,17 +286,20 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   # soil_tempk_y <- soil_tempk_m <- swc_max_m <- swc_max_y <- swc_m <- swc_y <- vector()
   
   # switch to the histo directory
-  dat.dir    <- paste(in.base,sites[s],"/histo/",sep="")
-  mon.files  <- dir(dat.dir, "-S-") # monthly files only  
+  # dat.dir    <- file.path(in.base,sites[s],"/analy/")
+  mon.files  <- dir(dir.histo, "-S-") # monthly files only  
   
   #Get time window
-  yeara <- as.numeric(strsplit(mon.files,"-")[[1]][4]) #first year
-  yearz <- as.numeric(strsplit(mon.files,"-")[[length(mon.files)]][4]) #last year
+  yeara <- as.numeric(strsplit(mon.files,"-")[[1]][yrind+1]) #first year
+  yearz <- as.numeric(strsplit(mon.files,"-")[[length(mon.files)-1]][yrind+1]) #last year
   
-  montha <- as.numeric(strsplit(mon.files,"-")[[1]][5]) #first month
-  monthz <- as.numeric(strsplit(mon.files,"-")[[length(mon.files)]][5]) #last month
+  montha <- as.numeric(strsplit(mon.files,"-")[[1]][yrind+2]) #first month
+  monthz <- as.numeric(strsplit(mon.files,"-")[[length(mon.files)-1]][yrind+2]) #last month
   
+  cat(" - Processing History Files")
   for (y in yrs){      
+    dpm <- lubridate::days_in_month(1:12)
+    if(lubridate::leap_year(y)) dpm[2] <- dpm[2]+1
     #calculate month start/end based on year 
     if (y == yrs[1]){
       month.begin = montha
@@ -301,12 +319,12 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
       day.now   <- sprintf("%2.2i",1)
       hour.now  <- sprintf("%6.6i",0)
       
-      dat.dir     <- paste(in.base,sites[s],"/histo/",sep="")
-      file.now    <- paste(sites[s],"-S-",year.now,"-",month.now,"-",day.now,"-"
+      # dat.dir     <- paste(in.base,sites[s],"/histo/",sep="")
+      file.now    <- paste(prefix,"-S-",year.now,"-",month.now,"-",day.now,"-"
                            ,hour.now,"-",sufx,sep="")
       
-      cat(" - Reading file :",file.now,"...","\n")
-      now <- ncdf4::nc_open(paste(dat.dir,file.now,sep=""))
+      # cat(" - Reading file :",file.now,"...","\n")
+      now <- ncdf4::nc_open(file.path(dir.histo,file.now))
       
       # Note: we have to convert the daily value for 1 month by days per month to get a monthly estimate
       fsc_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"FSC_IN")*dpm[m] #kg/(m2*day) --> kg/(m2*month)
@@ -367,58 +385,52 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   # Temperature Limitation 
   # ========================
   # soil_tempk <- sum(soil_tempo_y*area.dist)
-  # # -----------
-  # # Decomp Scheme = 0
-  # # -----------
-  # temperature_limitation = exp(resp_temperature_increase * (soil_tempk-318.15))
-  # # -----------
-  # # -----------
-  # # Decomp scheme = 1
-  # # -----------
-  # temperature_limitation = resp_temperature_increase * exp(308.56 * (1./56.02 - 1./(soil_tempk-227.15))) # this is LloydTaylor
-  # # -----------
-  # -----------
-  # Decomp Scheme = 2
-  # -----------
-  # Low Temp Limitation
-  lnexplow <- rh_decay_low * (rh_low_temp - soil_tempk)
-  tlow_fun <- 1 + exp(lnexplow)
-  
-  # High Temp Limitation
-  lnexphigh <- rh_decay_high*(soil_tempk - rh_high_temp)
-  thigh_fun <- 1 + exp(lnexphigh)
-  
-  temperature_limitation <- 1/(tlow_fun*thigh_fun)
-  # -----------
+  if(decomp_scheme %in% c(0, 3)){
+    temperature_limitation = min(1,exp(resp_temperature_increase * (soil_tempk-318.15)))
+  } else if(decomp_scheme %in% c(1,4)){
+    lnexplloyd             = rh_lloyd_1 * ( rh_lloyd_2 - 1. / (soil_tempk - rh_lloyd_3))
+    lnexplloyd             = max(-38.,min(38,lnexplloyd))
+    temperature_limitation = min( 1.0, resp_temperature_increase * exp(lnexplloyd) )
+  } else if(decomp_scheme==2) {
+    # Low Temp Limitation
+    lnexplow <- rh_decay_low * (rh_low_temp - soil_tempk)
+    lnexplow <- max(-38, min(38, lnexplow))
+    tlow_fun <- 1 + exp(lnexplow)
+    
+    # High Temp Limitation
+    lnexphigh <- rh_decay_high*(soil_tempk - rh_high_temp)
+    lnexphigh <- max(-38, min(38, lnexphigh))
+    thigh_fun <- 1 + exp(lnexphigh)
+    
+    temperature_limitation <- 1/(tlow_fun*thigh_fun)
+  } 
   # ========================
   
   # ========================
   # Moisture Limitation 
   # ========================
   # rel_soil_moist <- sum(swc_y*area.dist)
-  # # -----------
-  # # Moyano (not implemented; what Jackie used)
-  # # -----------
-  # water_limitation <- rel_soil_moist*4.0893 + rel_soil_moist^2*-3.1681 - 0.3195897 # This is Jackie's Moyano et al equation
-  # # -----------
-  # # -----------    
-  # # Decomp 0, 1
-  # # -----------    
-  # water_limitation <- exp((rel_soil_moist - resp_opt_water) * resp_water_below_opt)
-  # # -----------    
-  # -----------
-  # Decomp = 2
-  # -----------
-  # Dry soil Limitation
-  lnexpdry <- rh_decay_dry * (rh_dry_smoist - rel_soil_moist)
-  smdry_fun <- 1+exp(lnexpdry)
-  
-  # Wet Soil limitation
-  lnexpwet <- rh_decay_wet * (rel_soil_moist - rh_wet_smoist)
-  smwet_fun <- 1+exp(lnexpwet)
-  
-  water_limitation <- 1/(smdry_fun * smwet_fun)
-  # -----------
+  if(decomp_scheme %in% c(0,1)){
+    if (rel_soil_moist <= resp_opt_water){
+      water_limitation = exp( (rel_soil_moist - resp_opt_water) * resp_water_below_opt)
+    } else {
+      water_limitation = exp( (resp_opt_water - rel_soil_moist) * resp_water_above_opt)
+    }
+  } else if(decomp_scheme==2){
+    # Dry soil Limitation
+    lnexpdry <- rh_decay_dry * (rh_dry_smoist - rel_soil_moist)
+    lnexpdry <- max(-38, min(38, lnexpdry))
+    smdry_fun <- 1+exp(lnexpdry)
+    
+    # Wet Soil limitation
+    lnexpwet <- rh_decay_wet * (rel_soil_moist - rh_wet_smoist)
+    lnexpwet <- max(-38, min(38, lnexpwet))
+    smwet_fun <- 1+exp(lnexpwet)
+    
+    water_limitation <- 1/(smdry_fun * smwet_fun)
+  } else {
+    water_limitation = rel_soil_moist * 4.0893 - rel_soil_moist**2 * 3.1681 - 0.3195897
+  }
   # ========================
   
   A_decomp <- temperature_limitation * water_limitation # aka het_resp_weight
@@ -478,10 +490,11 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30,
   #---------------------------------------
   # Write everything to file!!
   #---------------------------------------
-  write.table(css.big,file=paste(out,sites[s],".css",sep=""),row.names=FALSE,append=FALSE,
+  file.prefix=paste0(prefix, "-lat", lat, "lon", lon)
+  write.table(css.big,file=file.path(outdir,paste0(file.prefix,".css")),row.names=FALSE,append=FALSE,
               col.names=TRUE,quote=FALSE)
   
-  write.table(pss.big,file=paste(out,sites[s],".pss",sep=""),row.names=FALSE,append=FALSE,
+  write.table(pss.big,file=file.path(outdir,paste0(file.prefix,".pss")),row.names=FALSE,append=FALSE,
               col.names=TRUE,quote=FALSE)
   #---------------------------------------
   

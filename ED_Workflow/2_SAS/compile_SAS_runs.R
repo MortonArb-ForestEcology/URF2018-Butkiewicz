@@ -73,7 +73,8 @@ kh_active_depth = -0.2
 # dpm   <- c(31,28,31,30,31,30,31,31,30,31,30,31) # days per month
 sufx  <- "g01.h5"
 
-expdesign <- expdesign[expdesign$RunID %in% dir(in.base),]
+expdesign <- expdesign[expdesign$RunID %in% dir(in.base),] # Do what we've spunup already
+expdesign <- expdesign[!expdesign$RunID %in% dir(out.base),] # Don't do anything we've already done the SAS for
 #---------------------------------------
 
 # ------------------------------------------------------------------------------------
@@ -86,11 +87,16 @@ for(s in 1:nrow(expdesign)){
   prefix <- expdesign$RunID[s]
   slxsand <- expdesign$SLXSAND[s]
   slxclay <- expdesign$SLXCLAY[s]
+  lat <- round(expdesign$latitude[s],2)
+  lon <- round(expdesign$latitude[s],2)
   dir.analy <- file.path(in.base, prefix, "analy")
   dir.histo <- file.path(in.base, prefix, "histo")
   outdir <- file.path(out.base, prefix)
-  SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=outdir, prefix, block=50, yrs.met=30,
-          treefall=0.005, sm_fire=0, fire_intensity=0, slxsand=slxsand, slxclay=slxclay
+  SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=outdir, 
+          prefix, lat, lon, 
+          block=50, yrs.met=30,
+          treefall=0.005, sm_fire=0, fire_intensity=0, slxsand=slxsand, slxclay=slxclay,
+          decomp_scheme=2
           ) 
 } # End Site Loop!
 # -------------------------------------
