@@ -43,6 +43,13 @@ n=3
 # Making the file directory if it doesn't already exist
 mkdir -p $finish_dir
 
+# Getting a list of all runs
+runs=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
+inc_fire=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # INCLUDE_FIRE
+sm_fire=($(awk -F ',' 'NR>1 {print $11}' ${RUN_file})) # SM_FIRE
+fire_int=($(awk -F ',' 'NR>1 {print $12}' ${RUN_file})) # FIRE_INTENSITY
+
+
 # Get the list of what grid runs have already finished spinups
 pushd $finish_dir
 	file_done=(lat*)
@@ -58,6 +65,8 @@ popd
 # not skipping any RUNs
 # NOTE: NEED TO COMMENT THIS PART OUT FIRST TIME THROUGH 
 #       because it doesn't like no matches in file_done
+
+# NOTE: Need to adjust this to parse down the fire parameters as well
 for REMOVE in ${file_done[@]}
 do 
 	runs=(${runs[@]/$REMOVE/})
