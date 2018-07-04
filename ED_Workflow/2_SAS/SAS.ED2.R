@@ -171,9 +171,9 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, block, yrs.m
   pfire = sum(nfire)/(length(nfire)*12)
   fire_return = length(nfire)/length(which(nfire>0))
   
-  print(paste0("mean soil temp  : ", round(soil_tempk, 2)))
-  print(paste0("mean soil moist : ", round(rel_soil_moist, 3)))
-  print(paste0("fire return interval (yrs) : ", fire_return))
+  print(paste0("mean soil temp  : ", round(soil_tempk, 2), "\n"))
+  print(paste0("mean soil moist : ", round(rel_soil_moist, 3), "\n"))
+  print(paste0("fire return interval (yrs) : ", fire_return), "\n")
   #---------------------------------------
   
   #---------------------------------------  
@@ -209,8 +209,8 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, block, yrs.m
   #  -- Write cohort info to the .css file as a new patch for each age slice
   #  -- Dummy extractions of patch-level variables; all of the important variables here are place holders
   #---------------------------------------  
+  cat(" - Reading analy files ...","\n")
   for (y in yrs){
-    cat(" - Reading file :",ann.files[y-yeara+1],"...","\n")
     now <- ncdf4::nc_open(file.path(dir.analy,ann.files[y-yeara+1]))
     ind <- which(yrs == y)
     
@@ -296,7 +296,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, block, yrs.m
   montha <- as.numeric(strsplit(mon.files,"-")[[1]][yrind+2]) #first month
   monthz <- as.numeric(strsplit(mon.files,"-")[[length(mon.files)-1]][yrind+2]) #last month
   
-  cat(" - Processing History Files")
+  cat(" - Processing History Files \n")
   for (y in yrs){      
     dpm <- lubridate::days_in_month(1:12)
     if(lubridate::leap_year(y)) dpm[2] <- dpm[2]+1
