@@ -34,10 +34,10 @@
 ##' @param rh_wet_smoist Param used for ED-1/CENTURY decomp schemes; ED default = 0.98
 ##' @export
 ##'
-SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30, 
+SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, block, yrs.met=30, 
                     treefall, sm_fire=0, fire_intensity=0, slxsand=0.33, slxclay=0.33,
                     sufx="g01.h5",
-                    kh_active_depth = -0.2,
+                    kh_active_depth = -0.20,
                     decay_rate_fsc=11, decay_rate_stsc=4.5, decay_rate_ssc=0.2,
                     Lc=0.049787, c2n_slow=10.0, c2n_structural=150.0, r_stsc=0.3, # Constants from ED
                     rh_decay_low=0.24, rh_decay_high=0.60, 
@@ -56,8 +56,10 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
   ann.files  <- dir(dat.dir, "-Y-") #yearly files only  
   
   #Get time window
-  yeara  <- as.numeric(strsplit(ann.files,"-")[[1]][4]) #first year
-  yearz  <- as.numeric(strsplit(ann.files,"-")[[length(ann.files)]][4]) #last full year
+  # Note: Need to make this more flexible to get the thing after "Y"
+  yrind <- which(strsplit(ann.files,"-")[[1]] == "Y")
+  yeara  <- as.numeric(strsplit(ann.files,"-")[[1]][yrind+1]) #first year
+  yearz  <- as.numeric(strsplit(ann.files,"-")[[length(ann.files)]][yrind+1]) #last full year
   yrs    <- seq(yeara+1, yearz, by=blckyr) # The years we're going to use as time steps for the demography
   nsteps <- length(yrs) # The number of blocks = the number steps we'll have
   
@@ -76,7 +78,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
     dslz[i] <- slz[i+1] - slz[i]    
   }
   
-  nsoil=which(slz>= kh_active_depth)  # Maximum depth for avg. temperature and moisture
+  nsoil=which(slz >= kh_active_depth-1e-3)  # Maximum depth for avg. temperature and moisture; adding a fudge factor bc it's being weird
   # nsoil=length(slz)
   #---------------------------------------
   
@@ -95,12 +97,28 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
   #        with; if using the means from the spin met cycle work best, insert them here
   # This will also be necessary for helping update disturbance parameter
   #---------------------------------------
+  slmsts <- calc.slmsts(slxsand, slxclay)
+  slpots <- calc.slpots(slxsand, slxclay)
+  slbs   <- calc.slbs(slxsand, slxclay)
+  soilcp <- calc.soilcp(slmsts, slpots, slbs)
+  
+  # Calculating Soil fire characteristics
+  soilfr=0
+  if(abs(sm_fire)>0){
+    if(sm_fire>0){
+      soilfr <- smfire.pos(slmsts, soilcp, smfire=sm_fire)
+    } else {
+      soilfr <- smfire.neg(slmsts, slpots, smfire=sm_fire, slbs)
+    }
+  }
+
+  
   month.begin = 1
   month.end = 12
   
-  tempk.air <- tempk.soil <- moist.soil <- moist.soil.mx <- vector()
+  tempk.air <- tempk.soil <- moist.soil <- moist.soil.mx <- moist.soil.mn <- nfire <- vector()
   for(y in yrs){
-    air.temp.tmp <- soil.temp.tmp <- soil.moist.tmp <- soil.mmax.tmp <- vector()
+    air.temp.tmp <- soil.temp.tmp <- soil.moist.tmp <- soil.mmax.tmp <- soil.mmin.tmp <- vector()
     ind <- which(yrs == y)
     for(m in month.begin:month.end){
       #Make the file name. 
@@ -109,31 +127,32 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
       day.now   <- sprintf("%2.2i",0)
       hour.now  <- sprintf("%6.6i",0)
       
-      file.now    <- paste(sites[s],"-E-",year.now,"-",month.now,"-",day.now,"-"
+      file.now    <- paste(prefix,"-E-",year.now,"-",month.now,"-",day.now,"-"
                            ,hour.now,"-",sufx,sep="")
       
       # cat(" - Reading file :",file.now,"...","\n")
-      now <- nc_open(paste(dat.dir,file.now,sep=""))
+      now <- ncdf4::nc_open(file.path(dat.dir,file.now))
       
-      air.temp.tmp  [m] <- ncvar_get(now, "MMEAN_ATM_TEMP_PY")
-      soil.temp.tmp [m] <- sum(ncvar_get(now, "MMEAN_SOIL_TEMP_PY")[nsoil]*dslz[nsoil]/sum(dslz[nsoil]))
-      soil.moist.tmp[m] <- sum(ncvar_get(now, "MMEAN_SOIL_WATER_PY")[nsoil]*dslz[nsoil]/sum(dslz[nsoil]))
-      soil.mmax.tmp [m] <- max(ncvar_get(now, "MMEAN_SOIL_WATER_PY"))
+      air.temp.tmp  [m] <- ncdf4::ncvar_get(now, "MMEAN_ATM_TEMP_PY")
+      soil.temp.tmp [m] <- sum(ncdf4::ncvar_get(now, "MMEAN_SOIL_TEMP_PY")[nsoil]*dslz[nsoil]/sum(dslz[nsoil]))
+      soil.moist.tmp[m] <- sum(ncdf4::ncvar_get(now, "MMEAN_SOIL_WATER_PY")[nsoil]*dslz[nsoil]/sum(dslz[nsoil]))
+      soil.mmax.tmp [m] <- max(ncdf4::ncvar_get(now, "MMEAN_SOIL_WATER_PY"))
+      soil.mmin.tmp [m] <- min(ncdf4::ncvar_get(now, "MMEAN_SOIL_WATER_PY"))
       
-      nc_close(now)
-    }
+      ncdf4::nc_close(now)
+    } # End month loop
     # Finding yearly means
     tempk.air    [ind] <- mean(air.temp.tmp)
-    tempk.soil   [ind] <- max(soil.temp.tmp) # means are typically making temps too low
+    tempk.soil   [ind] <- mean(soil.temp.tmp) 
     moist.soil   [ind] <- mean(soil.moist.tmp)
     moist.soil.mx[ind] <- max(soil.mmax.tmp)
+    moist.soil.mn[ind] <- min(soil.mmin.tmp)
+    nfire        [ind] <- length(which(soil.moist.tmp<soilfr)) # Number of time fire should get triggered
   }
-  # adjusting the soil moist to be relative based on the max observed
-  moist.soil <- moist.soil/max(moist.soil.mx)
-  
+
   soil_tempk     <- mean(tempk.soil)
   # rel_soil_moist <- mean(moist.soil)+.2
-  rel_soil_moist <- 0.5
+  rel_soil_moist <- mean(moist.soil/slmsts) # Relativizing by max moisture capacity
   
   print(paste0("mean soil temp  : ", soil_tempk))
   print(paste0("mean soil moist : ", rel_soil_moist))
@@ -177,11 +196,11 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
   #---------------------------------------  
   for (y in yrs){
     cat(" - Reading file :",ann.files[y-yeara+1],"...","\n")
-    now <- nc_open(paste(dat.dir,ann.files[y-yeara+1],sep=""))
+    now <- ncdf4::nc_open(paste(dat.dir,ann.files[y-yeara+1],sep=""))
     ind <- which(yrs == y)
     
     #Grab variable to see how many cohorts there are
-    ipft      <- ncvar_get(now,'PFT')
+    ipft      <- ncdf4::ncvar_get(now,'PFT')
     
     #---------------------------------------
     # organize into .css variables (Cohorts)
@@ -193,12 +212,12 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
     css.tmp[,"time"  ] <- rep(yeara,length(ipft))
     css.tmp[,"patch" ] <- rep(floor((y-yeara)/blckyr)+1,length(ipft))
     css.tmp[,"cohort"] <- 1:length(ipft)
-    css.tmp[,"dbh"   ] <- ncvar_get(now,'DBH')
-    css.tmp[,"hite"  ] <- ncvar_get(now,'HITE')
+    css.tmp[,"dbh"   ] <- ncdf4::ncvar_get(now,'DBH')
+    css.tmp[,"hite"  ] <- ncdf4::ncvar_get(now,'HITE')
     css.tmp[,"pft"   ] <- ipft
-    css.tmp[,"n"     ] <- ncvar_get(now,'NPLANT')
-    css.tmp[,"bdead" ] <- ncvar_get(now,'BDEAD')
-    css.tmp[,"balive"] <- ncvar_get(now,'BALIVE')
+    css.tmp[,"n"     ] <- ncdf4::ncvar_get(now,'NPLANT')
+    css.tmp[,"bdead" ] <- ncdf4::ncvar_get(now,'BDEAD')
+    css.tmp[,"balive"] <- ncdf4::ncvar_get(now,'BALIVE')
     css.tmp[,"Avgrg" ] <- rep(0,length(ipft))
     
     #save big .css matrix
@@ -219,17 +238,17 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
     pss.big[ind,"trk"]   <- 1
     pss.big[ind,"age"]   <- y-yeara
     # Note: the following are just place holders that will be overwritten post-SAS
-    # pss.big[ind,6]  <- ncvar_get(now,"AREA")
+    # pss.big[ind,6]  <- ncdf4::ncvar_get(now,"AREA")
     pss.big[ind,"water"]  <- 0.5 
-    pss.big[ind,"fsc"]  <- ncvar_get(now,"FAST_SOIL_C")
-    pss.big[ind,"stsc"]  <- ncvar_get(now,"STRUCTURAL_SOIL_C")
-    pss.big[ind,"stsl"] <- ncvar_get(now,"STRUCTURAL_SOIL_L")
-    pss.big[ind,"ssc"] <- ncvar_get(now,"SLOW_SOIL_C")
+    pss.big[ind,"fsc"]  <- ncdf4::ncvar_get(now,"FAST_SOIL_C")
+    pss.big[ind,"stsc"]  <- ncdf4::ncvar_get(now,"STRUCTURAL_SOIL_C")
+    pss.big[ind,"stsl"] <- ncdf4::ncvar_get(now,"STRUCTURAL_SOIL_L")
+    pss.big[ind,"ssc"] <- ncdf4::ncvar_get(now,"SLOW_SOIL_C")
     pss.big[ind,"psc"] <- 0
-    pss.big[ind,"msn"] <- ncvar_get(now,"MINERALIZED_SOIL_N")
-    pss.big[ind,"fsn"] <- ncvar_get(now,"FAST_SOIL_N")
+    pss.big[ind,"msn"] <- ncdf4::ncvar_get(now,"MINERALIZED_SOIL_N")
+    pss.big[ind,"fsn"] <- ncdf4::ncvar_get(now,"FAST_SOIL_N")
     
-    nc_close(now)
+    ncdf4::nc_close(now)
   }
   #---------------------------------------  
   
@@ -287,22 +306,22 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, block, yrs.met=30,
                            ,hour.now,"-",sufx,sep="")
       
       cat(" - Reading file :",file.now,"...","\n")
-      now <- nc_open(paste(dat.dir,file.now,sep=""))
+      now <- ncdf4::nc_open(paste(dat.dir,file.now,sep=""))
       
       # Note: we have to convert the daily value for 1 month by days per month to get a monthly estimate
-      fsc_in_m[m-month.begin+1] <- ncvar_get(now,"FSC_IN")*dpm[m] #kg/(m2*day) --> kg/(m2*month)
-      ssc_in_m[m-month.begin+1] <- ncvar_get(now,"SSC_IN")*dpm[m]
-      ssl_in_m[m-month.begin+1] <- ncvar_get(now,"SSL_IN")*dpm[m]
-      fsn_in_m[m-month.begin+1] <- ncvar_get(now,"FSN_IN")*dpm[m]
-      pln_up_m[m-month.begin+1] <- ncvar_get(now,"TOTAL_PLANT_NITROGEN_UPTAKE")*dpm[m]
-      # ssc_in_m[m-month.begin+1] <- ncvar_get(now,"SSC_IN")*dpm[m]
+      fsc_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"FSC_IN")*dpm[m] #kg/(m2*day) --> kg/(m2*month)
+      ssc_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"SSC_IN")*dpm[m]
+      ssl_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"SSL_IN")*dpm[m]
+      fsn_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"FSN_IN")*dpm[m]
+      pln_up_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"TOTAL_PLANT_NITROGEN_UPTAKE")*dpm[m]
+      # ssc_in_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"SSC_IN")*dpm[m]
       
       # # NOTE: the following lines shoudl get removed if using 20-year means
-      # soil_tempk_m[m-month.begin+1] <- ncvar_get(now,"SOIL_TEMPK_PA")[nsoil] # Surface soil temp
-      # swc_max_m[m-month.begin+1] <- max(ncvar_get(now,"SOIL_WATER_PA")) # max soil moist to avoid digging through water capacity stuff
-      # swc_m[m-month.begin+1] <- ncvar_get(now,"SOIL_WATER_PA")[nsoil] #Surface soil moist
+      # soil_tempk_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"SOIL_TEMPK_PA")[nsoil] # Surface soil temp
+      # swc_max_m[m-month.begin+1] <- max(ncdf4::ncvar_get(now,"SOIL_WATER_PA")) # max soil moist to avoid digging through water capacity stuff
+      # swc_m[m-month.begin+1] <- ncdf4::ncvar_get(now,"SOIL_WATER_PA")[nsoil] #Surface soil moist
       
-      nc_close(now)
+      ncdf4::nc_close(now)
     }
     # Find which patch we're working in
     ind <- (y-yeara)/blckyr + 1

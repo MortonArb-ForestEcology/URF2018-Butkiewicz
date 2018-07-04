@@ -20,12 +20,12 @@ calc.slmsts <- function(slxsand, slxclay){
   (50.5 - 14.2*slxsand - 3.7*slxclay) / 100.
 }
 
-calc.slpots <- function(slxclay, slxsand){
+calc.slpots <- function(slxsand, slxclay){
   # Soil moisture potential at saturation [ m ]
   -1. * (10.^(2.17 - 0.63*slxclay - 1.58*slxsand)) * 0.01
   
 }
-calc.slbs   <- function(slxclay, slxsand){
+calc.slbs   <- function(slxsand, slxclay){
   # B exponent (unitless)
   3.10 + 15.7*slxclay - 0.3*slxsand
 }

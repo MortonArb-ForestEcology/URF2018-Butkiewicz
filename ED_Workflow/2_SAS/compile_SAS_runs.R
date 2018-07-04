@@ -46,29 +46,22 @@
 # Setting things up to run equations, etc
 # ------------------------------------------------------------------------------------
 #---------------------------------------
-#Load libraries
-#---------------------------------------
-library(chron)
-library(ncdf4)
-library(colorspace)
-#---------------------------------------
-
-#---------------------------------------
 # Define File Structures & steps
 # Additional fixed constants and file paths that don't depend on the site
 #---------------------------------------
 # Site Info
 #Setup analysis file structure
-in.base  <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/1_spin_initial/URF2018_spininit.v1/"
-out.base <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/2_SAS/SAS_init_files.v1/"
+# in.base  <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/1_spin_initial/URF2018_spininit.v1/"
+# out.base <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/2_SAS/SAS_init_files.v1/"
+
+in.base  <- "~/Desktop/Research/URF2018-Butkiewicz/ED_Workflow/1_spin_initial/URF2018_spininit.v1/"
+out.base <- "~/Desktop/Research/URF2018-Butkiewicz/ED_Workflow/2_SAS/SAS_init_files.v1/"
 
 if(!dir.exists(out.base)) dir.create(out.base)
 
 # Load site characteristic table
 expdesign <- read.csv("../0_setup/ExperimentalDesign.csv")
-
-site.lat <- as.numeric(substr(sites,4,8)) # lat from SAS run
-site.lon <- as.numeric(substr(sites,12,17)) # insert site longitude(s) here
+summary(expdesign)
 
 blckyr  <- 50 #number of years to chunk data by
 disturb <- 0.005 # the treefall disturbance rate you will prescribe in the actual runs (or close to it)
@@ -76,22 +69,28 @@ yrs.met <- 30 # The number of met years in the spinup loop
 
 kh_active_depth = -0.2
 
-pft   <- c(5,6,8,9,10,11) #set of PFTs used in analysis
-dpm   <- c(31,28,31,30,31,30,31,31,30,31,30,31) # days per month
+# pft   <- c(5,6,8,9,10,11) #set of PFTs used in analysis
+# dpm   <- c(31,28,31,30,31,30,31,31,30,31,30,31) # days per month
 sufx  <- "g01.h5"
+
+expdesign <- expdesign[expdesign$RunID %in% dir(in.base),]
 #---------------------------------------
 
 # ------------------------------------------------------------------------------------
 # Running the SAS Solution
 # ------------------------------------------------------------------------------------
-for(s in 1:length(sites)){
+source("../0_setup/ED_Calcs_Soil_Fire.R")
+source("SAS.ED2.R")
+for(s in 1:nrow(expdesign)){
   # Read % Sand & % CLAY from table
+  prefix <- expdesign$RunID[s]
   slxsand <- expdesign$SLXSAND[s]
   slxclay <- expdesign$SLXCLAY[s]
-  dir.analy <- file.path(in.base, expdesign$RunID[s], "analy")
-  dir.histo <- file.path(in.base, expdesign$RunID[s], "histo")
-  SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=out.base, block=50, yrs.met=30,
-          treefall, sm_fire=0, fire_intensity=0, slxsand=slxsand, slxclay=slxclay
+  dir.analy <- file.path(in.base, prefix, "analy")
+  dir.histo <- file.path(in.base, prefix, "histo")
+  outdir <- file.path(out.base, prefix)
+  SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=outdir, prefix, block=50, yrs.met=30,
+          treefall=0.005, sm_fire=0, fire_intensity=0, slxsand=slxsand, slxclay=slxclay
           ) 
 } # End Site Loop!
 # -------------------------------------
