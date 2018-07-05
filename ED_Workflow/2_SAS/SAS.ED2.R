@@ -169,7 +169,7 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, block, yrs.m
   # rel_soil_moist <- mean(moist.soil)+.2
   rel_soil_moist <- mean(moist.soil/slmsts) # Relativizing by max moisture capacity
   pfire = sum(nfire)/(length(nfire)*12)
-  fire_return = length(nfire)/length(which(nfire>0))
+  fire_return = ifelse(max(nfire)>0, length(nfire)/length(which(nfire>0)), 0)
   
   print(paste0("mean soil temp  : ", round(soil_tempk, 2), "\n"))
   print(paste0("mean soil moist : ", round(rel_soil_moist, 3), "\n"))
