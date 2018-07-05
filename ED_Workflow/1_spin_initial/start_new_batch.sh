@@ -142,15 +142,6 @@ do
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
 		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 		
 		
-		# post-processing
-		cp ../../post_process_spininit.sh .
-		paleon_out=${file_path}/${RUN}_paleon
-		sed -i "s/RUN=.*/RUN=${RUN}/" post_process_spininit.sh 		
-		sed -i "s/job_name=.*/job_name=extract_${RUN}/" post_process_spininit.sh 		
-		sed -i "s,/dummy/path,${paleon_out},g" post_process_spininit.sh # set the file path
-
-
-#  		sh spawn_startloops_spinstart.sh
 	popd	
 
 	chmod -R a+rwx ${file_path}
