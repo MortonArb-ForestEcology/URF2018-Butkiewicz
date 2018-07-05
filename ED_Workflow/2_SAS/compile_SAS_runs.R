@@ -85,7 +85,7 @@ source("SAS.ED2.R")
 for(s in 1:nrow(expdesign)){
   # Read % Sand & % CLAY from table
   if(s <=4 ){
-    prefix <- 
+    prefix <- CD-SS-FN-TL-IN
   } else {
     prefix <- expdesign$RunID[s]
   }
