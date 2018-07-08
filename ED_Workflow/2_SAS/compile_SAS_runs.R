@@ -84,6 +84,7 @@ source("../0_setup/ED_Calcs_Soil_Fire.R")
 source("SAS.ED2.R")
 for(s in 1:nrow(expdesign)){
   # Read run settings % Sand & % CLAY from table
+  prefix <- expdesign$RunID[s]
   slxsand <- expdesign$SLXSAND[s]
   slxclay <- expdesign$SLXCLAY[s]
   lat <- round(expdesign$latitude[s],2)
