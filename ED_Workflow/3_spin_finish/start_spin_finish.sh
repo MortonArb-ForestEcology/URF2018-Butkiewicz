@@ -83,7 +83,6 @@ fireint_fin=()
 
 for((i=0;i<${#runs[@]};i++)); do 
 	RUN=${runs[i]}
-	echo ${RUN}
     for FILE in "${SAS[@]}"; do
         if [[ $RUN == "$FILE" ]]; then
             spinfin+=("$RUN")

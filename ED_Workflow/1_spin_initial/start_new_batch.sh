@@ -73,6 +73,8 @@ sm_fire=($(awk -F ',' 'NR>1 && $14=="" {print $11}' ${RUN_file})) # SM_FIRE
 fire_int=($(awk -F ',' 'NR>1 && $14=="" {print $12}' ${RUN_file})) # FIRE_INTENSITY
 
 
+n=$(($n<${#runs[@]}?$n:${#runs[@]}))
+
 # for FILE in $(seq 0 (($n-1)))
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
