@@ -133,6 +133,9 @@ do
 
         sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
         sed -i "s,SFILIN   = .*,SFILIN   = '${SAS_dir}${RUN}/${RUN}',g" ED2IN # set initial file path to the SAS spin folder
+        sed -i "s/NL%DTLSM   .*/NL%DTLSM   = 480/" ED2IN # change from bare ground to .css/.pss run
+        sed -i "s/NL%RADFRQ  .*/NL%RADFRQ  = 480/" ED2IN # set initial file path to the SAS spin folder
+        
         
         # Change Fire & Disturbance Params HERE
         # Note: Already set other params, so we just need to match the 
@@ -161,8 +164,11 @@ do
 
 		# adjust integration step changes
 		cp ${setup_dir}adjust_integration_restart.sh .
+		sed -i "s/finalyear=.*/finalyear=${finalfull}/" adjust_integration_restart.sh 		
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
-		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 		
+		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 	
+		sed -i "s/SITE=.*/SITE=${RUN}/" adjust_integration_restart.sh 		
+	    sed -i "s,/dummy/path,${file_path},g" adjust_integration_restart.sh # set the file path
 		
 		# Clean up the spin initials since we don't need them anymore
 		cp ${setup_dir}cleanup_spininit.sh .
