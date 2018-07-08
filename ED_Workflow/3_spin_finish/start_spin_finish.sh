@@ -38,7 +38,7 @@ finalyear=2301 # The year on which the models should top on Jan 1
 finalfull=2300 # The last year we actually care about (probably the year before finalyear)
 finalinit=1800
 
-n=3
+n=1
 
 # Making the file directory if it doesn't already exist
 mkdir -p $finish_dir
@@ -52,12 +52,12 @@ fire_int=($(awk -F ',' 'NR>1 {print $12}' ${RUN_file})) # FIRE_INTENSITY
 
 # Get the list of what grid runs have already finished spinups
 pushd $finish_dir
-	file_done=(lat*)
+	file_done=(C*)
 popd
 
 # Get the list of what grid runs have SAS solutions
 pushd $SAS_dir
-	runs=(lat*)
+	SAS=(C*)
 popd
 
 
@@ -67,21 +67,45 @@ popd
 #       because it doesn't like no matches in file_done
 
 # NOTE: Need to adjust this to parse down the fire parameters as well
-for REMOVE in ${file_done[@]}
-do 
-	runs=(${runs[@]/$REMOVE/})
+# for REMOVE in ${file_done[@]}
+# do 
+# 	runs=(${runs[@]/$REMOVE/})
+# 	SAS=(${SAS[@]/$REMOVE/})
+# done
+
+# Because we want to preserve the order of runs, I can't find away around doing a loop
+# - This is slower than other options, but makes sure we still do our controls first
+# - DO NOT imitate this with a large array
+spinfin=()
+fire_fin=()
+smfire_fin=()
+fireint_fin=()
+
+for((i=0;i<${#runs[@]};i++)); do 
+	RUN=${runs[i]}
+	echo ${RUN}
+    for FILE in "${SAS[@]}"; do
+        if [[ $RUN == "$FILE" ]]; then
+            spinfin+=("$RUN")
+            fire_fin+=("${inc_fire[i]}")
+            smfire_fin+=("${sm_fire[i]}")
+            fireint_fin+=("${fire_int[i]}")
+        fi
+    done
 done
 
+n=$(($n<${#spinfin[@]}?$n:${#spinfin[@]}))
 
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
 	# RUN Name and Lat/Lon
-	RUN=${runs[FILE]}
+	RUN=${spinfin[FILE]}
+	INC_FIRE=${fire_fin[FILE]}
+	SM_FIRE=${smfire_fin[FILE]}
+	FIRE_INT==${fireint_fin[FILE]}
+	
 	echo $RUN
 	
-	#I *THINK* this should work, but I'm not sure
-	INC_FIRE=($(awk -F ',' 'NR>1 && $2=="$RUN" {print $9}' ${RUN_file})) # INCLUDE_FIRE
-
 	# Make a new folder for this RUN
 	file_path=${finish_dir}/${RUN}/
 	mkdir -p ${file_path} 
@@ -91,7 +115,7 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ${init_dir}${RUN}/ED2IN .
-		cp ${init_dir}${RUN}/PalEON_Phase2.v1.xml .
+ 		# cp ${init_dir}${RUN}/PalEON_Phase2.v1.xml .
 
 		# ED2IN Changes	    
 	    sed -i "s,$init_dir,$finish_dir,g" ED2IN #change the baseline file path everywhere
@@ -113,8 +137,10 @@ do
         
         # Change Fire & Disturbance Params HERE
         # Note: Already set other params, so we just need to match the 
-        sed -i "s/NL%INCLUDE_FIRE    = 0.*/NL%INCLUDE_FIRE    = $INC_FIRE/" ED2IN # turn on fire if run w/ fire on
         sed -i "s/NL%TREEFALL_DISTURBANCE_RATE  = 0.*/NL%TREEFALL_DISTURBANCE_RATE  = 0.004/" ED2IN # turn on treefall
+        sed -i "s/NL%INCLUDE_FIRE    = 0.*/NL%INCLUDE_FIRE    = $INC_FIRE/" ED2IN # turn on fire if run w/ fire on
+        sed -i "s/NL%FIRE_PARAMETER  = 0.*/NL%FIRE_PARAMETER  = $FIRE_INT/" ED2IN # set fire intensity parameter
+        sed -i "s/NL%SM_FIRE         = 0.*/NL%SM_FIRE         = $SM_FIRE/" ED2IN # set fire threshold parameter
 
 		# spin spawn start changes -- 
 		# Note: spins require a different first script because they won't have any 
@@ -139,18 +165,6 @@ do
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
 		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 		
 		
-		# post-processing
-		cp ../../post_process_spinfinish.sh .
-		cp ${setup_dir}extract_output_paleon.R .
-		paleon_out=${file_path}/${RUN}_paleon		
-		sed -i "s/RUN=.*/RUN=${RUN}/" post_process_spinfinish.sh 		
-		sed -i "s/job_name=.*/job_name=extract_${RUN}/" post_process_spinfinish.sh 		
-		sed -i "s,/dummy/path,${paleon_out},g" post_process_spinfinish.sh # set the file path
-
-		sed -i "s/RUN=.*/RUN='${RUN}'/" extract_output_paleon.R
-	    sed -i "s,/dummy/path,${file_path},g" extract_output_paleon.R # set the file path
-	    
-	    
 		# Clean up the spin initials since we don't need them anymore
 		cp ${setup_dir}cleanup_spininit.sh .
 	    sed -i "s,/DUMMY/PATH,${init_dir}${RUN}/,g" cleanup_spininit.sh # set the file path
