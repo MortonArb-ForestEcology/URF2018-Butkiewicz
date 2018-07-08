@@ -451,10 +451,10 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
 
     # Water Stress
-    out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # kgC/pl
-    out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # kgC/pl
-    out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # kgC/pl
-    out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # kgC/pl
+    # out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # kgC/pl
+    # out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # kgC/pl
+    # out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # kgC/pl
+    # out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # kgC/pl
     out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # kgC/pl
     # CB= CarbonBalance
     # CB_MoistMax = Carbon Balance with Full water availability
