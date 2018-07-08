@@ -54,6 +54,7 @@ fire_int=($(awk -F ',' 'NR>1 {print $12}' ${RUN_file})) # FIRE_INTENSITY
 pushd $finish_dir
 	file_done=(C*)
 popd
+file_done=(${file_done[@]/"C*"/})
 
 # Get the list of what grid runs have SAS solutions
 pushd $SAS_dir
@@ -67,11 +68,13 @@ popd
 #       because it doesn't like no matches in file_done
 
 # NOTE: Need to adjust this to parse down the fire parameters as well
-# for REMOVE in ${file_done[@]}
-# do 
-# 	runs=(${runs[@]/$REMOVE/})
-# 	SAS=(${SAS[@]/$REMOVE/})
-# done
+if((${#file_done[@]} > 0)); then
+	for REMOVE in ${file_done[@]}
+	do 
+		runs=(${runs[@]/$REMOVE/})
+		SAS=(${SAS[@]/$REMOVE/})
+	done
+fi
 
 # Because we want to preserve the order of runs, I can't find away around doing a loop
 # - This is slower than other options, but makes sure we still do our controls first
@@ -101,7 +104,7 @@ do
 	RUN=${spinfin[FILE]}
 	INC_FIRE=${fire_fin[FILE]}
 	SM_FIRE=${smfire_fin[FILE]}
-	FIRE_INT==${fireint_fin[FILE]}
+	FIRE_INT=${fireint_fin[FILE]}
 	
 	echo $RUN
 	
@@ -133,8 +136,8 @@ do
 
         sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
         sed -i "s,SFILIN   = .*,SFILIN   = '${SAS_dir}${RUN}/${RUN}',g" ED2IN # set initial file path to the SAS spin folder
-        sed -i "s/NL%DTLSM   .*/NL%DTLSM   = 480/" ED2IN # change from bare ground to .css/.pss run
-        sed -i "s/NL%RADFRQ  .*/NL%RADFRQ  = 480/" ED2IN # set initial file path to the SAS spin folder
+        sed -i "s/NL%DTLSM  .*/NL%DTLSM   = 480/" ED2IN # change from bare ground to .css/.pss run
+        sed -i "s/NL%RADFRQ .*/NL%RADFRQ  = 480/" ED2IN # set initial file path to the SAS spin folder
         
         
         # Change Fire & Disturbance Params HERE
