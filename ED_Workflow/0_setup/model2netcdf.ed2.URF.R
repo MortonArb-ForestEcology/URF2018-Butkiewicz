@@ -692,21 +692,21 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
                                              missval = -999, longname = "Cohort Leaf Area Index")
   nc_var[["Cohort_Height"]] <- ncdf4::ncvar_def("Cohort_Height", units = "m", dim = list(lon, lat, cht, t), 
                                                 missval = -999, longname = "Cohort Height")
-  out <- conversion("Cohort_CB", pl2m2)  ## kgC/plant -> cm2/m2
-  nc_var[["Cohort_CB"]] <- ncdf4::ncvar_def("Cohort_CB", units = "kg C m-2", dim = list(lon, lat, cht, t), 
-                                            missval = -999, longname = "Monthly Carbon Balance")
-  out <- conversion("Cohort_CB_MoistMax", pl2m2)  ## kgC/plant -> cm2/m2
-  nc_var[["Cohort_CB_MoistMax"]] <- ncdf4::ncvar_def("Cohort_CB_MoistMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
-                                                     missval = -999, 
-                                                     longname = "Monthly Carbon Balance if no moisture limitation")
-  out <- conversion("Cohort_CB_LightMax", pl2m2)  ## kgC/plant -> cm2/m2
-  nc_var[["Cohort_CB_LightMax"]] <- ncdf4::ncvar_def("Cohort_CB_LightMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
-                                                     missval = -999, 
-                                                     longname = "Monthly Carbon Balance if no light limitation")
-  out <- conversion("Cohort_CB_MLMax", pl2m2)  ## kgC/plant -> cm2/m2
-  nc_var[["Cohort_CB_MLMax"]] <- ncdf4::ncvar_def("Cohort_CB_MLMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
-                                                  missval = -999, 
-                                                  longname = "Monthly Carbon Balance if no light or moisture limitation")
+  # out <- conversion("Cohort_CB", pl2m2)  ## kgC/plant -> cm2/m2
+  # nc_var[["Cohort_CB"]] <- ncdf4::ncvar_def("Cohort_CB", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+  #                                           missval = -999, longname = "Monthly Carbon Balance")
+  # out <- conversion("Cohort_CB_MoistMax", pl2m2)  ## kgC/plant -> cm2/m2
+  # nc_var[["Cohort_CB_MoistMax"]] <- ncdf4::ncvar_def("Cohort_CB_MoistMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+  #                                                    missval = -999, 
+  #                                                    longname = "Monthly Carbon Balance if no moisture limitation")
+  # out <- conversion("Cohort_CB_LightMax", pl2m2)  ## kgC/plant -> cm2/m2
+  # nc_var[["Cohort_CB_LightMax"]] <- ncdf4::ncvar_def("Cohort_CB_LightMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+  #                                                    missval = -999, 
+  #                                                    longname = "Monthly Carbon Balance if no light limitation")
+  # out <- conversion("Cohort_CB_MLMax", pl2m2)  ## kgC/plant -> cm2/m2
+  # nc_var[["Cohort_CB_MLMax"]] <- ncdf4::ncvar_def("Cohort_CB_MLMax", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+  #                                                 missval = -999, 
+  #                                                 longname = "Monthly Carbon Balance if no light or moisture limitation")
   nc_var[["Cohort_CB_MeanRel"]] <- ncdf4::ncvar_def("Cohort_CB_MeanRel", units = "", dim = list(lon, lat, cht, t), 
                                                     missval = -999, longname = "Relative carbon balance")
   
