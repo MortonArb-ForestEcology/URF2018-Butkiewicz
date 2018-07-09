@@ -1,4 +1,4 @@
-PDSI.GLSP <- read.csv("data_raw/met/month/PDSI_AllMembers.csv") #Reading in the CSV, and called it PDSI (for the name of the drought index) .GLSP (for Glacial Lakes state park).
+PDSI.GLSP <- read.csv("../data_raw/met/month/PDSI_AllMembers.csv") #Reading in the CSV, and called it PDSI (for the name of the drought index) .GLSP (for Glacial Lakes state park).
 class(PDSI.GLSP)
 ncol(PDSI.GLSP) #This should tell me the number of columns. I want to add a new column, so that's how this will work. There should be 201 columns. 
 # Each column is a different weather. 
