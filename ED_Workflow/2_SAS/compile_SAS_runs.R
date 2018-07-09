@@ -85,7 +85,7 @@ source("SAS.ED2.R")
 for(s in 1:nrow(expdesign)){
   prefix <- expdesign$RunID[s]
   
-  cat("*****Processing site:", prefix, "\n")
+  cat("***** Processing site:", paste(prefix), "\n")
   # Read run settings % Sand & % CLAY from table
   slxsand <- expdesign$SLXSAND[s]
   slxclay <- expdesign$SLXCLAY[s]
