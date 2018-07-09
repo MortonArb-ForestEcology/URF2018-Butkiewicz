@@ -29,9 +29,8 @@
       <num>       		5      </num>
       <include_pft_ag>  1      </include_pft_ag>
       <include_pft>     1      </include_pft>
-<!-- 
 
-<!~~ 	  Allocation Params	 ~~>
+<!-- 	  Allocation Params	 -->
       <b1Bl>
                  0.0799999982      </b1Bl>
       <b2Bl>
@@ -54,8 +53,8 @@
                  0.5299999714      </rho>
       <SLA>
                 22.0000000000      </SLA>
-
-<!~~ 	  Derived Params	 ~~>
+<!-- 
+	<!~~ 	  Derived Params	 ~~>
       <c2n_recruit>
                 18.3132781982      </c2n_recruit>
  -->
@@ -71,8 +70,10 @@
                 10.0000000000      </mort2>
       <mort3>
                  0.0659999996      </mort3>
+-->
       <plant_min_temp>
                  213.00000000      </plant_min_temp>
+<!--
       <seedling_mortality>
                  0.9499999881      </seedling_mortality>
       <treefall_gt>
@@ -83,8 +84,8 @@
 <!~~ 	  Nitrogen Params	 ~~>
       <c2n_leaf>
                 18.3122673035      </c2n_leaf>
-
-<!~~ 	  Photosynthesis Params	 ~~>
+-->
+	<!-- 	  Photosynthesis Params	 -->
       <cuticular_cond>
              	 10000.0000000000      </cuticular_cond>
       <D0>
@@ -105,8 +106,8 @@
                 18.2999992371      </Vm0>
       <water_conductance>
                  0.0047599999      </water_conductance>
-                 
-<!~~ 	  Radiation Params	 ~~>
+<!--                 
+	<!~~ 	  Radiation Params	 ~~>
       <clumping>
                  0.83999999999999996891      </clumping>
       <diffuse_backscatter_vis>
@@ -148,59 +149,57 @@
 
    </pft>
   
-<!-- 
-
    <pft>
       <num>				10      </num>
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
 
 
-	  <!~~ Allocation Params ~~>	
+	  <!-- Allocation Params -->	
       <b1Bl>
-                 0.04800      </b1Bl>	<!~~ ED Default ~~>
+                 0.04800      </b1Bl>	<!-- ED Default -->
       <b2Bl>
-                 1.45500      </b2Bl>	<!~~ ED Default ~~>
+                 1.45500      </b2Bl>	<!-- ED Default -->
       <b1Bs>
                  0.16170      </b1Bs>
       <b2Bs>
                  2.45720      </b2Bs>
       <b1Ht>
-                25.18000      </b1Ht> <!~~ ED Default ~~>
+                25.18000      </b1Ht> <!-- ED Default -->
       <b2Ht>
-                -0.04964      </b2Ht>	<!~~ ED Default ~~>
+                -0.04964      </b2Ht>	<!-- ED Default -->
       <hgt_min>
                  1.50000      </hgt_min>
       <q>
-                 0.99521      </q> 	<!~~ Pecan ~~>
+                 0.99521      </q> 	<!-- Pecan -->
       <sapwood_ratio>
-              3900.00000      </sapwood_ratio> <!~~ ED Default ~~>
+              3900.00000      </sapwood_ratio> <!-- ED Default -->
       <qsw>
-                 0.00621      </qsw>  <!~~ ED Default Value  ~~>
+                 0.00621      </qsw>  <!-- ED Default Value  -->
       <rho>
                  0.00000      </rho>
       <SLA>
-                39.73958      </SLA> <!~~ Pecan Temperate Decid ~~>
-<!~~ 
+                39.73958      </SLA> <!-- Pecan Temperate Decid -->
+<!-- 
 
-	  <!~~ Derived Params ~~>	
+	  <!-- Derived Params -->	
       <c2n_recruit>
                 28.5154876709      </c2n_recruit>
- ~~>
+ -->
 
-	  <!~~ Leaf Params ~~>	
+	  <!-- Leaf Params -->	
       <phenology>
                    2      </phenology>
 
-	  <!~~ Mortality Params ~~>	
+	  <!-- Mortality Params -->	
       <mort1>
-                 1.00000      </mort1> <!~~ ED Default ~~>
+                 1.00000      </mort1> <!-- ED Default -->
       <mort2>
-                20.00000      </mort2> <!~~ ED ~~>
+                20.00000      </mort2> <!-- ED -->
       <mort3>
-                 0.00381      </mort3> <!~~ ED Default ~~>
+                 0.00381      </mort3> <!-- ED Default -->
       <plant_min_temp>
-               193.00000      </plant_min_temp> <!~~ Modified ~~>
+               193.00000      </plant_min_temp> <!-- Modified -->
       <seedling_mortality>
                  0.95000      </seedling_mortality>
       <treefall_gt>
@@ -208,31 +207,32 @@
       <treefall_lt>
                  0.10000      </treefall_lt>
 
-	  <!~~ Nitrogen Params ~~>	
+	  <!-- Nitrogen Params -->	
       <c2n_leaf>
-                20.00000      </c2n_leaf> <!~~ Rough Average of Early & Late ~~>
+                24.84000      </c2n_leaf> <!-- PEcAn -->
 
-	  <!~~ Photosynthesis Params ~~>	
+	  <!-- Photosynthesis Params -->	
       <cuticular_cond>
-             10000.00000      </cuticular_cond> 	<!~~ ED Default ~~>
+              7904.00000      </cuticular_cond> <!-- PEcAn -->
       <D0>
-                 0.15000      </D0>	
+                 0.01000      </D0>	<!-- Jackie -->
       <dark_respiration_factor>
-                 0.01204      </dark_respiration_factor>  <!~~ ED ~~>
+                 0.01270      </dark_respiration_factor>  <!-- PEcAn -->
       <leaf_width>
-                 0.05000      </leaf_width>	<!~~ Jackie ~~>
+                 0.0500      </leaf_width>	<!-- Jackie -->
       <photosyn_pathway>
                    3      </photosyn_pathway>
       <quantum_efficiency>
-                 0.08000      </quantum_efficiency>	<!~~ Jackie ~~>
+                 0.03774      </quantum_efficiency>	<!-- PEcAn -->
       <stomatal_slope>
-                 5.72518      </stomatal_slope>	<!~~ Jackie ~~>
+                 8.90413      </stomatal_slope>	<!-- PEcAn -->
       <Vm_low_temp>
-                 4.71370      </Vm_low_temp> 	<!~~ Ryan Kelley (Pecan) ~~>
+                 5.08067      </Vm_low_temp>  <!-- Ryan Kelley (Pecan) -->
       <Vm0>
-                63.96669	  </Vm0> <!~~ Pecan ~~>
+                63.96669	  </Vm0> <!-- Pecan -->
       <water_conductance>
-                 0.0000473	  </water_conductance> 	<!~~ Ryan * 0.01 ~~>
+                 0.00473	  </water_conductance> 	<!-- Ryan * 0.01 -->
+<!-- 
 
 	  <!~~ Radiation Params ~~>	
       <clumping>
@@ -267,7 +267,7 @@
                  0.68127	  </root_turnover_rate>	<!~~ Jackie ~~>
       <storage_turnover_rate>
                  0.00000      </storage_turnover_rate>	<!~~ Modified per Jackie ~~>
-   </pft>
  -->
+   </pft>
 
 </config>
