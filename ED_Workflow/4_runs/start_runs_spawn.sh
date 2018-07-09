@@ -24,8 +24,8 @@
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-spin_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v1/ # Directory of initial spin files
-runs_dir=${file_base}/4_runs/URF2018_runs.v1/ # Where the transient runs will go
+spin_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v2/ # Directory of initial spin files
+runs_dir=${file_base}/4_runs/URF2018_runs.v2/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
 finalspin=2351 # The last year of the spin finish
 finalrun=2015 # The last full year of the runs
@@ -91,7 +91,7 @@ do
 		
 		# Copy the essential run files
 		cp ${spin_dir}${RUN}/ED2IN .
-		cp ${spin_dir}${RUN}/PalEON_Phase2.v1.xml .
+		cp ${setup_dir}PFTParams_URF2018.xml .
 		
 		# copy the files to automatically restart
 		cp ${setup_dir}spawn_startloops.sh . 

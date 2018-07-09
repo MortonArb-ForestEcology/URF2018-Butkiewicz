@@ -1535,7 +1535,7 @@ $ED_NL
    !               simulation.                                                             !
    ! PHENPATH   -- path and prefix of the prescribed phenology data.                       !
    !---------------------------------------------------------------------------------------!
-   NL%IEDCNFGF   = ''
+   NL%IEDCNFGF   = 'PFTParams_URF2018.xml'
    NL%EVENT_FILE = ''
    !---------------------------------------------------------------------------------------!
 

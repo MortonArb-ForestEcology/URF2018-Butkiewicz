@@ -54,8 +54,8 @@
 # in.base  <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/1_spin_initial/URF2018_spininit.v1/"
 # out.base <- "/home/crollinson/URF2018-Butkiewicz/ED_Workflow/2_SAS/SAS_init_files.v1/"
 
-in.base  <- "../1_spin_initial/URF2018_spininit.v1/"
-out.base <- "SAS_init_files.v1/"
+in.base  <- "../1_spin_initial/URF2018_spininit.v2/"
+out.base <- "SAS_init_files.v2/"
 
 if(!dir.exists(out.base)) dir.create(out.base)
 
