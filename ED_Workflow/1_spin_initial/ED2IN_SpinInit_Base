@@ -1086,7 +1086,7 @@ $ED_NL
    NL%ALPHA_C4        = 0.055
    NL%KLOWCO2IN       = 4000.
    NL%RRFFACT         = 1.000
-   NL%GROWTHRESP      = 0.333
+   NL%GROWTHRESP      = 1.000
    NL%LWIDTH_GRASS    = 0.05
    NL%LWIDTH_BLTREE   = 0.10
    NL%LWIDTH_NLTREE   = 0.05
