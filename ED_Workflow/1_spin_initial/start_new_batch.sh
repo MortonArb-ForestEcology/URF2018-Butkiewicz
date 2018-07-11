@@ -59,18 +59,57 @@ sed -i "s,$BU_base_spin,$file_base,g" ${file_base}/0_setup/PL_MET_HEADER
 mkdir -p $file_dir
 
 # Extract the file names of RUNs that haven't been started yet
-RUNs_done=($(awk -F ',' 'NR>1 && 14!="" {print $2}' ${RUN_file})) # Get RUNs that have a location
-runs=($(awk -F ',' 'NR>1 && $14=="" {print $2}' ${RUN_file}))
-lat=($(awk -F ',' 'NR>1 && $14=="" {print $4}' ${RUN_file}))
-lon=($(awk -F ',' 'NR>1 && $14=="" {print $3}' ${RUN_file}))
+runs_all=($(awk -F ',' 'NR>1 && $14=="" {print $2}' ${RUN_file}))
+lat_all=($(awk -F ',' 'NR>1 && $14=="" {print $4}' ${RUN_file}))
+lon_all=($(awk -F ',' 'NR>1 && $14=="" {print $3}' ${RUN_file}))
 
 # These will need to get updated with the proper column numbers
-met=($(awk -F ',' 'NR>1 && $14=="" {print $5}' ${RUN_file}))
-sand=($(awk -F ',' 'NR>1 && $14=="" {print $6}' ${RUN_file}))
-clay=($(awk -F ',' 'NR>1 && $14=="" {print $7}' ${RUN_file}))
-inc_fire=($(awk -F ',' 'NR>1 && $14=="" {print $9}' ${RUN_file})) # INCLUDE_FIRE
-sm_fire=($(awk -F ',' 'NR>1 && $14=="" {print $11}' ${RUN_file})) # SM_FIRE
-fire_int=($(awk -F ',' 'NR>1 && $14=="" {print $12}' ${RUN_file})) # FIRE_INTENSITY
+met_all=($(awk -F ',' 'NR>1 && $14=="" {print $5}' ${RUN_file}))
+sand_all=($(awk -F ',' 'NR>1 && $14=="" {print $6}' ${RUN_file}))
+clay_all=($(awk -F ',' 'NR>1 && $14=="" {print $7}' ${RUN_file}))
+inc_fire_all=($(awk -F ',' 'NR>1 && $14=="" {print $9}' ${RUN_file})) # INCLUDE_FIRE
+sm_fire_all=($(awk -F ',' 'NR>1 && $14=="" {print $11}' ${RUN_file})) # SM_FIRE
+fire_int_all=($(awk -F ',' 'NR>1 && $14=="" {print $12}' ${RUN_file})) # FIRE_INTENSITY
+
+# Get the list of what grid runs have already finished spinups
+pushd $file_dir
+	file_done=(C*)
+popd
+file_done=(${file_done[@]/"C*"/})
+
+# Because we want to preserve the order of runs, I can't find away around doing a loop
+# - This is slower than other options, but makes sure we still do our controls first
+# - DO NOT imitate this with a large array
+runs=()
+lat=()
+lon=()
+met=()
+sand=()
+clay=()
+inc_fire=()
+sm_fire=()
+fire_int=()
+
+for((i=0;i<${#runs_all[@]};i++)); do 
+	RUN=${runs_all[i]}
+    TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
+
+	# If the length of TEST is still the same, we haven't done it yet
+    if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
+		echo $RUN
+		runs+=("$RUN")
+		lat+=("${lat_all[i]}")
+		lon+=("${lon_all[i]}")
+		met+=("${met_all[i]}")
+		sand+=("${sand_all[i]}")
+		clay+=("${clay_all[i]}")
+		inc_fire+=("${inc_fire_all[i]}")
+		sm_fire+=("${sm_fire_all[i]}")
+		fire_int+==("${fire_int_all[i]}")
+	fi    
+
+done
+
 
 
 n=$(($n<${#runs[@]}?$n:${#runs[@]}))
