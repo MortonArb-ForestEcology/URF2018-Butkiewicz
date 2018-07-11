@@ -46,9 +46,15 @@
       <phenology>
                    2      </phenology>
 
-      <!--  Photosynthesis Params -->
+      <!-- Photosynthesis Params -->
+<!-- 
       <Vm0>
-                37.8	  </Vm0> <!-- Pecan -->
+                37.8	  </Vm0> <!~~ Pecan ~~>
+ -->
+
+      <!-- Mortality Params -->
+      <plant_min_temp>
+               193.00000      </plant_min_temp> <!-- Modified -->
 
    </pft>
 
