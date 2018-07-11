@@ -48,8 +48,8 @@ RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ stat
 # git fetch --all
 # git checkout origin/master -- $RUN_file
 
-finalyear=2801
-finalfull=2800
+finalyear=2051
+finalfull=2050
 n=1
 
 # Make sure the file paths on the Met Header have been updated for the current file structure
