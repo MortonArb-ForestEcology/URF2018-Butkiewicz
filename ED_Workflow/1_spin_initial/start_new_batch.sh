@@ -96,7 +96,6 @@ for((i=0;i<${#runs_all[@]};i++)); do
 
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
-		echo $RUN
 		runs+=("$RUN")
 		lat+=("${lat_all[i]}")
 		lon+=("${lon_all[i]}")
