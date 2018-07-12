@@ -30,7 +30,8 @@ all.runs <- dir("../extracted_output/")
 
 for(RUNID in all.runs){
   path.nc <- file.path("../extracted_output",RUNID)
-  files.nc <- dir(path.nc,".nc")
+  files.nc <- dir(path.nc)
+  files.nc <- files.nc[1001:length(files.nc)]
   print(RUNID) #This should help me keep track of where the function is currently working. 
   for(i in 1:length(files.nc)){
     print(i)
