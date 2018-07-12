@@ -39,7 +39,7 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 met_base=/home/models/ED_MET/GLSP.v1
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_spin_initial/URF2018_spininit.v1/ # Where everything will go
+file_dir=${file_base}/1_spin_initial/URF2018_spininit.v3/ # Where everything will go
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
 RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
 
@@ -147,7 +147,7 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ../../ED2IN_SpinInit_Base ED2IN
-# 		cp ${setup_dir}PalEON_Phase2.v1.xml .
+		cp ${setup_dir}PFTParams_URF2018.xml .
 
 		# ED2IN Changes	    
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
@@ -179,8 +179,11 @@ do
 
 		# adjust integration step changes
 		cp ${setup_dir}adjust_integration_restart.sh .
+		sed -i "s/finalyear=.*/finalyear=${finalfull}/" adjust_integration_restart.sh 		
 		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
-		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 		
+		sed -i "s/RUN=.*/RUN=${RUN}/" adjust_integration_restart.sh 	
+		sed -i "s/SITE=.*/SITE=${RUN}/" adjust_integration_restart.sh 		
+	    sed -i "s,/dummy/path,${file_path},g" adjust_integration_restart.sh # set the file path
 		
 	popd	
 

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "ed.dtd">
+<!-- Modifications based on Pecan meta analysis unless otherwise noted -->
+ <config>
+<!-- 
+   <fusefiss> 
+       <fusetol>           0.5   </fusetol>
+       <fusetol_h>         0.5   </fusetol_h>
+       <lai_fuse_tol>      0.8   </lai_fuse_tol>
+       <lai_tol>           1.0   </lai_tol>
+       <coh_tolerance_max> 2.5   </coh_tolerance_max>
+   </fusefiss>
+   
+   <decomposition>
+       <!~~ Note: These values were tweaked to approximate resp curves from Jackie ~~>
+       <rh_decay_low>      0.14  </rh_decay_low>
+       <rh_decay_high>     0.60  </rh_decay_high>
+       <rh_low_temp>     291.15  </rh_low_temp>
+       <rh_high_temp>    313.15  </rh_high_temp>
+       <rh_decay_dry>     12.00  </rh_decay_dry>
+       <rh_decay_wet>     36.00  </rh_decay_wet>
+       <rh_dry_smoist>     0.20  </rh_dry_smoist>
+       <rh_wet_smoist>     0.98  </rh_wet_smoist>
+   </decomposition>
+ -->
+
+
+   <pft>
+      <num>       		5      </num>
+      <include_pft_ag>  1      </include_pft_ag>
+      <include_pft>     1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      			</phenology> <!-- Cold Deciduous -->
+   </pft>
+  
+   <pft>
+      <num>				10      </num>
+      <include_pft_ag>	 0      </include_pft_ag>
+      <include_pft>		 1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      </phenology>
+
+      <!-- Photosynthesis Params -->
+<!-- 
+      <Vm0>
+                37.8	  </Vm0> <!~~ Pecan ~~>
+ -->
+
+      <!-- Mortality Params -->
+      <plant_min_temp>
+               193.00000      </plant_min_temp> <!-- Modified -->
+
+   </pft>
+
+</config>

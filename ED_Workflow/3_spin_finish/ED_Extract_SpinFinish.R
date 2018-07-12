@@ -9,10 +9,10 @@ mstmip_local <- read.csv("../0_setup/pecan.utils/mstmip_local.csv", sep=";")
 sitelat =  45.54127
 sitelon = -95.5313
 start_date <- "1801-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
-end_date = "2800-12-31"
+end_date = "2300-12-31"
 
 ## Original
-runs.dir <- "URF2018_spininit.v3" # Where our output is
+runs.dir <- "URF2018_spinfinish.v3" # Where our output is
 all.runs <- dir(runs.dir) # Get a list of what's been run (at least partially)
 out.base <- "extracted_output.v3" # Where we want to put our output
 dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if it's not there yet

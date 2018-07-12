@@ -414,7 +414,7 @@ $ED_NL
    !           a lot, leave this set to 1.  One value for all grids.                       ! 
    !---------------------------------------------------------------------------------------!
    NL%NZG = 10
-   NL%NZS = 4
+   NL%NZS = 2
    !---------------------------------------------------------------------------------------!
 
 
@@ -1086,7 +1086,7 @@ $ED_NL
    NL%ALPHA_C4        = 0.055
    NL%KLOWCO2IN       = 4000.
    NL%RRFFACT         = 1.000
-   NL%GROWTHRESP      = 0.333
+   NL%GROWTHRESP      = 1.000
    NL%LWIDTH_GRASS    = 0.05
    NL%LWIDTH_BLTREE   = 0.10
    NL%LWIDTH_NLTREE   = 0.05
@@ -1535,7 +1535,7 @@ $ED_NL
    !               simulation.                                                             !
    ! PHENPATH   -- path and prefix of the prescribed phenology data.                       !
    !---------------------------------------------------------------------------------------!
-   NL%IEDCNFGF   = ''
+   NL%IEDCNFGF   = 'PFTParams_URF2018.xml'
    NL%EVENT_FILE = ''
    !---------------------------------------------------------------------------------------!
 
