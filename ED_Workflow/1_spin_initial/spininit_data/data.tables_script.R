@@ -7,6 +7,9 @@
 #  2) Cycle through each year in that run, building a temporary data frame and then appending the temporary data frame
 #     to a large data frame. 
 #  3) Save the data frame to a .csv for each run in a new folder under 1_spin_init/spininit_data, called "tables." 
+#  4) Except that #3 doesn't work. 
+#  5) I kind of know why but I don't know how to fix it. 
+#  6) I've never saved anything to a dynamic file path before. 
 
 library(ncdf4)
 
@@ -68,7 +71,6 @@ for(RUNID in all.runs){
   nc_close(test.nc)
   rownames(agb.data) <- c(1:length(agb.data$agb)) #Makes the rows easier to look at, since they're X1, X63 or
   # something annoying like that. 
-  csv.name <- file.path("./tables/data_",RUNID)
-  write.csv(agb.data,file=csv.name) #This will write the data for each individual run to a CSV file that
+  write.csv(agb.data,paste0("./tables/data_",RUNID,".csv")) #This will write the data for each individual run to a CSV file that
   # I can work with in R on my laptop, since the server doesn't have a graphics card. 
 }
