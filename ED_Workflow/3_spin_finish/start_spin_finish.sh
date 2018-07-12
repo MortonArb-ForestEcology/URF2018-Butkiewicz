@@ -26,9 +26,9 @@
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-init_dir=${file_base}/1_spin_initial/URF2018_spininit.v1/ # Directory of initial spin files
-SAS_dir=${file_base}/2_SAS/SAS_init_files.v1/ # Directory of SAS initialization files
-finish_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v1/ # Where the transient runs will go
+init_dir=${file_base}/1_spin_initial/URF2018_spininit.v3/ # Directory of initial spin files
+SAS_dir=${file_base}/2_SAS/SAS_init_files.v3/ # Directory of SAS initialization files
+finish_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v3/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
 
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
@@ -117,7 +117,7 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ${init_dir}${RUN}/ED2IN .
- 		# cp ${init_dir}${RUN}/PalEON_Phase2.v1.xml .
+		cp ${setup_dir}PFTParams_URF2018.xml .
 
 		# ED2IN Changes	    
 	    sed -i "s,$init_dir,$finish_dir,g" ED2IN #change the baseline file path everywhere
