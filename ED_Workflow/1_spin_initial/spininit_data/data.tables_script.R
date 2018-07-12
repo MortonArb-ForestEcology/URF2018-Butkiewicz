@@ -35,7 +35,7 @@ for(RUNID in all.runs){
   for(i in 1:length(files.nc)){
     print(i)
     if(i==1){
-      test.nc <- nc_open(file.path(path.nc,reference$RUNID,files.nc[i])) 
+      test.nc <- nc_open(file.path(path.nc,RUNID,files.nc[i])) 
       table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
       
       agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
@@ -54,7 +54,7 @@ for(RUNID in all.runs){
       agb.data$days <- days
       
     } else {
-      test.nc <- nc_open(file.path(path.nc,files.nc[i]))
+      test.nc <- nc_open(file.path(path.nc,RUNID,files.nc[i]))
       table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
       
       agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
