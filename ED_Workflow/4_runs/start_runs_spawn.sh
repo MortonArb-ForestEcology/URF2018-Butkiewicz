@@ -24,10 +24,13 @@
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-spin_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v3/ # Directory of initial spin files
+init_dir=${file_base}/1_spin_initial/URF2018_spininit.v3/ # Directory of initial spin files
 runs_dir=${file_base}/4_runs/URF2018_runs.v3/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
-finalspin=2351 # The last year of the spin finish
+
+RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
+
+finalspin=2301 # The last year of the spin finish
 finalrun=2015 # The last full year of the runs
 
 USER=crolli
@@ -39,14 +42,29 @@ mkdir -p $runs_dir
 
 # Get the list of what grid runs already have at least started full runs
 pushd $runs_dir
-	file_done=(lat*)
+	file_done=(C*)
 popd
+file_done=(${file_done[@]/"C*"/})
+
+# Getting a list of all runs
+runs_all=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
 
 # Get the list of what grid runs have at least started the spin finish
 pushd $spin_dir
-	runs=(lat*)
+	spins=(C*)
 popd
+spins=(${spins[@]/"C*"/})
 
+# Subset the runs to just what's in the spin directory
+runs=()
+for((i=0;i<${#runs_all[@]};i++)); do 
+	RUN=${runs_all[i]}
+    for FILE in "${spins[@]}"; do
+        if [[ $RUN == "$FILE" ]]; then
+            runs+=("$RUN")
+        fi
+    done
+done
 
 # This will probably be slow later on, but will probably be the best way to make sure we're
 # not skipping any RUNs
@@ -150,18 +168,8 @@ do
 	    sed -i "s/lastyear=.*/lastyear=${finalspin}/" cleanup_spinfinish.sh 		
 
 		# copy & edit the files that do all of the post-run housekeeping
-		cp ../../post_process_runs.sh .
-		cp ${setup_dir}submit_ED_extraction.sh .
-		cp ${setup_dir}extract_output_paleon.R .
 		cp ${setup_dir}cleanup_runs.sh .
 		paleon_out=${file_path}/${RUN}_paleon		
-
-		sed -i "s/RUN=.*/RUN=${RUN}/" post_process_runs.sh 		
-		sed -i "s/job_name=.*/job_name=extract_${RUN}/" post_process_runs.sh 		
-		sed -i "s,/dummy/path,${paleon_out},g" post_process_runs.sh # set the file path
-
-		sed -i "s/RUN=.*/RUN='${RUN}'/" extract_output_paleon.R
-	    sed -i "s,/dummy/path,${file_path},g" extract_output_paleon.R # set the file path
 
 		sed -i "s,/DUMMY/PATH,${file_path}/,g" cleanup_runs.sh # set the file path
 		sed -i "s/RUN=.*/RUN=${RUN}/" cleanup_runs.sh
