@@ -1,28 +1,16 @@
-#############################
-# Above Ground Biomass Data #
-#############################
+####################################
+# Above Ground Biomass Data Tables #
+####################################
 
-# ----------------------- #
-# Formatting a Data Table #
-# ----------------------- #
+# This code is means to do a couple of things:
+#  1) Cycle through each extracted run folder.
+#  2) Cycle through each year in that run, building a temporary data frame and then appending the temporary data frame
+#     to a large data frame. 
+#  3) Save the data frame to a .csv for each run in a new folder under 1_spin_init/spininit_data, called "tables." 
 
 library(ncdf4)
 
 if(!dir.exists("./tables/")) dir.create("./tables/", recursive = T) #This should create a folder for the output to go into. 
-
-# Some example code from an extract workflow that has a run ID #
-
-# all.runs <- dir("4_runs/ed_runs.v1")
-# for(RUNID in all.runs){
-#   
-#   # -------
-#   # Set up dynamic file paths based on each site we're looping through
-#   # -------
-#   ed.dir <- file.path("4_runs/ed_runs.v1", RUNID, "analy") # Where the raw data are
-#   outdir <- file.path("4_runs/extracted_output", RUNID) # Where we want to save our output
-#   if(!dir.exists(outdir)) dir.create(outdir, recursive = T)
-
-###############################################################################################################
 
 #This is stored in and run from the "spininit_data" folder that I made. 
 #I think that this is how I should run this on the server. 
@@ -80,6 +68,7 @@ for(RUNID in all.runs){
   nc_close(test.nc)
   rownames(agb.data) <- c(1:length(agb.data$agb)) #Makes the rows easier to look at, since they're X1, X63 or
   # something annoying like that. 
-  write.csv(agb.data,file="./tables/data_",RUNID) #This will write the data for each individual run to a CSV file that
+  csv.name <- file.path("./tables/data_",RUNID)
+  write.csv(agb.data,file=csv.name) #This will write the data for each individual run to a CSV file that
   # I can work with in R on my laptop, since the server doesn't have a graphics card. 
 }
