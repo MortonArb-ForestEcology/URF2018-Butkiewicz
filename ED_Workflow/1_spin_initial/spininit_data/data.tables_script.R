@@ -21,55 +21,56 @@ all.runs <- dir("../extracted_output/")
 
 for(RUNID in all.runs){
   path.nc <- file.path("../extracted_output",RUNID)
-  files.nc <- dir(path.nc)
-  files.nc <- files.nc[1001:length(files.nc)]
+  files.nc <- dir(path.nc, "ED2")
+  # files.nc <- files.nc[1001:length(files.nc)]
   print(RUNID) #This should help me keep track of where the function is currently working. 
   for(i in 1:length(files.nc)){
     print(i)
     test.nc <- nc_open(file.path(path.nc,files.nc[i])) 
+    # days <- test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals #Adds days on to the end of the calendar. 
+    days <- ncvar_get(test.nc, "time")
+
+    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
+    
+    # Setting up a data frame with our time index, etc
+    dat.tmp <- data.frame(RUNID = RUNID,
+    					  year=i,
+    					  month=rep(1:ncol(table.pft), each=nrow(table.pft)),
+    					  day=rep(days, each=nrow(table.pft)))
+    					  
+    # Add in PFT info
+    dat.tmp$pft <- stack(table.pft)[,1]
+
+    # Label things with user-friendly names
+    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'")
+
+    # Add in AGB  
+    agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
+    dat.tmp$AGB <- stack(agb.trees)[,1]
+    
+    density.trees <- data.frame(ncvar_get(test.nc,"Cohort_Density"))
+    dat.tmp$density <- stack(density.trees)[,1]
+
+    dbh.trees <- data.frame(ncvar_get(test.nc,"Cohort_DBH"))
+    dat.tmp$DBH <- stack(dbh.trees)[,1]
+    
+    # Condensing to 1 point per PFT per time
+    dat.tmp2 <- aggregate(dat.tmp[,c("AGB", "density")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=sum)
+    # names(dat.tmp2)[names(dat.tmp2)=="x"] <- "AGB" # When workign with 2+ vars, it preserves names
+        
+    dat.tmp2$DBH.mean <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=mean)[,"x"]
+    dat.tmp2$DBH.sd <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=sd)[,"x"]
+    dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
+    dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
+    
     if(i==1){
-      table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
-      
-      agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
-      agb.trees[table.pft!=10] <- NA #Gets rid of all other plant functional types. 
-      agb.trees <- data.frame(agb=colSums(agb.trees,na.rm=TRUE)) #Essentially combines the cohorts, ignoring NA values
-      agb.trees$pft <- "Hardwoods"
-      
-      agb.grasses <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
-      agb.grasses[table.pft!=5] <- NA #Gets rid of all other plant functional types. 
-      agb.grasses <- data.frame(agb=colSums(agb.grasses,na.rm=TRUE))
-      agb.grasses$pft <- "Grasses"
-      
-      agb.data <- rbind(agb.grasses,agb.trees) #Creates a messy but functional dataframe. 
-      
-      days <- c(test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals) #Adds days on to the end of the calendar. 
-      agb.data$days <- days
-      
+     dat.out <- dat.tmp2
     } else {
-      table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
-      
-      agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
-      agb.trees[table.pft!=10] <- NA
-      agb.trees <- data.frame(agb=colSums(agb.trees,na.rm=TRUE))
-      agb.trees$pft <- "Hardwoods"
-      
-      agb.grasses <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
-      agb.grasses[table.pft!=5] <- NA
-      agb.grasses <- data.frame(agb=colSums(agb.grasses,na.rm=TRUE))
-      agb.grasses$pft <- "Grasses"
-      
-      agb.data_temp <- rbind(agb.grasses,agb.trees) #Creates a temporary data frame that I can work with. 
-      
-      days <- c(test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals+days[length(days)]) #Should add days to the end of the 
-      # previous vector, giving a continuous stream of days. 
-      agb.data_temp$days <- days #Gives us the right number of columns to bind with the pre-made data frame. 
-      
-      agb.data <- rbind(agb.data,agb.data_temp)
+      dat.out <- rbind(dat.out, dat.tmp2)
     }
     nc_close(test.nc)
-  }
-  rownames(agb.data) <- c(1:length(agb.data$agb)) #Makes the rows easier to look at, since they're X1, X63 or
-  # something annoying like that. 
-  write.csv(agb.data,paste0("./tables/data_",RUNID,".csv")) #This will write the data for each individual run to a CSV file that
+  } # Close i loop
   # I can work with in R on my laptop, since the server doesn't have a graphics card. 
-}
+} # Close RUNID loop
+
+write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the data for each individual run to a CSV file that
