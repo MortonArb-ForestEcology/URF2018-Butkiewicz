@@ -26,8 +26,8 @@ for(RUNID in all.runs){
   print(RUNID) #This should help me keep track of where the function is currently working. 
   for(i in 1:length(files.nc)){
     print(i)
+    test.nc <- nc_open(file.path(path.nc,files.nc[i])) 
     if(i==1){
-      test.nc <- nc_open(file.path(path.nc,files.nc[i])) 
       table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
       
       agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
@@ -46,7 +46,6 @@ for(RUNID in all.runs){
       agb.data$days <- days
       
     } else {
-      test.nc <- nc_open(file.path(path.nc,files.nc[i]))
       table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
       
       agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
@@ -67,8 +66,8 @@ for(RUNID in all.runs){
       
       agb.data <- rbind(agb.data,agb.data_temp)
     }
+    nc_close(test.nc)
   }
-  nc_close(test.nc)
   rownames(agb.data) <- c(1:length(agb.data$agb)) #Makes the rows easier to look at, since they're X1, X63 or
   # something annoying like that. 
   write.csv(agb.data,paste0("./tables/data_",RUNID,".csv")) #This will write the data for each individual run to a CSV file that
