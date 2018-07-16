@@ -2,20 +2,11 @@
 # Above Ground Biomass Data Tables #
 ####################################
 
-# This code is means to do a couple of things:
-#  1) Cycle through each extracted run folder.
-#  2) Cycle through each year in that run, building a temporary data frame and then appending the temporary data frame
-#     to a large data frame. 
-#  3) Save the data frame to a .csv for each run in a new folder under 1_spin_init/spininit_data, called "tables." 
-#  4) Except that #3 doesn't work. 
-#  5) I kind of know why but I don't know how to fix it. 
-#  6) I've never saved anything to a dynamic file path before. 
+# The following code should be run on the Forest Ecology Server, where the output is.
 
 library(ncdf4)
+library(car)
 
-if(!dir.exists("./tables/")) dir.create("./tables/", recursive = T) #This should create a folder for the output to go into. 
-
-#This is stored in and run from the "spininit_data" folder that I made. 
 #I think that this is how I should run this on the server. 
 all.runs <- dir("../extracted_output/") 
 
@@ -23,14 +14,14 @@ for(RUNID in all.runs){
   path.nc <- file.path("../extracted_output",RUNID)
   files.nc <- dir(path.nc, "ED2")
   # files.nc <- files.nc[1001:length(files.nc)]
-  print(RUNID) #This should help me keep track of where the function is currently working. 
+  print(RUNID) #This should keep track of where the function is currently working. 
   for(i in 1:length(files.nc)){
     print(i)
-    test.nc <- nc_open(file.path(path.nc,files.nc[i])) 
+    test.nc <- nc_open(file.path(path.nc,files.nc[i])) #Opens connection to specific file. 
     # days <- test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals #Adds days on to the end of the calendar. 
     days <- ncvar_get(test.nc, "time")
 
-    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
+    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT")) #Creates a dataframe with the cohort pfts. 
     
     # Setting up a data frame with our time index, etc
     dat.tmp <- data.frame(RUNID = RUNID,
@@ -39,7 +30,7 @@ for(RUNID in all.runs){
     					  day=rep(days, each=nrow(table.pft)))
     					  
     # Add in PFT info
-    dat.tmp$pft <- stack(table.pft)[,1]
+    dat.tmp$pft <- stack(table.pft)[,1] #We changed the format of table.pft
 
     # Label things with user-friendly names
     dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'")
@@ -70,7 +61,6 @@ for(RUNID in all.runs){
     }
     nc_close(test.nc)
   } # Close i loop
-  # I can work with in R on my laptop, since the server doesn't have a graphics card. 
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the data for each individual run to a CSV file that
+write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a CSV file
