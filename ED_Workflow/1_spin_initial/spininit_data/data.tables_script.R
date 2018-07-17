@@ -63,7 +63,7 @@ for(RUNID in all.runs){
   if(RUNID==1){
     dat.out_final <- dat.out
   } else {
-    dat.out_final <- rbdin(dat.out_final,dat.out)
+    dat.out_final <- rbind(dat.out_final,dat.out)
   }
 } # Close RUNID loop
 
