@@ -1,5 +1,5 @@
 ####################################
-# Above Ground Biomass Data Tables #
+# Above Ground Biomass Output Tables #
 ####################################
 
 # The following code should be run on the Forest Ecology Server, where the output is.
@@ -7,40 +7,39 @@
 library(ncdf4)
 library(car)
 
-#I think that this is how I should run this on the server. 
-all.runs <- dir("../extracted_output/") 
+all.runs <- dir("../extracted_output/") #file path
 
 for(RUNID in all.runs){
-  path.nc <- file.path("../extracted_output",RUNID)
+  path.nc <- file.path("../extracted_output",RUNID) # here's our file path, which should change as the for loop iterates through
+  # RUNID. 
   files.nc <- dir(path.nc, "ED2")
-  # files.nc <- files.nc[1001:length(files.nc)]
-  print(RUNID) #This should keep track of where the function is currently working. 
+  print(RUNID) #Keep track of where the function is currently working. 
   for(i in 1:length(files.nc)){
-    print(i)
-    test.nc <- nc_open(file.path(path.nc,files.nc[i])) #Opens connection to specific file. 
-    # days <- test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals #Adds days on to the end of the calendar. 
-    days <- ncvar_get(test.nc, "time")
+    print(i) #Keeps track of where the function is currently working. 
+    test.nc <- nc_open(file.path(path.nc,files.nc[i]))
+    day <- ncvar_get(test.nc, "time")
 
-    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT")) #Creates a dataframe with the cohort pfts. 
+    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
     
     # Setting up a data frame with our time index, etc
     dat.tmp <- data.frame(RUNID = RUNID,
     					  year=i,
     					  month=rep(1:ncol(table.pft), each=nrow(table.pft)),
-    					  day=rep(days, each=nrow(table.pft)))
+    					  day=rep(day, each=nrow(table.pft)))
     					  
     # Add in PFT info
-    dat.tmp$pft <- stack(table.pft)[,1] #We changed the format of table.pft
+    dat.tmp$pft <- stack(table.pft)[,1]
 
     # Label things with user-friendly names
-    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'")
+    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'") #Recodes the PFT column so that it's now user
+    #-friendly, replacing the old PFT values of 5 and 10. 
 
     # Add in AGB  
     agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
     dat.tmp$AGB <- stack(agb.trees)[,1]
     
     density.trees <- data.frame(ncvar_get(test.nc,"Cohort_Density"))
-    dat.tmp$density <- stack(density.trees)[,1]
+    dat.tmp$density <- stack(density.trees)[,1] 
 
     dbh.trees <- data.frame(ncvar_get(test.nc,"Cohort_DBH"))
     dat.tmp$DBH <- stack(dbh.trees)[,1]
@@ -61,6 +60,11 @@ for(RUNID in all.runs){
     }
     nc_close(test.nc)
   } # Close i loop
+  if(RUNID==1){
+    dat.out_final <- dat.out
+  } else {
+    dat.out_final <- rbdin(dat.out_final,dat.out)
+  }
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a CSV file
+write.csv(dat.out_final,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a CSV file
