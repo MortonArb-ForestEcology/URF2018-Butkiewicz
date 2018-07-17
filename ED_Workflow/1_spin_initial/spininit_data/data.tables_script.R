@@ -60,11 +60,11 @@ for(RUNID in all.runs){
     }
     nc_close(test.nc)
   } # Close i loop
-  if(RUNID==1){
+  if(RUNID==all.runs[1]){
     dat.out_final <- dat.out
   } else {
     dat.out_final <- rbind(dat.out_final,dat.out)
   }
 } # Close RUNID loop
 
-write.csv(dat.out_final,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a CSV file
+write.csv(dat.out_final,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
