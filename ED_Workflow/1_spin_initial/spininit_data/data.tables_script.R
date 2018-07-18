@@ -53,18 +53,18 @@ for(RUNID in all.runs){
     dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
     dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
     
-    if(i==1){
+    if(i==1 & RUNID==all.runs[1]){
      dat.out <- dat.tmp2
     } else {
       dat.out <- rbind(dat.out, dat.tmp2)
     }
     nc_close(test.nc)
   } # Close i loop
-  if(RUNID==all.runs[1]){
-    dat.out_final <- dat.out
-  } else {
-    dat.out_final <- rbind(dat.out_final,dat.out)
-  }
+  # if(RUNID==all.runs[1]){
+  #   dat.out_final <- dat.out
+  # } else {
+  #   dat.out_final <- rbind(dat.out_final,dat.out)
+  # }
 } # Close RUNID loop
 
 write.csv(dat.out_final,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv

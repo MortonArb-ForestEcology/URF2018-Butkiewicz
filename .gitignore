@@ -11,3 +11,5 @@ ED_Workflow/1_spin_initial/URF2018_spininit.v1/*
 ED_Workflow/1_spin_initial/extracted_output/*
 *.css
 *.pss
+*.RData
+ED_Workflow/1_spin_initial/spininit_data/*
