@@ -67,4 +67,4 @@ for(RUNID in all.runs){
   # }
 } # Close RUNID loop
 
-write.csv(dat.out_final,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
+write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
