@@ -9,11 +9,12 @@ library(car)
 
 all.runs <- dir("../extracted_output/") #file path
 
-for(RUNID in all.runs){
+for(RUNID in 1:length(all.runs)){
   path.nc <- file.path("../extracted_output",RUNID) # here's our file path, which should change as the for loop iterates through
   # RUNID. 
   files.nc <- dir(path.nc, "ED2")
   print(RUNID) #Keep track of where the function is currently working. 
+  # for(i in 1:length(files.nc)){
   for(i in 1:length(files.nc)){
     print(i) #Keeps track of where the function is currently working. 
     test.nc <- nc_open(file.path(path.nc,files.nc[i]))
@@ -67,4 +68,4 @@ for(RUNID in all.runs){
   # }
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("./tables/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
+write.csv(dat.out,paste0("output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
