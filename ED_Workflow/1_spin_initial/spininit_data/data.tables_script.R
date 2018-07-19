@@ -9,7 +9,7 @@ library(car)
 
 all.runs <- dir("../extracted_output/") #file path
 
-for(RUNID in 1:length(all.runs)){
+for(RUNID in all.runs){
   path.nc <- file.path("../extracted_output",RUNID) # here's our file path, which should change as the for loop iterates through
   # RUNID. 
   files.nc <- dir(path.nc, "ED2")
