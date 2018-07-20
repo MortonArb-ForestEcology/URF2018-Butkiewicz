@@ -4,43 +4,46 @@
 
 library(ncdf4)
 
-
 all.runs <- dir("../extracted_output.v3/") 
 
 for(RUNID in all.runs){
-  path.nc <- file.path("../extracted_output.v3",RUNID) # path.nc now contains our file path. 
-  files.nc <- dir(path.nc, "ED2") # files.nc can now be used to extract a specific file. ED2 specifies that it pulls the correct
-  # data files. 
-  # files.nc <- files.nc[1001:length(files.nc)]
-  print(RUNID) # This keeps track of whether the function is actually working. 
+  path.nc <- file.path("../extracted_output.v3",RUNID)
+  files.nc <- dir(path.nc, "ED2")
+  print(RUNID) #Keep track of where the function is currently working. 
+  # for(i in 1:length(files.nc)){
   for(i in 1:length(files.nc)){
-    print(i)
-    test.nc <- nc_open(file.path(path.nc,files.nc[i])) # opens a connection to the output file. 
-    # days <- test.nc$var$Cohort_AbvGrndBiom$dim[[4]]$vals #Adds days on to the end of the calendar. 
-    days <- ncvar_get(test.nc, "time") #extracts the values for time
+    print(i) #Keeps track of where the function is currently working. 
+    test.nc <- nc_open(file.path(path.nc,files.nc[i]))
+    day <- ncvar_get(test.nc, "time")
     
-    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT")) 
+    # I found a bug in the code here. One of the years has only 1 cohort, so when you just make a data frame like this, it stacks it
+    # vertically as R does because R is annoying like that. We need to find a way to specify that this table needs to be horizontal
+    # instead of vertical. 
+    # table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))  
+    # Idea one: 
+    table.pft <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_PFT"),ncol=12))
     
     # Setting up a data frame with our time index, etc
     dat.tmp <- data.frame(RUNID = RUNID,
                           year=i,
                           month=rep(1:ncol(table.pft), each=nrow(table.pft)),
-                          day=rep(days, each=nrow(table.pft)))
+                          day=rep(day, each=nrow(table.pft)))
     
     # Add in PFT info
     dat.tmp$pft <- stack(table.pft)[,1]
     
     # Label things with user-friendly names
-    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'")
+    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'") #Recodes the PFT column so that it's now user
+    #-friendly, replacing the old PFT values of 5 and 10. 
     
     # Add in AGB  
-    agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
+    agb.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_AbvGrndBiom"),ncol=12))
     dat.tmp$AGB <- stack(agb.trees)[,1]
     
-    density.trees <- data.frame(ncvar_get(test.nc,"Cohort_Density"))
-    dat.tmp$density <- stack(density.trees)[,1]
+    density.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_Density"),ncol=12))
+    dat.tmp$density <- stack(density.trees)[,1] 
     
-    dbh.trees <- data.frame(ncvar_get(test.nc,"Cohort_DBH"))
+    dbh.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_DBH"),ncol=12))
     dat.tmp$DBH <- stack(dbh.trees)[,1]
     
     # Condensing to 1 point per PFT per time
@@ -52,16 +55,13 @@ for(RUNID in all.runs){
     dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
     dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
     
-    if(i==1){
+    if(i==1 & RUNID==all.runs[1]){
       dat.out <- dat.tmp2
     } else {
       dat.out <- rbind(dat.out, dat.tmp2)
     }
     nc_close(test.nc)
   } # Close i loop
-  
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("./output_control_runsL.csv"), row.names=F) #This will write the data for each individual run to a CSV file
-
-#The .csv should now be extracted form the server and onto a computer with some sort of graphics software in order to produce the graphs. 
+write.csv(dat.out,paste0("./output_control_runs.csv"), row.names=F) #This will write the output to a .csv
