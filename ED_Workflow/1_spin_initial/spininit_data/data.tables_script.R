@@ -7,6 +7,8 @@
 library(ncdf4)
 library(car)
 
+#if(!dir.exists("./tables/v3")) dir.create("./tables/v3")
+
 all.runs <- dir("../extracted_output.v3/") #file path
 
 for(RUNID in all.runs){
@@ -68,4 +70,4 @@ for(RUNID in all.runs){
   # }
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
+write.csv(dat.out,paste0("./tables/v3/output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
