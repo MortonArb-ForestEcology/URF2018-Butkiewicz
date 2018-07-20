@@ -7,10 +7,10 @@
 library(ncdf4)
 library(car)
 
-all.runs <- dir("../extracted_output/") #file path
+all.runs <- dir("../extracted_output.v3/") #file path
 
 for(RUNID in all.runs){
-  path.nc <- file.path("../extracted_output",RUNID) # here's our file path, which should change as the for loop iterates through
+  path.nc <- file.path("../extracted_output.v3",RUNID) # here's our file path, which should change as the for loop iterates through
   # RUNID. 
   files.nc <- dir(path.nc, "ED2")
   print(RUNID) #Keep track of where the function is currently working. 
