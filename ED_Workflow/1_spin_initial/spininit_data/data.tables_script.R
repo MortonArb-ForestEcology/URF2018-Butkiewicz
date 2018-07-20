@@ -22,7 +22,12 @@ for(RUNID in all.runs){
     test.nc <- nc_open(file.path(path.nc,files.nc[i]))
     day <- ncvar_get(test.nc, "time")
 
-    table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))
+    # I found a bug in the code here. One of the years has only 1 cohort, so when you just make a data frame like this, it stacks it
+    # vertically as R does because R is annoying like that. We need to find a way to specify that this table needs to be horizontal
+    # instead of vertical. 
+    # table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))  
+    # Idea one: 
+    table.pft <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_PFT"),ncol=12))
     
     # Setting up a data frame with our time index, etc
     dat.tmp <- data.frame(RUNID = RUNID,
@@ -38,13 +43,13 @@ for(RUNID in all.runs){
     #-friendly, replacing the old PFT values of 5 and 10. 
 
     # Add in AGB  
-    agb.trees <- data.frame(ncvar_get(test.nc,"Cohort_AbvGrndBiom"))
+    agb.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_AbvGrndBiom"),ncol=12))
     dat.tmp$AGB <- stack(agb.trees)[,1]
     
-    density.trees <- data.frame(ncvar_get(test.nc,"Cohort_Density"))
+    density.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_Density"),ncol=12))
     dat.tmp$density <- stack(density.trees)[,1] 
 
-    dbh.trees <- data.frame(ncvar_get(test.nc,"Cohort_DBH"))
+    dbh.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_DBH"),ncol=12))
     dat.tmp$DBH <- stack(dbh.trees)[,1]
     
     # Condensing to 1 point per PFT per time
