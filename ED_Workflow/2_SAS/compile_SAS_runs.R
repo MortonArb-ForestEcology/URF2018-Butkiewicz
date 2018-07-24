@@ -98,7 +98,7 @@ for(s in 1:nrow(expdesign)){
   outdir <- file.path(out.base, prefix)
   SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=outdir, 
           prefix, lat, lon, 
-          block=50, yrs.met=30,
+          blckyr=31, yrs.met=30,
           treefall=0.005, sm_fire=sm_fire, fire_intensity=fire_intensity, slxsand=slxsand, slxclay=slxclay,
           decomp_scheme=2
           ) 
