@@ -89,6 +89,8 @@ for(s in 1:nrow(expdesign)){
   # Read run settings % Sand & % CLAY from table
   slxsand <- expdesign$SLXSAND[s]
   slxclay <- expdesign$SLXCLAY[s]
+  sm_fire <- expdesign$SM_FIRE[s]
+  fire_intensity <- expdesign$Fire.Intensity
   lat <- round(expdesign$latitude[s],2)
   lon <- round(expdesign$latitude[s],2)
   dir.analy <- file.path(in.base, prefix, "analy")
@@ -97,7 +99,7 @@ for(s in 1:nrow(expdesign)){
   SAS.ED2(dir.analy=dir.analy, dir.histo=dir.histo, outdir=outdir, 
           prefix, lat, lon, 
           block=50, yrs.met=30,
-          treefall=0.005, sm_fire=0, fire_intensity=0, slxsand=slxsand, slxclay=slxclay,
+          treefall=0.005, sm_fire=sm_fire, fire_intensity=fire_intensity, slxsand=slxsand, slxclay=slxclay,
           decomp_scheme=2
           ) 
 } # End Site Loop!
