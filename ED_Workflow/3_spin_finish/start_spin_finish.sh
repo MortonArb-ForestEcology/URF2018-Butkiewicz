@@ -71,7 +71,7 @@ popd
 if((${#file_done[@]} > 0)); then
 	for REMOVE in ${file_done[@]}
 	do 
-		runs=(${runs[@]/$REMOVE/})
+# 		runs=(${runs[@]/$REMOVE/})
 		SAS=(${SAS[@]/$REMOVE/})
 	done
 fi
@@ -89,6 +89,9 @@ for((i=0;i<${#runs[@]};i++)); do
     for FILE in "${SAS[@]}"; do
         if [[ $RUN == "$FILE" ]]; then
             spinfin+=("$RUN")
+            echo $RUN
+            echo ${inc_fire[i]}
+            
             fire_fin+=("${inc_fire[i]}")
             smfire_fin+=("${sm_fire[i]}")
             fireint_fin+=("${fire_int[i]}")
@@ -143,9 +146,9 @@ do
         # Change Fire & Disturbance Params HERE
         # Note: Already set other params, so we just need to match the 
         sed -i "s/NL%TREEFALL_DISTURBANCE_RATE  = 0.*/NL%TREEFALL_DISTURBANCE_RATE  = 0.004/" ED2IN # turn on treefall
-        sed -i "s/NL%INCLUDE_FIRE    = 0.*/NL%INCLUDE_FIRE    = $INC_FIRE/" ED2IN # turn on fire if run w/ fire on
-        sed -i "s/NL%FIRE_PARAMETER  = 0.*/NL%FIRE_PARAMETER  = $FIRE_INT/" ED2IN # set fire intensity parameter
-        sed -i "s/NL%SM_FIRE         = 0.*/NL%SM_FIRE         = $SM_FIRE/" ED2IN # set fire threshold parameter
+        sed -i "s/NL%INCLUDE_FIRE    = */NL%INCLUDE_FIRE    = $INC_FIRE/" ED2IN # turn on fire if run w/ fire on
+        sed -i "s/NL%FIRE_PARAMETER  = */NL%FIRE_PARAMETER  = $FIRE_INT/" ED2IN # set fire intensity parameter
+        sed -i "s/NL%SM_FIRE         = */NL%SM_FIRE         = $SM_FIRE/" ED2IN # set fire threshold parameter
 
 		# spin spawn start changes -- 
 		# Note: spins require a different first script because they won't have any 
