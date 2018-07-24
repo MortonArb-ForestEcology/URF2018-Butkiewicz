@@ -104,7 +104,7 @@ for((i=0;i<${#runs_all[@]};i++)); do
 		clay+=("${clay_all[i]}")
 		inc_fire+=("${inc_fire_all[i]}")
 		sm_fire+=("${sm_fire_all[i]}")
-		fire_int+==("${fire_int_all[i]}")
+		fire_int+=("${fire_int_all[i]}")
 	fi    
 
 done
