@@ -49,8 +49,8 @@
 #          -- can I call a file within itself?
 
 USER=crolli # or whoever is in charge of this site
-SITE=latXXXlon-XXX # Site can be indexed off some file name
-finalyear=3010 # the last year in the histo should actually be jan 1 3011
+SITE=TEST # Site can be indexed off some file name
+finalyear=LATSTYEAR# the last year in the histo should actually be jan 1 3011
 #outdir=/dummy/path/
 site_path=/dummy/path
 
@@ -73,9 +73,9 @@ sed -i "s,SFILIN   = .*,SFILIN   = '${site_path}histo/${SITE}',g" ED2IN # set in
 
 # taking this out of adjust start loops
 sed -i "s/IMONTHZ  =.*/IMONTHZ  = 01/" ED2IN 
-sed -i "s/IYEARZ   =.*/IYEARZ   = 3011/" ED2IN 
-sed -i "s/DTLSM  =.*/DTLSM  = 540/" ED2IN 
-sed -i "s/RADFRQ  =.*/RADFRQ  = 540/" ED2IN 
+sed -i "s/IYEARZ   =.*/IYEARZ   = ${finalyear}/" ED2IN 
+sed -i "s/DTLSM  =.*/DTLSM  = 480/" ED2IN 
+sed -i "s/RADFRQ  =.*/RADFRQ  = 480/" ED2IN 
 
 # # 3. Submit the job!
 # qsub paleon_ed2_smp_geo.sh	
