@@ -49,7 +49,7 @@
 #          -- can I call a file within itself?
 
 USER=crolli # or whoever is in charge of this site
-SITE=TEST # Site can be indexed off some file name
+RUN=TEST # Site can be indexed off some file name
 finalyear=LATSTYEAR# the last year in the histo should actually be jan 1 3011
 #outdir=/dummy/path/
 site_path=/dummy/path
@@ -69,7 +69,7 @@ sed -i "s/IDATEH   =.*/IDATEH   = ${startday}     ! Day/" ED2IN
 sed -i "s/IMONTHH  =.*/IMONTHH  = ${startmonth}     ! Month/" ED2IN 
 sed -i 's/IED_INIT_MODE   =.*/IED_INIT_MODE   = 5/' ED2IN
 sed -i "s/RUNTYPE  =.*/RUNTYPE  = 'HISTORY'/" ED2IN
-sed -i "s,SFILIN   = .*,SFILIN   = '${site_path}histo/${SITE}',g" ED2IN # set initial file path to current directory
+sed -i "s,SFILIN   = .*,SFILIN   = '${site_path}histo/${RUN}',g" ED2IN # set initial file path to current directory
 
 # taking this out of adjust start loops
 sed -i "s/IMONTHZ  =.*/IMONTHZ  = 01/" ED2IN 
