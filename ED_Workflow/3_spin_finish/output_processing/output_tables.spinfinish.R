@@ -55,9 +55,16 @@ for(RUNID in all.runs){
     dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
     dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
     
-    dat.tmp2 <- dat.tmp2[dat.tmp2$PFT.name!=0,]
+    # dat.tmp2 <- dat.tmp2[dat.tmp2$PFT.name!=0,] #Will remove any rows where PFT.name = 0. Decided to keep in case it came in handy, but did not implement because I don't like getting rid of 0's. 
+    
+    # Add a binary fire variable. 
     fire <- matrix(ncvar_get(test.nc,"Fire_flux"))
-    dat.tmp2$fire <- rep(fire)
+    if(sum(fire)!=0){
+      fire <- 1 #Means that fire occured. 
+    } else {
+      fire <- 0 #Means that fire did not occur. 
+    }
+    dat.tmp2$fire <- fire
     
     if(i==1 & RUNID==all.runs[1]){
       dat.out <- dat.tmp2
