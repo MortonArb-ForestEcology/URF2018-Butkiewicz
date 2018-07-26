@@ -55,6 +55,10 @@ for(RUNID in all.runs){
     dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
     dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
     
+    dat.tmp2 <- dat.tmp2[dat.tmp2$PFT.name!=0,]
+    fire <- matrix(ncvar_get(test.nc,"Fire_flux"))
+    dat.tmp2$fire <- rep(fire)
+    
     if(i==1 & RUNID==all.runs[1]){
       dat.out <- dat.tmp2
     } else {
