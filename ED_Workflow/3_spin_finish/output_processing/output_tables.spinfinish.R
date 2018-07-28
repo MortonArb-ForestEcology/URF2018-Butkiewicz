@@ -75,4 +75,4 @@ for(RUNID in all.runs){
   } # Close i loop
 } # Close RUNID loop
 
-write.csv(dat.out,paste0("./output_control_runs.csv"), row.names=F) #This will write the output to a .csv
+write.csv(dat.out,paste0("./output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
