@@ -89,6 +89,10 @@ for(RUNID in all.runs){
                            year=i,
                            dat.site)
     
+    # Make the pft names more user-friendly. 
+    
+    dat.site <- car::recode(dat.site$pft, "'5'='Grasses'; '10'='Hardwoods'")
+    
     # Add a binary fire variable. 
     fire <- matrix(ncvar_get(ncT,"Fire_flux"))
     if(sum(fire)!=0){
