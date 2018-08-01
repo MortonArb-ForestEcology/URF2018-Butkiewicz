@@ -13,66 +13,99 @@ for(RUNID in all.runs){
   # for(i in 1:length(files.nc)){
   for(i in 1:length(files.nc)){
     print(i) #Keeps track of where the function is currently working. 
-    test.nc <- nc_open(file.path(path.nc,files.nc[i]))
-    day <- ncvar_get(test.nc, "time")
+    ncT <- nc_open(file.path(path.nc,files.nc[i]))
     
-    # I found a bug in the code here. One of the years has only 1 cohort, so when you just make a data frame like this, it stacks it
-    # vertically as R does because R is annoying like that. We need to find a way to specify that this table needs to be horizontal
-    # instead of vertical. 
-    # table.pft <- data.frame(ncvar_get(test.nc,"Cohort_PFT"))  
-    # Idea one: 
-    table.pft <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_PFT"),ncol=12))
+    table.patch <- as.data.frame(matrix(ncvar_get(ncT,"Cohort_PatchID"),ncol=12)) # This seems unnecessarily complex, but this makes sure that even if there is only one cohort, the dataframes will be shaped the same way. 
+    table.pft <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_PFT"),ncol=12))
+    table.agb <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_AbvGrndBiom"),ncol=12))
+    table.dens <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_Density"),ncol=12))
+    table.dbh <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_DBH"),ncol=12))
     
-    # Setting up a data frame with our time index, etc
-    dat.tmp <- data.frame(RUNID = RUNID,
-                          year=i,
-                          month=rep(1:ncol(table.pft), each=nrow(table.pft)),
-                          day=rep(day, each=nrow(table.pft)))
+    dat.cohort <- data.frame(month=rep(1:ncol(table.pft),each=nrow(table.pft)), #The choice of table.pft to count the number of months is arbitrary. 
+                             patch = stack(table.patch)[,1],
+                             pft = stack(table.pft)[,1], # kgC/m2
+                             agb = stack(table.agb)[,1],
+                             dens = stack(table.dens)[,1], # trees/m2
+                             dbh = stack(table.dbh)[,1]) # DBH/tree
     
-    # Add in PFT info
-    dat.tmp$pft <- stack(table.pft)[,1]
+    # Calculate the DBH weight for each cohort usign a loop!
+    dat.cohort$p.dens <- NA # creating a placeholder column
+    dat.cohort$p.dbh <- NA # creating a placeholder column
+    dat.cohort$dbh.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dbh, NA) #This creates a column of DBH that only includes values from the dbh column that are greater than 10 cm. 
     
-    # Label things with user-friendly names
-    dat.tmp$PFT.name <- car::recode(dat.tmp$pft, "'5'='Grasses'; '10'='Hardwoods'") #Recodes the PFT column so that it's now user
-    #-friendly, replacing the old PFT values of 5 and 10. 
+    # Basically, "variable" is the measurement of every single tree in the patch. 
+    #            "variable.tree" is the measurement of every tree with a dbh >10 cm. 
+    #            "p.variable" is the measurement weighted by patch area, which in ED is outputted as a proportion and has 
+    #             no units. 
     
-    # Add in AGB  
-    agb.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_AbvGrndBiom"),ncol=12))
-    dat.tmp$AGB <- stack(agb.trees)[,1]
+    dat.cohort$dens.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dens, NA) #This creates a new column where only the densities associated with a DBH > 10 cm is allowed. 
+    dat.cohort$p.dbh.tree <- NA #creates a placeholder column, which will be the tree DBH weighted by patch area. 
+    dat.cohort$p.dens.tree <- NA #creates a placeholder column, which will be the tree density weighted by patch area. 
     
-    density.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_Density"),ncol=12))
-    dat.tmp$density <- stack(density.trees)[,1] 
+    #Make a loop that calculates the weighted values for dbh.  
+    for(PCH in unique(dat.cohort$patch)){
+      for(PFT in unique(dat.cohort$pft)){
+        row.ind <- which(dat.cohort$patch==PCH & dat.cohort$pft==PFT) # row numbers for this group 
+        
+        dat.tmp <- dat.cohort[row.ind,] # subset our data to something small for our sanity
+        dens.tot <- sum(dat.tmp$dens) # sum of cohort densities by patch and PFT. 
+        dens.tree <- sum(dat.tmp$dens.tree, na.rm=T) # total density of the trees with a DBH above our threshold value. 
+        
+        dat.tmp$p.dens <- dat.tmp$dens/dens.tot # fractional density. 
+        dat.tmp$p.dens.tree  <- dat.tmp$dens.tree/dens.tree # density of trees above our DBH weighted by patch area
+        dat.tmp$p.dbh  <- dat.tmp$dbh * dat.tmp$p.dens 
+        dat.tmp$p.dbh.tree  <- dat.tmp$dbh.tree * dat.tmp$p.dens.tree
+        
+        dat.cohort[row.ind,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] <- dat.tmp[,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] # put the new values into our table
+      } # Close PFT loop
+    } # Close PCH (patch) loop 
     
-    dbh.trees <- as.data.frame(matrix(ncvar_get(test.nc,"Cohort_DBH"),ncol=12))
-    dat.tmp$DBH <- stack(dbh.trees)[,1]
+    dat.patch <- aggregate(dat.cohort[,c("agb", "dens", "p.dbh", "dens.tree", "p.dbh.tree")], by=dat.cohort[,c("patch", "pft")], FUN=sum, na.rm=T)
+    dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("month","patch", "pft")], FUN=max)[,"x"],2) # rounding to 2 decimal places
+    names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
     
-    # Condensing to 1 point per PFT per time
-    dat.tmp2 <- aggregate(dat.tmp[,c("AGB", "density")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=sum)
-    # names(dat.tmp2)[names(dat.tmp2)=="x"] <- "AGB" # When workign with 2+ vars, it preserves names
+    patch.area <- ncvar_get(ncT, "Patch_Area")[,6]
+    patch.area <- data.frame(patch = 1:length(patch.area),
+                             area  = patch.area)
     
-    dat.tmp2$DBH.mean <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=mean)[,"x"]
-    dat.tmp2$DBH.sd <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=sd)[,"x"]
-    dat.tmp2$DBH.min <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=min)[,"x"]
-    dat.tmp2$DBH.max <- aggregate(dat.tmp[,c("DBH")], by=dat.tmp[,c("RUNID", "year", "month", "day", "PFT.name")], FUN=max)[,"x"]
+    dat.patch <- merge(dat.patch, patch.area, all.x=T)
     
-    # dat.tmp2 <- dat.tmp2[dat.tmp2$PFT.name!=0,] #Will remove any rows where PFT.name = 0. Decided to keep in case it came in handy, but did not implement because I don't like getting rid of 0's. 
+    dat.patch[dat.patch$dens.tree==0, "dbh.tree"] <- NA
+    dat.patch$p.agb <- dat.patch$agb * dat.patch$area
+    dat.patch$p.dens <- dat.patch$dens * dat.patch$area
+    dat.patch$p.dbh <- dat.patch$dbh * dat.patch$area
+    dat.patch$p.dens.tree <- dat.patch$dens.tree * dat.patch$area
+    
+    # For trees, we need to weight by area of patches with TREES
+    area.tree <- dat.patch[dat.patch$pft==10 & !is.na(dat.patch$dbh.tree),"area"]
+    dat.patch$p.dbh.tree <- dat.patch$dbh.tree * dat.patch$area/sum(area.tree)
+    
+    dat.site <- aggregate(dat.patch[,c("p.agb", "p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
+    dat.site$dbh.max <- aggregate(dat.patch[,"dbh.max"], by=list(dat.patch$pft), FUN=max)[,"x"]
+    colnames(dat.site)[1] <- "pft"
+    dat.site <- subset(dat.site,subset=pft!=0)
+    
+    dat.site <- data.frame(RUNID=RUNID,
+                           year=i,
+                           dat.site)
     
     # Add a binary fire variable. 
     fire <- matrix(ncvar_get(test.nc,"Fire_flux"))
     if(sum(fire)!=0){
-      fire <- 1 #Means that fire occured. 
+      fire <- "Yes" #Means that fire occured. 
     } else {
-      fire <- 0 #Means that fire did not occur. 
+      fire <- "No" #Means that fire did not occur. 
     }
-    dat.tmp2$fire <- fire
+    dat.site$fire <- fire
     
     if(i==1 & RUNID==all.runs[1]){
-      dat.out <- dat.tmp2
+      dat.out <- dat.site
     } else {
-      dat.out <- rbind(dat.out, dat.tmp2)
+      dat.out <- rbind(dat.out, dat.site)
     }
-    nc_close(test.nc)
+    nc_close(ncT)
   } # Close i loop
 } # Close RUNID loop
 
 write.csv(dat.out,paste0("./output_runs_ALL.csv"), row.names=F) #This will write the output to a .csv
+#The final result should be yearly averages of everything. It would probably be better to weight this by monthly averages, but...well, we're not there yet.
