@@ -90,7 +90,7 @@ for(RUNID in all.runs){
                            dat.site)
     
     # Add a binary fire variable. 
-    fire <- matrix(ncvar_get(test.nc,"Fire_flux"))
+    fire <- matrix(ncvar_get(ncT,"Fire_flux"))
     if(sum(fire)!=0){
       fire <- "Yes" #Means that fire occured. 
     } else {
