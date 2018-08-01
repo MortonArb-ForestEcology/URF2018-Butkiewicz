@@ -61,7 +61,7 @@ for(RUNID in all.runs){
     } # Close PCH (patch) loop 
     
     dat.patch <- aggregate(dat.cohort[,c("agb", "dens", "p.dbh", "dens.tree", "p.dbh.tree")], by=dat.cohort[,c("patch", "pft")], FUN=sum, na.rm=T)
-    dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("month","patch", "pft")], FUN=max)[,"x"],2) # rounding to 2 decimal places
+    dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("patch", "pft")], FUN=max)[,"x"],2) # rounding to 2 decimal places
     names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
     
     patch.area <- ncvar_get(ncT, "Patch_Area")[,6]
