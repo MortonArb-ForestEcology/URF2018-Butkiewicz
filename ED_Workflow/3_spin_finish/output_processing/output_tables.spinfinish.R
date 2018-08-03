@@ -8,7 +8,7 @@ library(car)
 all.runs <- dir("../extracted_output.v3/")
 
 for(RUNID in all.runs){
-  path.nc <- file.path("../extraacted_output.v3",RUNID) #Set up path files.
+  path.nc <- file.path("../extracted_output.v3",RUNID) #Set up path files.
   files.nc <- dir(path.nc,"ED2")
   
   print(RUNID) #Keep track of where the function is currently working.
@@ -22,7 +22,7 @@ for(RUNID in all.runs){
     
     dat.cohort <- data.frame(RUNID=RUNID,
                              year=i,
-                             patch = ncvar_get(ncT, "Cohort_PatchID")[,7], #Just looking at the month of June here. 
+                             patch = ncvar_get(ncT, "Cohort_PatchID")[,7], #Just looking at the month of July here. 
                              pft   = ncvar_get(ncT, "Cohort_PFT")[,7], 
                              agb   = ncvar_get(ncT, "Cohort_AbvGrndBiom")[,7], # kgC/m2
                              dens  = ncvar_get(ncT, "Cohort_Density")[,7], # trees/m2
