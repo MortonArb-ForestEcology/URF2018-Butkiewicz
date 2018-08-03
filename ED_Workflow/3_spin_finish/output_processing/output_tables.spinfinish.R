@@ -84,7 +84,7 @@ for(RUNID in all.runs){
     dat.patch$p.dbh.tree <- dat.patch$dbh.tree * dat.patch$area/sum(area.tree)
     
     dat.site <- aggregate(dat.patch[,c("p.agb","p.dens","p.dbh","p.ba","p.dens.tree","p.dbh.tree","p.ba.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
-    dat.site <- aggregate(dat.patch[,"dbh.max"],by=list(dat.patch$pft),FUN=max[,"x"])
+    dat.site$dbh.max <- aggregate(dat.patch[,"dbh.max"], by=list(dat.patch$pft), FUN=max)[,"x"]
     
     #Make the pft's more user-friendly: 
     colnames(dat.site)[1] <- "pft"
