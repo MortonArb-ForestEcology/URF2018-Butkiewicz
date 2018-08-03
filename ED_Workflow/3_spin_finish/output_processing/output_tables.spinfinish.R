@@ -20,7 +20,7 @@ for(RUNID in all.runs){
     table.agb <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_AbvGrndBiom"),ncol=12))
     table.dens <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_Density"),ncol=12))
     table.dbh <- as.data.frame(matrix(ncvar_get(ncT, "Cohort_DBH"),ncol=12))
-    
+
     dat.cohort <- data.frame(month=rep(1:ncol(table.pft),each=nrow(table.pft)), #The choice of table.pft to count the number of months is arbitrary. 
                              patch = stack(table.patch)[,1],
                              pft = stack(table.pft)[,1], # kgC/m2
@@ -32,6 +32,10 @@ for(RUNID in all.runs){
     dat.cohort$p.dens <- NA # creating a placeholder column
     dat.cohort$p.dbh <- NA # creating a placeholder column
     dat.cohort$dbh.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dbh, NA) #This creates a column of DBH that only includes values from the dbh column that are greater than 10 cm. 
+
+    #Create some columns for Basal Area. I was unable to find an actual Basal Area variable so we'll have to calculate it from DBH and density. 
+    dat.cohort$ba <- NA
+    dat.cohort$ba.tree <- ifelse(dat.cohort$ba>=10,dat.cohort$ba,NA)
     
     # Basically, "variable" is the measurement of every single tree in the patch. 
     #            "variable.tree" is the measurement of every tree with a dbh >10 cm. 
@@ -55,12 +59,16 @@ for(RUNID in all.runs){
         dat.tmp$p.dens.tree  <- dat.tmp$dens.tree/dens.tree # density of trees above our DBH weighted by patch area
         dat.tmp$p.dbh  <- dat.tmp$dbh * dat.tmp$p.dens 
         dat.tmp$p.dbh.tree  <- dat.tmp$dbh.tree * dat.tmp$p.dens.tree
+        dat.tmp$ba <- ((dat.tmp$dbh)*(0.5*pi))^2
+        dat.tmp$ba <- dat.tmp$ba*dat.tmp$dens
+        dat.tmp$ba.tree <- ((dat.tmp$dbh.tree)*(0.5*pi))^2
+        dat.tmp$ba.tree <- dat.tmp$ba.tree*dat.tmp$dens.tree
         
-        dat.cohort[row.ind,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] <- dat.tmp[,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] # put the new values into our table
+        dat.cohort[row.ind,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree","ba","ba.tree")] <- dat.tmp[,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree","ba","ba.tree")] # put the new values into our table
       } # Close PFT loop
     } # Close PCH (patch) loop 
     
-    dat.patch <- aggregate(dat.cohort[,c("agb", "dens", "p.dbh", "dens.tree", "p.dbh.tree")], by=dat.cohort[,c("patch", "pft")], FUN=sum, na.rm=T)
+    dat.patch <- aggregate(dat.cohort[,c("agb", "dens", "p.dbh", "dens.tree", "p.dbh.tree","ba","ba.tree")], by=dat.cohort[,c("patch", "pft")], FUN=sum, na.rm=T)
     dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("patch", "pft")], FUN=max)[,"x"],2) # rounding to 2 decimal places
     names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
     
@@ -75,10 +83,12 @@ for(RUNID in all.runs){
     dat.patch$p.dens <- dat.patch$dens * dat.patch$area
     dat.patch$p.dbh <- dat.patch$dbh * dat.patch$area
     dat.patch$p.dens.tree <- dat.patch$dens.tree * dat.patch$area
+    dat.patch$p.ba <- dat.patch$ba*dat.patch$area
     
     # For trees, we need to weight by area of patches with TREES
     area.tree <- dat.patch[dat.patch$pft==10 & !is.na(dat.patch$dbh.tree),"area"]
     dat.patch$p.dbh.tree <- dat.patch$dbh.tree * dat.patch$area/sum(area.tree)
+    dat.patch$p.ba.tree <- dat.patch$ba.tree*dat.patch$area/sum(area.tree)
     
     dat.site <- aggregate(dat.patch[,c("p.agb", "p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
     dat.site$dbh.max <- aggregate(dat.patch[,"dbh.max"], by=list(dat.patch$pft), FUN=max)[,"x"]
@@ -92,6 +102,9 @@ for(RUNID in all.runs){
     # Make the pft names more user-friendly. 
     
     dat.site <- car::recode(dat.site$pft, "'5'='Grasses'; '10'='Hardwoods'")
+    
+    # Add DBH 
+    
     
     # Add a binary fire variable. 
     fire <- matrix(ncvar_get(ncT,"Fire_flux"))
