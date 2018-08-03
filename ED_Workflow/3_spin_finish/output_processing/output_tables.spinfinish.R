@@ -89,7 +89,7 @@ for(RUNID in all.runs){
     #Make the pft's more user-friendly: 
     colnames(dat.site)[1] <- "pft"
     dat.site <- subset(dat.site, subset=pft!=0)
-    dat.site <- car::recode(dat.site$pft, "'5'='Grasses'; '10'='Hardwoods'")
+    dat.site$pft <- car::recode(dat.site$pft, "'5'='Grasses'; '10'='Hardwoods'")
     
     # Add RUNID and year information: 
     dat.site <- data.frame(RUNID=RUNID,
