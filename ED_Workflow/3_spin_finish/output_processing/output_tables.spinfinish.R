@@ -16,9 +16,6 @@ for(RUNID in all.runs){
   for(i in 1:length(files.nc)){
     print(i) #Keep track of where function is currently working.
     ncT <- nc_open(file.path(path.nc,files.nc[i]))
-    # ncT <- nc_open("/Users/Cori/Research/URF 2018 Butkiewicz/Project_Output/3_spin_finish/ED2.1827.nc")
-    # RUNID="CD-SC-FN-TN-IN"
-    # i=27
     
     dat.cohort <- data.frame(RUNID=RUNID,
                              year=i,
@@ -46,7 +43,7 @@ for(RUNID in all.runs){
       for(PFT in unique(dat.cohort$pft)){
         row.ind <- which(dat.cohort$patch==PCH & dat.cohort$pft==PFT) # Row numbers for this group. 
         
-        dat.tmp <- dat.cohort[row.ind] # Subset our data to something small for our sanity. 
+        dat.tmp <- dat.cohort[row.ind,] # Subset our data to something small for our sanity. 
         dens.tot <- sum(dat.tmp$dens) # Sum of cohort densities by patch and PFT. 
         dens.tree <- sum(dat.tmp$dens.tree, na.rm=T) # Total density of the trees with a DBH above our threshold value. 
         
@@ -63,7 +60,7 @@ for(RUNID in all.runs){
       }# Close PFT loop
     }# Close PCH loop
     
-    dat.patch <- aggregate(dat.cohort[,c("agb","dens","p.dbh","dens.tree","p.dbh","dens.tree","p.dbh.tree","ba","ba.tree")],by=dat.cohort[,c("patch","pft")], FUN=sum, na.rm=T)
+    dat.patch <- aggregate(dat.cohort[,c("agb","dens","p.dbh","dens.tree","p.dbh","p.dens.tree","p.dbh.tree","ba","ba.tree")],by=dat.cohort[,c("patch","pft")], FUN=sum, na.rm=T)
     dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("patch","pft")],FUN=max)[,"x"],2)
     names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
     
