@@ -14,10 +14,15 @@ mort.bur <- function(FIRE){
 	return(mrate)
 }
 
-# By plu
-diam.range <- seq(5, 60, by=5) # We can generate a range of diameters to feed into our function; # Note, they only really look at 5-60 cm range
+# We can generate a range of diameters to feed into our function; 
+# Note, they only really look at 5-60 cm range
+diam.range <- seq(5, 60, by=5) 
 mrate <- mort.pin(FIRE=1, DIAM=diam.range)
-
 plot(mrate ~ diam.range, type="b")
+
+# Survivorship is the inverse of mortality
+1-mort.pin(FIRE=1, DIAM=10)
+1-mort.pin(FIRE=1, DIAM=30)
+
 
 
