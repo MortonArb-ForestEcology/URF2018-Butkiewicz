@@ -14,9 +14,10 @@ mort.bur <- function(FIRE){
 	return(mrate)
 }
 
-mort.pin(FIRE=1, DIAM=10)
-mort.pin(FIRE=1, DIAM=20)
-mort.pin(FIRE=1, DIAM=40)
+# By plu
+diam.range <- seq(5, 60, by=5) # We can generate a range of diameters to feed into our function; # Note, they only really look at 5-60 cm range
+mrate <- mort.pin(FIRE=1, DIAM=diam.range)
 
-mort.bur(FIRE=1)
+plot(mrate ~ diam.range, type="b")
+
 
