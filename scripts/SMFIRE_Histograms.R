@@ -45,4 +45,5 @@ for(i in 1:length(files.sand)){
   nc_close(sand.test) 
 } # Close i loop
 
-# Find 5th percentile and generate histograms
+# Find threshold for fire to occur every 20 years. 
+FRI_5 <- quantile(sm_fire$sm_fire, 0.05)
