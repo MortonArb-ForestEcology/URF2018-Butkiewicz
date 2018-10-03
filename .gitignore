@@ -13,3 +13,4 @@ ED_Workflow/1_spin_initial/extracted_output/*
 *.pss
 *.RData
 ED_Workflow/1_spin_initial/spininit_data/*
+*.nc

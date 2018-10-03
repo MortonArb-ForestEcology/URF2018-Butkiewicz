@@ -112,10 +112,10 @@ SAS.ED2 <- function(dir.analy, dir.histo, outdir, prefix, lat, lon, blckyr, yrs.
   #        with; if using the means from the spin met cycle work best, insert them here
   # This will also be necessary for helping update disturbance parameter
   #---------------------------------------
-  slmsts <- calc.slmsts(slxsand, slxclay)
-  slpots <- calc.slpots(slxsand, slxclay)
-  slbs   <- calc.slbs(slxsand, slxclay)
-  soilcp <- calc.soilcp(slmsts, slpots, slbs)
+  slmsts <- calc.slmsts(slxsand, slxclay) # Saturated Water Capacity
+  slpots <- calc.slpots(slxsand, slxclay) # Saturated water potential
+  slbs   <- calc.slbs(slxsand, slxclay) # Exponent
+  soilcp <- calc.soilcp(slmsts, slpots, slbs) # Dry water capacity
   
   # Calculating Soil fire characteristics
   soilfr=0
