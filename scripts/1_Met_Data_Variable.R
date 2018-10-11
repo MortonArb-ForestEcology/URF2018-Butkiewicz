@@ -1,3 +1,4 @@
+# Read in the raw CSV
 PDSI.GLSP <- read.csv("../data_raw/met/month/PDSI_AllMembers.csv") #Reading in the CSV, and called it PDSI (for the name of the drought index) .GLSP (for Glacial Lakes state park).
 class(PDSI.GLSP)
 ncol(PDSI.GLSP) #This should tell me the number of columns. I want to add a new column, so that's how this will work. There should be 201 columns. 
@@ -12,8 +13,9 @@ PDSI.GLSP$year <- rep(1800:(1800-1+nrow(PDSI.GLSP)/12), length.out=nrow(PDSI.GLS
 ncol(PDSI.GLSP)
 summary(PDSI.GLSP$year)
 
-# Subset the table for only 1800-1829. 
 
+
+# Subset the table for only 1800-1829. 
 #Does NOT work!!!
 PDSI.GLSP_29yr <- subset(PDSI.GLSP,subset=year<=1829)
 

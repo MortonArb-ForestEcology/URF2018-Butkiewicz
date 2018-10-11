@@ -9,7 +9,7 @@ exp.design.wb <- gs_title("URF 2018 Experimental Design")
 exp.design.wb # Prints all the metadata
 
 # Get the particular sheet & coerce it into a data frame rather than something special
-exp.design <- data.frame(gs_read(exp.design.wb, ws="ExpDesign"))
+exp.design <- data.frame(gs_read(exp.design.wb, ws="NewExpDesign"))
 summary(exp.design)
 
 # Put the treatments in the order we want to do them
