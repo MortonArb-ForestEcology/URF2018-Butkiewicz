@@ -127,7 +127,7 @@ do
 	CLAY=${clay[FILE]}
 # 	INC_FIRE=${include_fire[FILE]}
 	SM_FIRE=${sm_fire[FILE]}
-	FIRE_INT=${fire_intensity[FILE]}
+	FIRE_INT=${fire_int[FILE]}
 	
 	echo $RUN
 
@@ -161,7 +161,9 @@ do
         sed -i "s/POI_LON  =.*/POI_LON  = $LON/" ED2IN # set RUN longitude
         sed -i "s/SLXCLAY =.*/SLXCLAY = $CLAY/" ED2IN # set fraction soil clay
         sed -i "s/SLXSAND =.*/SLXSAND = $SAND/" ED2IN # set fraction soil sand
-   		sed -i "s/FIRE_PARAMETER  =.*/FIRE_PARAMETER  = $FIRE_INT/" ED2IN # Set the fire parameter for later
+#         sed -i "s/NL%INCLUDE_FIRE    = .*/NL%INCLUDE_FIRE    = $INC_FIRE/" ED2IN # turn on fire if run w/ fire on
+        sed -i "s/NL%FIRE_PARAMETER  = .*/NL%FIRE_PARAMETER  = $FIRE_INT/" ED2IN # set fire intensity parameter
+        sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = $SM_FIRE/" ED2IN # set fire threshold parameter
 
 		# spin spawn start changes -- 
 		# Note: spins require a different first script because they won't have any 
