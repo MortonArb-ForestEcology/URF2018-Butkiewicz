@@ -59,23 +59,23 @@ sed -i "s,$BU_base_spin,$file_base,g" ${file_base}/0_setup/PL_MET_HEADER
 mkdir -p $file_dir
 
 # Extract the file names of RUNs that haven't been started yet
-runs_all=($(awk -F ',' 'NR>1 && $14=="" {print $2}' ${RUN_file}))
-lat_all=($(awk -F ',' 'NR>1 && $14=="" {print $4}' ${RUN_file}))
-lon_all=($(awk -F ',' 'NR>1 && $14=="" {print $3}' ${RUN_file}))
+runs_all=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
+lat_all=45.54127
+lon_all=-95.5313
 
 # These will need to get updated with the proper column numbers
-met_all=($(awk -F ',' 'NR>1 && $14=="" {print $5}' ${RUN_file}))
-sand_all=($(awk -F ',' 'NR>1 && $14=="" {print $6}' ${RUN_file}))
-clay_all=($(awk -F ',' 'NR>1 && $14=="" {print $7}' ${RUN_file}))
-inc_fire_all=($(awk -F ',' 'NR>1 && $14=="" {print $9}' ${RUN_file})) # INCLUDE_FIRE
-sm_fire_all=($(awk -F ',' 'NR>1 && $14=="" {print $11}' ${RUN_file})) # SM_FIRE
-fire_int_all=($(awk -F ',' 'NR>1 && $14=="" {print $12}' ${RUN_file})) # FIRE_INTENSITY
+met_all=($(awk -F ',' 'NR>1 {print $6}' ${RUN_file}))
+sand_all=($(awk -F ',' 'NR>1 {print $3}' ${RUN_file}))
+clay_all=($(awk -F ',' 'NR>1 {print $4}' ${RUN_file}))
+# inc_fire_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # INCLUDE_FIRE
+sm_fire_all=($(awk -F ',' 'NR>1 {print $7}' ${RUN_file})) # SM_FIRE
+fire_int_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # FIRE_INTENSITY
 
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir
-	file_done=(C*)
+	file_done=(s*)
 popd
-file_done=(${file_done[@]/"C*"/})
+file_done=(${file_done[@]/"s*"/})
 
 # Because we want to preserve the order of runs, I can't find away around doing a loop
 # - This is slower than other options, but makes sure we still do our controls first
@@ -97,12 +97,12 @@ for((i=0;i<${#runs_all[@]};i++)); do
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
 		runs+=("$RUN")
-		lat+=("${lat_all[i]}")
-		lon+=("${lon_all[i]}")
+# 		lat+=("${lat_all[i]}")
+# 		lon+=("${lon_all[i]}")
 		met+=("${met_all[i]}")
 		sand+=("${sand_all[i]}")
 		clay+=("${clay_all[i]}")
-		inc_fire+=("${inc_fire_all[i]}")
+# 		inc_fire+=("${inc_fire_all[i]}")
 		sm_fire+=("${sm_fire_all[i]}")
 		fire_int+=("${fire_int_all[i]}")
 	fi    
@@ -118,12 +118,14 @@ for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't hav
 do
 	# RUN Name and Lat/Lon
 	RUN=${runs[FILE]}
-	LAT=${lat[FILE]}
-	LON=${lon[FILE]}	
+# 	LAT=${lat[FILE]}
+# 	LON=${lon[FILE]}	
+	LAT=$lat_all
+	LON=$lon_all
 	MET=${met[FILE]}
 	SAND=${sand[FILE]}
 	CLAY=${clay[FILE]}
-	INC_FIRE=${include_fire[FILE]}
+# 	INC_FIRE=${include_fire[FILE]}
 	SM_FIRE=${sm_fire[FILE]}
 	FIRE_INT=${fire_intensity[FILE]}
 	

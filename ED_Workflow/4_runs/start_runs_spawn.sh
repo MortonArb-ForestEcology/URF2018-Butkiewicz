@@ -44,7 +44,7 @@ mkdir -p $runs_dir
 pushd $runs_dir
 	file_done=(C*)
 popd
-file_done=(${file_done[@]/"C*"/})
+file_done=(${file_done[@]/"s*"/})
 
 # Getting a list of all runs
 runs_all=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
@@ -53,7 +53,7 @@ runs_all=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
 pushd $spin_dir
 	spins=(C*)
 popd
-spins=(${spins[@]/"C*"/})
+spins=(${spins[@]/"s*"/})
 
 # Subset the runs to just what's in the spin directory
 runs=()

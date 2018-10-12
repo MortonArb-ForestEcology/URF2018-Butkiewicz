@@ -20,7 +20,7 @@ if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 ed.order <- read.csv("ExperimentalDesign.csv")
 
 # Clean up the GCM strings
-ed.order2 <- stringr::str_split(unique(ed.order$climate), "_")
+ed.order2 <- stringr::str_split(unique(ed.order$Climate), "_")
 ed.order2 <- data.frame(matrix(unlist(ed.order2), ncol=length(ed.order2[[1]]), byrow=T))
 names(ed.order2) <- c("GCM", "ens")
 ed.order2$GCM <- as.factor(gsub("[.]", "-", ed.order2$GCM))
