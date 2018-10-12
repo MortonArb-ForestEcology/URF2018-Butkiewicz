@@ -136,8 +136,8 @@ do
 
         sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
         sed -i "s,SFILIN   = .*,SFILIN   = '${SAS_dir}${RUN}/${RUN}',g" ED2IN # set initial file path to the SAS spin folder
-        sed -i "s/NL%DTLSM  .*/NL%DTLSM   = 480/" ED2IN # change from bare ground to .css/.pss run
-        sed -i "s/NL%RADFRQ .*/NL%RADFRQ  = 480/" ED2IN # set initial file path to the SAS spin folder
+        sed -i "s/NL%DTLSM  .*/NL%DTLSM   = 450/" ED2IN # change integration step if necessary
+        sed -i "s/NL%RADFRQ .*/NL%RADFRQ  = 450/" ED2IN # change integration step if necessary
         
         
         # Change Fire & Disturbance Params HERE
