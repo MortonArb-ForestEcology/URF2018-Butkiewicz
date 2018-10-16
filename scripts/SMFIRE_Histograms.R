@@ -65,22 +65,19 @@ hist(smfire_df$sm_fire,
 
 library(MASS)
 # I want a table with predicted sm_fire values.
-sm_fire <- c(0, 0.01, 0.015, 0.02, 0.025)
+sm_fire <- c(0, 0.01, 0.015, 0.02, 0.025, 0.03)
 s=0
 for (s in sm_fire){
   smfire_subset <- smfire_df[which(smfire_df$sm_fire <= s),]
   FRI <- as.numeric(1/(fractions(length(smfire_subset)/length(smfire_df$sm_fire))))
+  FRI <- data.frame(FRI=FRI,
+                    sm_fire=s)
   if(s==0){
-    FRI_df <- data.frame(FRI=FRI,
-                         sm_fire=s)
+    FRI_df <- data.frame(FRI)
   } else {
     FRI_df <- rbind(FRI_df, FRI)
   }
 }
-
-
-smfire_subset <- smfire_df[which(smfire_df$sm_fire <= 0.025),]
-FRI <- as.numeric(1/(fractions(length(smfire_subset)/length(smfire_df$sm_fire))))
 
 #########
 # I don't have the time to figure out how to loop this properly so I'll just tack the Clay histograms onto the end until I can figure something out
@@ -125,6 +122,22 @@ FRI_20
 # Find threshold for fire to occur every 5 years. 
 FRI_5 <- quantile(smfire_df$sm_fire, 0.20)
 FRI_5 #This returns a value around 0.02, which is what I had set for the low fire return interval in my dry climates.
+
+library(MASS)
+# I want a table with predicted sm_fire values.
+sm_fire <- c(0, 0.01, 0.015, 0.02, 0.025, 0.03)
+s=0
+for (s in sm_fire){
+  smfire_subset <- smfire_df[which(smfire_df$sm_fire <= s),]
+  FRI <- as.numeric(1/(fractions(length(smfire_subset)/length(smfire_df$sm_fire))))
+  FRI <- data.frame(FRI=FRI,
+                    sm_fire=s)
+  if(s==0){
+    FRI_df <- data.frame(FRI)
+  } else {
+    FRI_df <- rbind(FRI_df, FRI)
+  }
+}
 
 #Generate a histogram
 hist(smfire_df$sm_fire,
