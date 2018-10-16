@@ -73,8 +73,8 @@ kh_active_depth = -0.2
 # dpm   <- c(31,28,31,30,31,30,31,31,30,31,30,31) # days per month
 sufx  <- "g01.h5"
 
-expdesign <- expdesign[expdesign$RunID %in% dir(in.base),] # Do what we've spunup already
-expdesign <- expdesign[!expdesign$RunID %in% dir(out.base),] # Don't do anything we've already done the SAS for
+expdesign <- expdesign[expdesign$RUNID %in% dir(in.base),] # Do what we've spunup already
+expdesign <- expdesign[!expdesign$RUNID %in% dir(out.base),] # Don't do anything we've already done the SAS for
 #---------------------------------------
 
 # ------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ expdesign <- expdesign[!expdesign$RunID %in% dir(out.base),] # Don't do anything
 source("../0_setup/ED_Calcs_Soil_Fire.R")
 source("SAS.ED2.R")
 for(s in 1:nrow(expdesign)){
-  prefix <- expdesign$RunID[s]
+  prefix <- expdesign$RUNID[s]
   
   cat("***** Processing site:", paste(prefix), "\n")
   # Read run settings % Sand & % CLAY from table
