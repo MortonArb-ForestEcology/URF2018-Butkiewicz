@@ -92,7 +92,7 @@ for(s in 1:nrow(expdesign)){
   sm_fire <- expdesign$SM_FIRE[s]
   fire_intensity <- expdesign$Fire.Intensity
   lat <- round(expdesign$latitude[s],2)
-  lon <- round(expdesign$latitude[s],2)
+  lon <- round(expdesign$longitude[s],2)
   dir.analy <- file.path(in.base, prefix, "analy")
   dir.histo <- file.path(in.base, prefix, "histo")
   outdir <- file.path(out.base, prefix)
