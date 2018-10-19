@@ -64,12 +64,12 @@ lat_all=45.54127
 lon_all=-95.5313
 
 # These will need to get updated with the proper column numbers
-met_all=($(awk -F ',' 'NR>1 {print $6}' ${RUN_file}))
-sand_all=($(awk -F ',' 'NR>1 {print $3}' ${RUN_file}))
-clay_all=($(awk -F ',' 'NR>1 {print $4}' ${RUN_file}))
+met_all=($(awk -F ',' 'NR>1 {print $8}' ${RUN_file}))
+sand_all=($(awk -F ',' 'NR>1 {print $5}' ${RUN_file}))
+clay_all=($(awk -F ',' 'NR>1 {print $6}' ${RUN_file}))
 # inc_fire_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # INCLUDE_FIRE
-sm_fire_all=($(awk -F ',' 'NR>1 {print $7}' ${RUN_file})) # SM_FIRE
-fire_int_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # FIRE_INTENSITY
+sm_fire_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # SM_FIRE
+fire_int_all=($(awk -F ',' 'NR>1 {print $11}' ${RUN_file})) # FIRE_INTENSITY
 
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir

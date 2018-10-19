@@ -46,8 +46,8 @@ mkdir -p $finish_dir
 # Getting a list of all runs
 runs=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
 inc_fire=2 # INCLUDE_FIRE
-sm_fire=($(awk -F ',' 'NR>1 {print $7}' ${RUN_file})) # SM_FIRE
-fire_int=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # FIRE_INTENSITY
+sm_fire=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # SM_FIRE
+fire_int=($(awk -F ',' 'NR>1 {print $11}' ${RUN_file})) # FIRE_INTENSITY
 
 
 # Get the list of what grid runs have already finished spinups
