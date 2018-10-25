@@ -443,10 +443,10 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # Basics:
     out <- add(getHdf5Data(ncT, "DBH"), "Cohort_DBH") #cm
-    out <- add(getHdf5Data(ncT, "BA_CO")*nplant, "Cohort_BasalArea") # cm2/m2
-    out <- add(getHdf5Data(ncT, "AGB_CO")*nplant, "Cohort_AbvGrndBiom") #kgC/m2
-    out <- add(getHdf5Data(ncT, "BALIVE")*nplant, "Cohort_TotLivBiom") # kgC /m2
-    out <- add(getHdf5Data(ncT, "BDEAD")*nplant, "Cohort_TotDeadBiom")
+    out <- add(getHdf5Data(ncT, "BA_CO"), "Cohort_BasalArea") # cm2/m2
+    out <- add(getHdf5Data(ncT, "AGB_CO"), "Cohort_AbvGrndBiom") #kgC/m2
+    out <- add(getHdf5Data(ncT, "BALIVE"), "Cohort_TotLivBiom") # kgC /m2
+    out <- add(getHdf5Data(ncT, "BDEAD"), "Cohort_TotDeadBiom")
     out <- add(getHdf5Data(ncT, "LAI_CO"), "Cohort_LAI")
     out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
 
