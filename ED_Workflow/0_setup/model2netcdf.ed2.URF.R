@@ -326,16 +326,16 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # Drivers
     # -------
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_CO2_PY"), "CO2air")  ## CO2air
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "LWdown")  ## Lwdown
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PRSS_PY"), "Psurf")  ## Psurf
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_SHV_PY"), "Qair")  ## Qair
-    out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "SWdown")  ## Swdown
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
-    out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
-    out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
-    # -------
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_CO2_PY"), "CO2air")  ## CO2air
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "LWdown")  ## Lwdown
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_PRSS_PY"), "Psurf")  ## Psurf
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_SHV_PY"), "Qair")  ## Qair
+    # out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "SWdown")  ## Swdown
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
+    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
+    # out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
+    # # -------
     
     # -------
     # Site-Level Disturbance information
@@ -347,40 +347,40 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # Site-Level Carbon & Water Fluxes
     # -------
-    out$SLZ <- slzdata
-    
-    out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "AutoResp")  ## AutoResp
-    out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), "CO2CAS")  ## CO2CAS
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), "GPP")  ## GPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), "HeteroResp")  ## HeteroResp
-    out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
-                 getHdf5Data(ncT, "MMEAN_RH_PY"), "NEE")  ## NEE
-    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
-    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "TotalResp")  ## TotalResp
-    
-    out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
-    out <- add(getHdf5Data(ncT, "MMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "MMEAN_VAPOR_WC_PY") + 
-                 getHdf5Data(ncT, "MMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Evap")  ## Evap
+    # out$SLZ <- slzdata
+    # 
+    # out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "AutoResp")  ## AutoResp
+    # out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), "CO2CAS")  ## CO2CAS
+    # out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), "GPP")  ## GPP
+    # out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), "HeteroResp")  ## HeteroResp
+    # out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
+    #              getHdf5Data(ncT, "MMEAN_RH_PY"), "NEE")  ## NEE
+    # out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
+    # out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "TotalResp")  ## TotalResp
+    # 
+    # out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
+    # out <- add(getHdf5Data(ncT, "MMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "MMEAN_VAPOR_WC_PY") + 
+    #              getHdf5Data(ncT, "MMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Evap")  ## Evap
 
     # Site-level variables related to water & carbon stress
-    out <- add(getHdf5Data(ncT, "MMEAN_AVAILABLE_WATER_PY"), "WaterAvail")  ## WaterAvail=Available Water kg/m2
-    out <- add(getHdf5Data(ncT, "MMEAN_A_CLOSED_PY"), "A_Closed")  ## Minimum assimilation rate; umol/m2l/s
-    out <- add(getHdf5Data(ncT, "MMEAN_A_CO2_PY"), "A_CO2")  ## CO2-limited assimilation rate; umol/m2l/s
-    out <- add(getHdf5Data(ncT, "MMEAN_A_LIGHT_PY"), "A_Light")  ## Light-limited assimilation rate; umol/m2l/s
-    out <- add(getHdf5Data(ncT, "MMEAN_A_NET_PY"), "A_Net")  ## Actual assimilation rate; umol/m2l/s
-    out <- add(getHdf5Data(ncT, "MMEAN_A_OPEN_PY"), "A_Open")  ##  Assimilation rate (no soil moist. stress); umol/m2l/s
-    out <- add(getHdf5Data(ncT, "MMEAN_FSW_PY"), "MoistStress")  ## Moisture stress
-    out <- add(getHdf5Data(ncT, "MMEAN_FS_OPEN_PY"), "NetStress")  ## Net stress factor
-    out <- add(getHdf5Data(ncT, "MMEAN_PSI_OPEN_PY"), "Transp_StressMin")  ## Transpiration with no stress
-    out <- add(getHdf5Data(ncT, "MMEAN_PSI_CLOSED_PY"), "Transp_StressMax")  ## Transpiration at maximum stress
+    # out <- add(getHdf5Data(ncT, "MMEAN_AVAILABLE_WATER_PY"), "WaterAvail")  ## WaterAvail=Available Water kg/m2
+    # out <- add(getHdf5Data(ncT, "MMEAN_A_CLOSED_PY"), "A_Closed")  ## Minimum assimilation rate; umol/m2l/s
+    # out <- add(getHdf5Data(ncT, "MMEAN_A_CO2_PY"), "A_CO2")  ## CO2-limited assimilation rate; umol/m2l/s
+    # out <- add(getHdf5Data(ncT, "MMEAN_A_LIGHT_PY"), "A_Light")  ## Light-limited assimilation rate; umol/m2l/s
+    # out <- add(getHdf5Data(ncT, "MMEAN_A_NET_PY"), "A_Net")  ## Actual assimilation rate; umol/m2l/s
+    # out <- add(getHdf5Data(ncT, "MMEAN_A_OPEN_PY"), "A_Open")  ##  Assimilation rate (no soil moist. stress); umol/m2l/s
+    # out <- add(getHdf5Data(ncT, "MMEAN_FSW_PY"), "MoistStress")  ## Moisture stress
+    # out <- add(getHdf5Data(ncT, "MMEAN_FS_OPEN_PY"), "NetStress")  ## Net stress factor
+    # out <- add(getHdf5Data(ncT, "MMEAN_PSI_OPEN_PY"), "Transp_StressMin")  ## Transpiration with no stress
+    # out <- add(getHdf5Data(ncT, "MMEAN_PSI_CLOSED_PY"), "Transp_StressMax")  ## Transpiration at maximum stress
     # -------
     
     # -------
     # Site-Level Soil Characteristics by depth
     # -------
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
-    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
+    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
+    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
+    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
     # -------
     
     # --------------------------
@@ -399,8 +399,8 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
   
     # Patch-level
     # out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
-    out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
-    out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
+    # out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
+    # out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
     # 1 = clear cut (crop & pasture)
     # 2 = forest plantation
     # 3 = tree fall
@@ -445,17 +445,17 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "DBH"), "Cohort_DBH") #cm
     out <- add(getHdf5Data(ncT, "BA_CO"), "Cohort_BasalArea") # cm2/m2
     out <- add(getHdf5Data(ncT, "AGB_CO"), "Cohort_AbvGrndBiom") #kgC/m2
-    out <- add(getHdf5Data(ncT, "BALIVE"), "Cohort_TotLivBiom") # kgC /m2
-    out <- add(getHdf5Data(ncT, "BDEAD"), "Cohort_TotDeadBiom")
-    out <- add(getHdf5Data(ncT, "LAI_CO"), "Cohort_LAI")
-    out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
+    # out <- add(getHdf5Data(ncT, "BALIVE"), "Cohort_TotLivBiom") # kgC /m2
+    # out <- add(getHdf5Data(ncT, "BDEAD"), "Cohort_TotDeadBiom")
+    # out <- add(getHdf5Data(ncT, "LAI_CO"), "Cohort_LAI")
+    # out <- add(getHdf5Data(ncT, "HITE"), "Cohort_Height") # Height in m
 
     # Water Stress
     # out <- add(array(getHdf5Data(ncT, "CB")[13,]), "Cohort_CB") # kgC/pl
     # out <- add(array(getHdf5Data(ncT, "CB_MOISTMAX")[13,]), "Cohort_CB_MoistMax") # kgC/pl
     # out <- add(array(getHdf5Data(ncT, "CB_LIGHTMAX")[13,]), "Cohort_CB_LightMax") # kgC/pl
     # out <- add(array(getHdf5Data(ncT, "CB_MLMAX")[13,]), "Cohort_CB_MLMax") # kgC/pl
-    out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # kgC/pl
+    # out <- add(getHdf5Data(ncT, "CBR_BAR"), "Cohort_CB_MeanRel") # kgC/pl
     # CB= CarbonBalance
     # CB_MoistMax = Carbon Balance with Full water availability
     # CB_LightMax = Carbon Balance with Full light availability
