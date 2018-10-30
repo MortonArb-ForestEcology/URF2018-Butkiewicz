@@ -8,7 +8,7 @@ mstmip_local <- read.csv("../0_setup/pecan.utils/mstmip_local.csv", sep=";")
 # some site metadata
 sitelat =  45.54127
 sitelon = -95.5313
-start_date <- "1801-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
+start_date <- "2200-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
 end_date = "2300-12-31"
 
 ## Original
