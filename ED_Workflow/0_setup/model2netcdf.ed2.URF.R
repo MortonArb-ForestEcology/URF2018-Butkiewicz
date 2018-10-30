@@ -155,7 +155,7 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     print("*** Writing netCDF file ***")
     
     out <- unlist(out_list, recursive = FALSE)
-    nc <- ncdf4::nc_create(outfile, nc_var)
+    nc <- ncdf4::nc_create(outfiles, nc_var)
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
     for (VAR in names(nc_var)) {
       ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["E"]][[VAR]])
