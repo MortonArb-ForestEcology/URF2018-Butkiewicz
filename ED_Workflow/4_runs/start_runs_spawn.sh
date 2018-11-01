@@ -42,7 +42,7 @@ mkdir -p $runs_dir
 
 # Get the list of what grid runs already have at least started full runs
 pushd $runs_dir
-	file_done=(C*)
+	file_done=(s*)
 popd
 file_done=(${file_done[@]/"s*"/})
 
@@ -51,7 +51,7 @@ runs_all=($(awk -F ',' 'NR>1 {print $2}' ${RUN_file}))
 
 # Get the list of what grid runs have at least started the spin finish
 pushd $spin_dir
-	spins=(C*)
+	spins=(s*)
 popd
 spins=(${spins[@]/"s*"/})
 
