@@ -349,13 +349,13 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # out$SLZ <- slzdata
     # 
-    # out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "AutoResp")  ## AutoResp
+    out <- add(getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "AutoResp")  ## AutoResp
     # out <- add(getHdf5Data(ncT, "MMEAN_CAN_CO2_PY"), "CO2CAS")  ## CO2CAS
-    # out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), "GPP")  ## GPP
-    # out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), "HeteroResp")  ## HeteroResp
-    # out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
-    #              getHdf5Data(ncT, "MMEAN_RH_PY"), "NEE")  ## NEE
-    # out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
+    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY"), "GPP")  ## GPP
+    out <- add(getHdf5Data(ncT, "MMEAN_RH_PY"), "HeteroResp")  ## HeteroResp
+    out <- add(-getHdf5Data(ncT, "MMEAN_GPP_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY") + 
+                  getHdf5Data(ncT, "MMEAN_RH_PY"), "NEE")  ## NEE
+    out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
     # out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "TotalResp")  ## TotalResp
     # 
     # out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
@@ -378,9 +378,9 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # -------
     # Site-Level Soil Characteristics by depth
     # -------
-    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
-    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
-    # out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
+    out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
     # -------
     
     # --------------------------
@@ -398,9 +398,9 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "AREA"), "Patch_Area")  ## Area of each Patches
   
     # Patch-level
-    # out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
-    # out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
-    # out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
+    out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
+    out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
+    out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
     # 1 = clear cut (crop & pasture)
     # 2 = forest plantation
     # 3 = tree fall
