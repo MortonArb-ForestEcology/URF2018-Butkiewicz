@@ -145,10 +145,10 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
       out_list[[rflag]] <- put_out$out
     }
     
-    # SLZ specific hack until I figure that out
-    if(!is.null(out_list[["-E-"]]$SLZ)){
-      out_list[["-E-"]]$SLZ <- NULL
-    }
+    # # SLZ specific hack until I figure that out
+    # if(!is.null(out_list[["-E-"]]$SLZ)){
+    #   out_list[["-E-"]]$SLZ <- NULL
+    # }
     
     # ----- write ncdf files
     
@@ -330,9 +330,9 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     # out <- add(getHdf5Data(ncT, "MMEAN_ATM_RLONG_PY"), "LWdown")  ## Lwdown
     # out <- add(getHdf5Data(ncT, "MMEAN_ATM_PRSS_PY"), "Psurf")  ## Psurf
     # out <- add(getHdf5Data(ncT, "MMEAN_ATM_SHV_PY"), "Qair")  ## Qair
-    # out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
+    out <- add(getHdf5Data(ncT, "MMEAN_PCPG_PY"), "Rainf")  ## Rainf
     # out <- add(getHdf5Data(ncT, "MMEAN_ATM_PAR_PY"), "SWdown")  ## Swdown
-    # out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
+    out <- add(getHdf5Data(ncT, "MMEAN_ATM_TEMP_PY"), "Tair")  ## Tair
     # out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
     # out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
     # # -------
@@ -358,7 +358,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "MMEAN_GPP_PY") - getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "NPP")  ## NPP
     out <- add(getHdf5Data(ncT, "MMEAN_RH_PY") + getHdf5Data(ncT, "MMEAN_PLRESP_PY"), "TotalResp")  ## TotalResp
     # 
-    # out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
+    out <- add(getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Tveg")  ## Tveg
     # out <- add(getHdf5Data(ncT, "MMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "MMEAN_VAPOR_WC_PY") + 
     #              getHdf5Data(ncT, "MMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Evap")  ## Evap
 
@@ -398,7 +398,7 @@ read_E_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, ...){
     out <- add(getHdf5Data(ncT, "AREA"), "Patch_Area")  ## Area of each Patches
   
     # Patch-level
-    out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
+    # out <- add(getHdf5Data(ncT, "DISTURBANCE_RATES"), "Disturb_Rate") # Disturbance matrix to/from
     out <- add(getHdf5Data(ncT, "DIST_TYPE"), "Disturb_Type") # Disturbance type per patch
     out <- add(getHdf5Data(ncT, "AVG_MONTHLY_WATERDEF"), "WaterDef") # Average Water Deficit; kg/m2 (Fire ignit)
     # 1 = clear cut (crop & pasture)
@@ -524,11 +524,11 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   
   zg <- ncdf4::ncdim_def("SoilLayerMidpoint", "meters", c(slzdata[1:length(dz)] + dz/2, 0))
   
-  dims  <- list(lon = lon, lat = lat, time = t)
-  dimsz <- list(lon = lon, lat = lat, time = t, nsoil = zg)
-  dimsp <- list(lon = lon, lat = lat, time = t, npatch = pch)
-  dimsc <- list(lon = lon, lat = lat, time = t, ncohort = cht)
-  dimsd <- list(lon = lon, lat = lat, time = t, ndisturb = disturb)
+  dims  <- list(lon = lon, lat = lat, time = t) # time only
+  dimsz <- list(lon = lon, lat = lat, time = t, nsoil = zg) # time x soil 
+  dimsp <- list(lon = lon, lat = lat, time = t, npatch = pch) # time x patches
+  dimsc <- list(lon = lon, lat = lat, time = t, ncohort = cht) # time x cohort
+  dimsd <- list(lon = lon, lat = lat, time = t, ndisturb = disturb) # time x disturbance
   
   # ----- fill list
   
@@ -656,8 +656,8 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
                                          longname = "Number of cohorts in each patch")
   nc_var[["Patch_Area"]] <- ncdf4::ncvar_def("Patch_Area", units = "fraction", dim = list(lon, lat, pch, t), missval = -999, 
                                                  longname = "fraction of total area in patch")
-  # nc_var[["Disturb_Rate"]] <- ncdf4::ncvar_def("Disturb_Rate", units = "fraction", dim = list(lon, lat, disturb, t), missval = -999, 
-                                             # longname = "Disturbance Transiton Matrix")
+  # nc_var[["Disturb_Rate"]] <- ncdf4::ncvar_def("Disturb_Rate", units = "fraction", dim = list(lon, lat, disturb, t), missval = -999,
+  #                                            longname = "Disturbance Transiton Matrix")
   nc_var[["Disturb_Type"]] <- ncdf4::ncvar_def("Disturb_Type", units = "ID", dim = list(lon, lat, pch, t), missval = -999, 
                                              longname = "Disturbance Identifier")
   nc_var[["WaterDef"]] <- ncdf4::ncvar_def("WaterDef", units = "kg/m2", dim = list(lon, lat, pch, t), missval = -999, 
