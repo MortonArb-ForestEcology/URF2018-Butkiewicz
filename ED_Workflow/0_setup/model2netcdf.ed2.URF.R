@@ -158,6 +158,7 @@ model2netcdf.ED2.URF <- function(ed.dir, outdir, sitelat, sitelon, start_date, e
     nc <- ncdf4::nc_create(outfile, nc_var)
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
     for (VAR in names(out_list$E)) {
+      if(VAR=="SLZ") next
       ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["E"]][[VAR]])
       cat(paste(nc_var[[VAR]]$name, nc_var[[VAR]]$longname), file = varfile, sep = "\n")
     }
