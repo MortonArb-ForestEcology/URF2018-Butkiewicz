@@ -5,10 +5,10 @@
 library(ncdf4)
 library(car)
 
-all.runs <- dir("../extracted_output.v3/")
+all.runs <- dir("../extracted_output.v4/")
 
 for(RUNID in all.runs){
-  path.nc <- file.path("../extracted_output.v3",RUNID) #Set up path files.
+  path.nc <- file.path("../extracted_output.v4",RUNID) #Set up path files.
   files.nc <- dir(path.nc,"ED2")
   
   print(RUNID) #Keep track of where the function is currently working.
@@ -117,4 +117,4 @@ for(RUNID in all.runs){
   }# Close i loop
 }# Close RUNID loop
 
-write.csv(dat.out,paste0("./output_runs_ALL.csv"), row.names=F) # Writes the output to one csv. 
+write.csv(dat.out,paste0("./output_runs_v4.csv"), row.names=F) # Writes the output to one csv. 
