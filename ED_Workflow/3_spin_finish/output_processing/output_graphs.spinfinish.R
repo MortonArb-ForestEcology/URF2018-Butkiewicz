@@ -38,7 +38,7 @@ mytheme <- theme_bw()+
 # Basal area was calculated from dbh, tree density, and patch area, and then tracked over time. The graph is labeled with green, 
 # orange, and yellow regions. If the line falls within the green region, the spinup is a forest. If it falls within the yellow 
 # region, it is a prairie, and if it falls within the orange region then it is a savanna. 
-pdf("../../Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_treecover_v4.pdf")
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_treecover_v4.pdf")
 ggplot(my_output,aes(x=year,y=Tree.BA_Fraction)) +
   annotate("rect",xmin=0, xmax=101, ymin=0.50, ymax=1, alpha=0.4, fill="green") + 
   annotate("rect", xmin=0, xmax=101, ymin=0.10, ymax=0.50, alpha=0.4, fill="orange") + 
