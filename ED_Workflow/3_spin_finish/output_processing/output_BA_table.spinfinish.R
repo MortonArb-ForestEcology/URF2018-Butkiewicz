@@ -43,9 +43,9 @@ table.ba$Tree.BA_Fraction <- table.ba$Tree.BA/table.ba$Total.BA # Calculate frac
 # Split each RUNID into its two major components: environment and fire. 
 RUNID <- as.character(table.ba$RUNID)
 class(RUNID)
-factors <- t(data.frame(strsplit(RUNID, split="-F")))
+factors <- t(data.frame(strsplit(RUNID, split="-f")))
 rownames(factors) <- c() # Gets rid of the row names that show up.
-colnames(factors) <- c("Environ","Fire") # Generate more user-friendly column names. 
+colnames(factors) <- c("Soil","Fire") # Generate more user-friendly column names. 
 factors <- data.frame(factors)
 
 table.ba <- cbind(factors,table.ba)
