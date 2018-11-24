@@ -66,7 +66,9 @@ for(RUNID in all.runs){
     names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
     
     
-    patch.area <- ncvar_get(ncT,"Patch_Area")[,7]
+    patch.area <- matrix(ncvar_get(ncT,"Patch_Area"),ncol=12)
+    patch.area <- data.frame(patch.area)
+    patch.area <- patch.area[,7]
     patch.area <- data.frame(patch=1:length(patch.area),
                              area=patch.area)
     
