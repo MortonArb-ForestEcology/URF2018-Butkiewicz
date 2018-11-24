@@ -677,7 +677,7 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   nc_var[["Cohort_DBH"]] <- ncdf4::ncvar_def("Cohort_DBH", units = "cm", dim = list(lon, lat, cht, t), 
                                                     missval = -999, longname = "Cohort diameter at breast height")
   out <- conversion("Cohort_BasalArea", pl2m2)  ## cm2/plant -> cm2/m2
-  nc_var[["Cohort_BasalArea"]] <- ncdf4::ncvar_def("Cohort_BasalArea", units = "kg C m-2", dim = list(lon, lat, cht, t), 
+  nc_var[["Cohort_BasalArea"]] <- ncdf4::ncvar_def("Cohort_BasalArea", units = "cm2 m-2", dim = list(lon, lat, cht, t), 
                                                    missval = -999, longname = "Cohort basal area")
   
   out <- conversion("Cohort_AbvGrndBiom", pl2m2)  ## kgC/plant -> cm2/m2
