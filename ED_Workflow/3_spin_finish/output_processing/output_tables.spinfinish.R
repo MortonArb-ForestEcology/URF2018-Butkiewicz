@@ -23,11 +23,12 @@ for(RUNID in all.runs){
                              pft   = ncvar_get(ncT, "Cohort_PFT")[,7], 
                              agb   = ncvar_get(ncT, "Cohort_AbvGrndBiom")[,7], # kgC/m2
                              dens  = ncvar_get(ncT, "Cohort_Density")[,7], # trees/m2
-                             dbh   = ncvar_get(ncT, "Cohort_DBH")[,7]) # DBH/tree
+                             dbh   = ncvar_get(ncT, "Cohort_DBH")[,7], # DBH/tree
+                             ba    = ncvar_get(ncT, "Cohort_BasalArea")[,7]) # cm2/m2
     
     # Calculate basal area: 
-    dat.cohort$ba <- ((dat.cohort$dbh)/2)^2
-    dat.cohort$ba <- (dat.cohort$ba)*pi*dat.cohort$dens 
+    # dat.cohort$ba <- ((dat.cohort$dbh)/2)^2 #gives squared radius
+    # dat.cohort$ba <- (dat.cohort$ba)*pi*dat.cohort$dens 
     
     # Create placeholder columns for weighted variables:  
     dat.cohort$p.dens <- NA 
