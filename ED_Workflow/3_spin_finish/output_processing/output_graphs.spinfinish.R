@@ -5,22 +5,27 @@
 # This is not meant to be run on the GitHub repository, but instead provides an example of how I generated the graphs in my results.
 
 library(ggplot2)
-files.output <- file.path("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/")
+# files.output <- file.path("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/")
 FRI <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv")
 
-my_output_general <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_runs_v4.csv")
+my_output_general <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_runs_v4.csv") #Reads in dataframe with pft, agb, density, dbh, basal area, etc. 
+
+# Edit the datatable
 RUNID <- as.character(my_output_general$RUNID)
 factors <- t(data.frame(strsplit(RUNID, split="-f")))
 rownames(factors) <- c() # Gets rid of the row names that show up.
 colnames(factors) <- c("Soil","Fire") # Generate more user-friendly column names. 
 factors <- data.frame(factors)
 my_output_general <- cbind(factors,my_output_general)
-my_output_general$Soil <- car::recode(my_output$Soil, "'s1'='0.93'; 's2'='0.8'; 's3'='0.66'; 's4'='0.52'; 's5'='0.38'")
+my_output_general$Soil <- car::recode(my_output_general$Soil, "'s1'='0.93'; 's2'='0.8'; 's3'='0.66'; 's4'='0.52'; 's5'='0.38'")
+my_output_general <- my_output_general[,-2]
 my_output_general <- merge(my_output_general,FRI)
 
 my_output <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_batables_v4.csv")
 my_output <- merge(my_output,FRI)
+my_output <- cbind(factors,my_output)
 my_output$Soil <- car::recode(my_output$Soil, "'s1'='0.93'; 's2'='0.8'; 's3'='0.66'; 's4'='0.52'; 's5'='0.38'")
+my_output <- my_output[,-2]
 
 # my_output_subset <- subset(my_output, subset=year>=410) #Subset last ninety years so that we can look at the stability of the ecosystems.
 summary(my_output)
@@ -58,6 +63,7 @@ dev.off() # ----
 # GRAPH OF TREE BASAL AREA AS IT CHANGES THROUGH TIME
 # ---------------------------------------------------
 # Basal area was calculated from dbh, tree density, and patch area (I belive). This is measured in cm^2.  
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_ba_v4.pdf")
 ggplot(my_output_general,aes(x=year,y=p.ba.tree)) +
   geom_line() +
   xlab("Years") +
@@ -71,7 +77,7 @@ dev.off() # ------
 # ----------------------------------------------------
 # Tree density was given in the output, measured in plants m^-2. This graph shows density as it changes through time from the year
 # 2200 until the year 2300. 
-pdf("../../../../../../Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_density_v4")
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_density_v4.pdf")
 ggplot(my_output_general,aes(x=year,y=p.dens.tree)) +
   geom_line() +
   xlab("Years") +
@@ -85,7 +91,7 @@ dev.off() # -----
 # ----------------------------------------------------
 # The max DBH for each patch in each year was determined when the output was extracted into the tables. The maximum DBH is in cm and 
 # generally increased through time. 
-pdf("../../../../../../Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_DBH_v4")
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/line_graph_DBH_v4.pdf")
 ggplot(my_output_general,aes(x=year,y=dbh.max)) +
   geom_line() +
   xlab("Years") +

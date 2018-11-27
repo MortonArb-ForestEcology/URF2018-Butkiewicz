@@ -26,4 +26,4 @@ for(s in RUNID){
   } #Close ifelse statement
 } # Close s loop
 
-write.csv(FRI.df,paste0("../../Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv"), row.names=F)
+write.csv(FRI.df,paste0("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv"), row.names=F)

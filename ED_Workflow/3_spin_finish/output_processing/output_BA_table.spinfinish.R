@@ -10,11 +10,11 @@
 # For the following code to work, the output_tables.spinfinish code must have been run and the results saved to a .csv. 
 
 # Read in the output: 
-my_output <- read.csv("./output_runs_ALL.csv")
+my_output <- read.csv("./output_runs_v4.csv")
 summary(my_output)
 
 # We're only interested in the last 90 years of output: 
-my_output <- subset(my_output,subset=my_output$year>410)
+# my_output <- subset(my_output,subset=my_output$year>410)
 
 # Create a new table with the basal areas from my_output: 
 table.ba <- aggregate(my_output[,"p.ba"], by=my_output[,c("RUNID","year")], FUN=sum, na.rm=T) # Sums the BA of the entire ecosystem, which
@@ -41,40 +41,41 @@ table.ba$Tree.BA_Fraction <- table.ba$Tree.BA/table.ba$Total.BA # Calculate frac
 # moisture threshold, and another column that defines each run by its climate and soil variables. 
 
 # Split each RUNID into its two major components: environment and fire. 
-RUNID <- as.character(table.ba$RUNID)
-class(RUNID)
-factors <- t(data.frame(strsplit(RUNID, split="-f")))
-rownames(factors) <- c() # Gets rid of the row names that show up.
-colnames(factors) <- c("Soil","Fire") # Generate more user-friendly column names. 
-factors <- data.frame(factors)
-
-table.ba <- cbind(factors,table.ba)
+# RUNID <- as.character(table.ba$RUNID)
+# class(RUNID)
+# factors <- t(data.frame(strsplit(RUNID, split="-f")))
+# rownames(factors) <- c() # Gets rid of the row names that show up.
+# colnames(factors) <- c("Soil","Fire") # Generate more user-friendly column names. 
+# factors <- data.frame(factors)
+# 
+# table.ba <- cbind(factors,table.ba)
 
 # Change the names of the Climate variables. 
-levels(table.ba$Environ)[levels(table.ba$Environ)=="CD-SS"] <- "Dry Climate, Low Soil Water Holding Capacity"
-levels(table.ba$Environ)[levels(table.ba$Environ)=="CD-SC"] <- "Dry Climate, High Soil Water Holding Capacity"
-levels(table.ba$Environ)[levels(table.ba$Environ)=="CW-SS"] <- "Wet Climate, Low Soil Soil Water Holding Capacity"
-levels(table.ba$Environ)[levels(table.ba$Environ)=="CW-SC"] <- "Wet Climate, High Soil Water Holding Capacity"
+# levels(table.ba$Environ)[levels(table.ba$Environ)=="CD-SS"] <- "Dry Climate, Low Soil Water Holding Capacity"
+# levels(table.ba$Environ)[levels(table.ba$Environ)=="CD-SC"] <- "Dry Climate, High Soil Water Holding Capacity"
+# levels(table.ba$Environ)[levels(table.ba$Environ)=="CW-SS"] <- "Wet Climate, Low Soil Soil Water Holding Capacity"
+# levels(table.ba$Environ)[levels(table.ba$Environ)=="CW-SC"] <- "Wet Climate, High Soil Water Holding Capacity"
+# 
+# # Change the names of the Fire threshold values. 
+# levels(table.ba$Fire)[levels(table.ba$Fire)=="N-TN-IN"] <- "No Fire"
+# levels(table.ba$Fire)[levels(table.ba$Fire)=="Y-TL-IM"] <- "Low Fire Threshold"
+# levels(table.ba$Fire)[levels(table.ba$Fire)=="Y-TH-IM"] <- "High Fire Threshold"
+# 
+# # The following code is optional. Graphing the data in R organizes my panels in a way that I don't like, so I've controlled the way R 
+# # makes the graphs by including a "code" that orders the graphs the way I want. 
+# 
+# # Create two dummy columns with a "code" that will order the output graph in a way that I wannt: 
+# table.ba$Environ.code <- table.ba$Environ
+# table.ba$Fire.code <- table.ba$Fire
+# 
+# # Recode the names in the dummy column: 
+# levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Dry Climate, Low Soil Water Holding Capacity"] <- "d"
+# levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Dry Climate, High Soil Water Holding Capacity"] <- "b"
+# levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Wet Climate, Low Soil Soil Water Holding Capacity"] <- "c"
+# levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Wet Climate, High Soil Water Holding Capacity"] <- "a"
+# 
+# levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="No Fire"] <- 1
+# levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="Low Fire Threshold"] <- 2
+# levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="High Fire Threshold"] <- 3
 
-# Change the names of the Fire threshold values. 
-levels(table.ba$Fire)[levels(table.ba$Fire)=="N-TN-IN"] <- "No Fire"
-levels(table.ba$Fire)[levels(table.ba$Fire)=="Y-TL-IM"] <- "Low Fire Threshold"
-levels(table.ba$Fire)[levels(table.ba$Fire)=="Y-TH-IM"] <- "High Fire Threshold"
-
-# The following code is optional. Graphing the data in R organizes my panels in a way that I don't like, so I've controlled the way R 
-# makes the graphs by including a "code" that orders the graphs the way I want. 
-
-# Create two dummy columns with a "code" that will order the output graph in a way that I wannt: 
-table.ba$Environ.code <- table.ba$Environ
-table.ba$Fire.code <- table.ba$Fire
-
-# Recode the names in the dummy column: 
-levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Dry Climate, Low Soil Water Holding Capacity"] <- "d"
-levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Dry Climate, High Soil Water Holding Capacity"] <- "b"
-levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Wet Climate, Low Soil Soil Water Holding Capacity"] <- "c"
-levels(table.ba$Environ.code)[levels(table.ba$Environ.code)=="Wet Climate, High Soil Water Holding Capacity"] <- "a"
-
-levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="No Fire"] <- 1
-levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="Low Fire Threshold"] <- 2
-levels(table.ba$Fire.code)[levels(table.ba$Fire.code)=="High Fire Threshold"] <- 3
-
+write.csv(table.ba,paste0("./output_batables_v4.csv"), row.names=F) # Writes the output to one csv. 
