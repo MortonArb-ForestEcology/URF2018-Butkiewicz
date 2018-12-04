@@ -100,7 +100,7 @@ for(RUNID in all.runs){
                            dat.site)
     
     #Add soil information
-    soilmoist <- data.frame(ncvar_get(ncT300, "SoilMoist")[,7]) #Retrieves soil information for the growing season (July)
+    soilmoist <- data.frame(ncvar_get(ncT, "SoilMoist")[,7]) #Retrieves soil information for the growing season (July)
     # soilmoist is a datatable where each column represents a month and each row represents a depth. 
     
     slz <- c(-2.17, -1.50, -1.10, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06) #Gives absolute soil depth; organized from deepest to shallowest soil layer
