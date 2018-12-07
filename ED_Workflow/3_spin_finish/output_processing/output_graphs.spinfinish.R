@@ -14,7 +14,8 @@ FRI$FRI <- car::recode(FRI$FRI, "'Inf'='100'")
 min_FRI <- min(FRI$FRI)
 max_FRI <- max(FRI$FRI)
 
-dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_runs_v4.csv") #Reads in dataframe with pft, agb, density, dbh, basal area, etc. 
+dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_runs_v4.csv") #Reads in dataframe with pft, agb, density, dbh, basal area, etc.
+
 
 # Modify the data in whatever way I think will make graphing easier:
 dat.all <- merge(dat.all, FRI)
@@ -100,7 +101,7 @@ ggplot(dat.all, aes(x = SLXSAND, y = p.ba.tree, fill = SM_FIRE)) +
   geom_boxplot(position = position_dodge(width=1), lwd=0.7) + 
   mytheme + 
   xlab("Sand Proportion") + 
-  ylab ("Basal Area (cm^2)") + 
+  ylab (expression(bold(paste("Basal Area (cm"^"2", " m"^"-2",")")))) + 
   scale_fill_manual(name = "Fire\nThreshold", values=c("orange", "gold3", "lightgoldenrod2", "olivedrab3", "olivedrab4"))
 dev.off()
 

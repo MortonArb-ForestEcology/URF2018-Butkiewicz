@@ -15,3 +15,7 @@ ED_Workflow/1_spin_initial/extracted_output/*
 ED_Workflow/1_spin_initial/spininit_data/*
 *.nc
 data_raw/met/climate-filitering-weights/monte-carlo-ensemble-weights-glsp.csv
+ED_Workflow/3_spin_finish/output_processing/output_batables_v4.csv
+ED_Workflow/3_spin_finish/output_processing/output_FRI_v4.csv
+ED_Workflow/3_spin_finish/output_processing/output_runs_v4.csv
+ED_Workflow/3_spin_finish/output_processing/basal_area.png
