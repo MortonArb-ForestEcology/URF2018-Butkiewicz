@@ -11,6 +11,9 @@ library(car)
 # files.output <- file.path("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/")
 FRI <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv")
 FRI$FRI <- car::recode(FRI$FRI, "'Inf'='100'")
+min_FRI <- min(FRI$FRI)
+max_FRI <- max(FRI$FRI)
+
 dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_runs_v4.csv") #Reads in dataframe with pft, agb, density, dbh, basal area, etc. 
 
 # Modify the data in whatever way I think will make graphing easier:
@@ -25,9 +28,10 @@ dat.all$SLXSAND <- car::recode(dat.all$Soil, "'s1'='0.93'; 's2'='0.8'; 's3'='0.6
 dat.all$SM_FIRE <- car::recode(dat.all$Fire, "'1'='0.04'; '2'='0.03'; '3'='0.02'; '4'='0.01'; '5'='0'")
 
 # Aggregate data down all 101 years to make 
-dat.all.agg <- aggregate(x=dat.all[,c("p.dens","p.dens.tree","p.ba","soil_moist","p.agb")],
+dat.all.agg <- aggregate(x=dat.all[,c("p.dens","p.dens.tree","p.ba","p.ba.tree","soil_moist","p.agb")],
                          by=dat.all[,c("RUNID","SLXSAND","SM_FIRE")],
                          FUN=mean)
+colnames(dat.all.agg)
 dat.all.agg <- merge(dat.all.agg, FRI)
 
 #------------------------------
@@ -61,28 +65,57 @@ RUNID.2 <- dat.all.agg[,1:3]
 sm.standard <- merge(RUNID.2, sm.standard)
 sm.standard <- merge(sm.standard,FRI)
 
+# Standardized Soil Moisture vs. FRI
+# pdf("/Users/Cori/Desktop/graph")
+ggplot(sm.standard, aes(x=FRI, y=soilmoist)) #Compares soil moisture against fire return interval to see if there's any covariation.
+#dev.off()
+  
 # --------
 # OTHER GRAPHS
 # ---------
 
-# Standardized Soil Moisture vs. FRI
-# pdf("/Users/Cori/Desktop/graph")
-ggplot(sm.standard, aes(x=FRI, y=soilmoist)) + #Compares soil moisture against fire return interval to see if there's any covariation. 
-  geom_point() + 
+# Theme for the graphs
+mytheme <- theme(plot.title = element_text(hjust = 0.5), # should center the title somewhat
+        panel.background = element_rect(fill="white"), # makes panel background white
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(color="black", size = 1.5),
+        text = element_text(family = "Helvetica"), # changes font to Helvetica
+        axis.text.x = element_text(size = 45, margin = margin(t=20)),
+        axis.text.y = element_text(size = 45, margin = margin(r=20)),
+        axis.title.x = element_text(size = 50, face = "bold", margin = margin(t = 20)),
+        axis.title.y = element_text(size = 50, face = "bold", margin = margin(t = 50, r = 20)),
+        legend.title = element_text(size=50),
+        legend.text = element_text(size=45, margin = margin(t = 20)),
+        legend.key.size = unit(3, "line"))
+
   facet_grid(. ~ SLXSAND) #Labels on the top represent proportion of sand in the soil. 
 # dev.off()
 
-# Density vs. Soil Moisture
-ggplot(dat.all.agg, aes(x=SM_FIRE, y=p.dens.tree, color=SLXSAND)) + 
-  geom_point()
+dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
 
-# Density vs. FRI
-ggplot(dat.all.agg, aes(x=as.numeric(paste(SLXSAND)), y=p.dens.tree, color=SM_FIRE)) + 
-  geom_line() +
-  geom_point()
+# Plots basal area vs. soil texture
+png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/basal_area.png", width = 2000, height = 2000)
+ggplot(dat.all, aes(x = SLXSAND, y = p.ba.tree, fill = SM_FIRE)) + 
+  geom_boxplot(position = position_dodge(width=1), lwd=0.7) + 
+  mytheme + 
+  xlab("Sand Proportion") + 
+  ylab ("Basal Area (cm^2)") + 
+  scale_fill_manual(name = "Fire\nThreshold", values=c("orange", "gold3", "lightgoldenrod2", "olivedrab3", "olivedrab4"))
+dev.off()
 
+# Plots density vs. soil texture
 ggplot(dat.all, aes(x=SLXSAND, y=p.dens.tree, fill=SM_FIRE)) + 
-  geom_boxplot() 
+  geom_boxplot() + 
+  scale_fill_manual(name = "Fire\nThreshold", values = c("orange", "gold3", "lightgoldenrod3", "olivedrab3", "olivedrab4"))
 
-ggplot(dat.all.agg, aes(x=SLXSAND, y=FRI, fill=SM_FIRE)) + 
-  geom_bar()
+#Plots FRI vs SM_FIRE
+dat.all.agg$SM_FIRE <- factor(dat.all.agg$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
+png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/fire.png", width = 2000, height = 1500)
+ggplot(dat.all.agg, aes(x=SLXSAND, y=FRI, fill=SM_FIRE, label=FRI)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  xlab("Sand Proportion") + 
+  ylab("Fire Return Interval (years)") + 
+  scale_fill_manual(name = "Fire\nThreshold", values=c("orange", "gold3", "lightgoldenrod2", "olivedrab3", "olivedrab4")) + 
+  mytheme
+dev.off()
