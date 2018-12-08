@@ -10,6 +10,7 @@ library(car)
 # Get the data into the environment: 
 # files.output <- file.path("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/")
 FRI <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv")
+
 FRI$FRI <- car::recode(FRI$FRI, "'Inf'='100'")
 min_FRI <- min(FRI$FRI)
 max_FRI <- max(FRI$FRI)
@@ -95,6 +96,8 @@ mytheme <- theme(plot.title = element_text(hjust = 0.5), # should center the tit
 
 dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
 
+summary(dat.all)
+
 # Plots basal area vs. soil texture
 png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/basal_area.png", width = 2000, height = 2000)
 ggplot(dat.all, aes(x = SLXSAND, y = p.ba.tree, fill = SM_FIRE)) + 
@@ -112,11 +115,22 @@ ggplot(dat.all, aes(x=SLXSAND, y=p.dens.tree, fill=SM_FIRE)) +
 
 #Plots FRI vs SM_FIRE
 dat.all.agg$SM_FIRE <- factor(dat.all.agg$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
+
+# geom_text(data = censusData,
+#           aes(x = County, group=variable, y = value + 150, 
+#               label = format(value, nsmall = 0, digits=1, scientific = FALSE)), 
+#           color="blue", position=position_dodge(.9), hjust=.5)
+dat.all.agg$FRI_label <- round(dat.all.agg$FRI)
+dat.all.agg[dat.all.agg$FRI==100 & dat.all.agg$SM_FIRE!= "0.01","FRI_label"] <- NA
+summary(dat.all.agg)
 png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/fire.png", width = 2000, height = 1500)
 ggplot(dat.all.agg, aes(x=SLXSAND, y=FRI, fill=SM_FIRE, label=FRI)) + 
   geom_bar(position="dodge", stat="identity") + 
+  geom_text(aes(x=SLXSAND, label=FRI_label, y=FRI+2, group=SM_FIRE), position=position_dodge(1), hjust=0.5, fontface="bold", size=14) +
+  # geom_text(data=dat.all.agg[dat.all.agg$SM_FIRE %in% c(0.04, 0.03, 0.02, 0),], aes(x=SLXSAND, label=round(FRI), y=FRI+2, group=SM_FIRE), position=position_dodge(1)) +
   xlab("Sand Proportion") + 
   ylab("Fire Return Interval (years)") + 
   scale_fill_manual(name = "Fire\nThreshold", values=c("orange", "gold3", "lightgoldenrod2", "olivedrab3", "olivedrab4")) + 
+  guides(color=F) +
   mytheme
 dev.off()
