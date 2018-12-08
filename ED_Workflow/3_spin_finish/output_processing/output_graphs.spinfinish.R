@@ -78,18 +78,18 @@ ggplot(sm.standard, aes(x=FRI, y=soilmoist)) #Compares soil moisture against fir
 
 # Theme for the graphs
 mytheme <- theme(plot.title = element_text(hjust = 0.5), # should center the title somewhat
-        panel.background = element_rect(fill="white"), # makes panel background white
-        panel.grid = element_blank(),
-        panel.border = element_blank(),
-        axis.line = element_line(color="black", size = 1.5),
-        text = element_text(family = "Helvetica"), # changes font to Helvetica
-        axis.text.x = element_text(size = 45, margin = margin(t=20)),
-        axis.text.y = element_text(size = 45, margin = margin(r=20)),
-        axis.title.x = element_text(size = 50, face = "bold", margin = margin(t = 20)),
-        axis.title.y = element_text(size = 50, face = "bold", margin = margin(t = 50, r = 20)),
-        legend.title = element_text(size=50),
-        legend.text = element_text(size=45, margin = margin(t = 20)),
-        legend.key.size = unit(3, "line"))
+                 panel.background = element_rect(fill="white"), # makes panel background white
+                 panel.grid = element_blank(),
+                 panel.border = element_blank(),
+                 axis.line = element_line(color="black", size = 1.5),
+                 text = element_text(family = "Helvetica"), # changes font to Helvetica
+                 axis.text.x = element_text(size = 55, margin = margin(t=20)),
+                 axis.text.y = element_text(size = 55, margin = margin(r=20)),
+                 axis.title.x = element_text(size = 60, face = "bold", margin = margin(t = 20)),
+                 axis.title.y = element_text(size = 60, face = "bold", margin = margin(t = 50, r = 20)),
+                 legend.title = element_text(size=60),
+                 legend.text = element_text(size=55, margin = margin(t = 20)),
+                 legend.key.size = unit(3, "line"))
 
   facet_grid(. ~ SLXSAND) #Labels on the top represent proportion of sand in the soil. 
 # dev.off()
