@@ -35,8 +35,10 @@
 
 
 	  <!-- Leaf Params -->	
+<!-- 
       <phenology>
-                   2      			</phenology> <!-- Cold Deciduous -->
+                   		2      	</phenology> <!~~ Cold Deciduous ~~>
+ -->
    </pft>
   
    <pft>

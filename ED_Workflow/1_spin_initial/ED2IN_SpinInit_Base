@@ -585,7 +585,7 @@ $ED_NL
    !            3.  Aquifer.  Soil moisture of the ficticious layer beneath the bottom is  !
    !                always at saturation.                                                  !
    !---------------------------------------------------------------------------------------!
-   NL%ISOILBC        = 0
+   NL%ISOILBC        = 1
    !---------------------------------------------------------------------------------------!
 
 
