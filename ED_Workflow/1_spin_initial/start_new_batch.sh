@@ -39,7 +39,7 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 met_base=/home/models/ED_MET/GLSP.v1
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_spin_initial/URF2018_spininit.v4/ # Where everything will go
+file_dir=${file_base}/1_spin_initial/URF2018_spininit.v5/ # Where everything will go
 setup_dir=${file_base}/0_setup/ # Where some constant setup files are
 RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
 

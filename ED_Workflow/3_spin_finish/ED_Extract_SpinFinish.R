@@ -12,9 +12,9 @@ start_date <- "2200-01-01" # The runs actually start in June 1800, but lets skip
 end_date = "2300-12-31"
 
 ## Original
-runs.dir <- "URF2018_spinfinish.v4" # Where our output is
+runs.dir <- "URF2018_spinfinish.v5" # Where our output is
 all.runs <- dir(runs.dir) # Get a list of what's been run (at least partially)
-out.base <- "extracted_output.v4" # Where we want to put our output
+out.base <- "extracted_output.v5" # Where we want to put our output
 dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if it's not there yet
 
 # Get a list of what runs we need to extract

@@ -24,8 +24,8 @@
 file_base=~/URF2018-Butkiewicz/ED_Workflow # whatever you want the base output file path to be
 
 ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-spin_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v4/ # Directory of initial spin files
-runs_dir=${file_base}/4_runs/URF2018_runs.v4/ # Where the transient runs will go
+spin_dir=${file_base}/3_spin_finish/URF2018_spinfinish.v5/ # Directory of initial spin files
+runs_dir=${file_base}/4_runs/URF2018_runs.v5/ # Where the transient runs will go
 setup_dir=${file_base}/0_setup/
 
 RUN_file=${setup_dir}/ExperimentalDesign.csv # # Path to list of ED RUNs w/ status
