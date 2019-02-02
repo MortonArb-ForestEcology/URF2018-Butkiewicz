@@ -69,7 +69,7 @@ sand_all=($(awk -F ',' 'NR>1 {print $5}' ${RUN_file}))
 clay_all=($(awk -F ',' 'NR>1 {print $6}' ${RUN_file}))
 # inc_fire_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # INCLUDE_FIRE
 sm_fire_all=($(awk -F ',' 'NR>1 {print $9}' ${RUN_file})) # SM_FIRE
-fire_int_all=($(awk -F ',' 'NR>1 {print $11}' ${RUN_file})) # FIRE_INTENSITY
+fire_int_all=($(awk -F ',' 'NR>1 {print $12}' ${RUN_file})) # FIRE_INTENSITY
 
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir
