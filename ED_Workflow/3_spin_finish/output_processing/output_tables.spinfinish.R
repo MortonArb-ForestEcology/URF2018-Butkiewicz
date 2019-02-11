@@ -2,92 +2,110 @@
 # Spinfinish Output Table #
 ###########################
 
+# This script is meant to compile data from the Step 3 (spin finish) extracted output into two tables: one master table containing
+# basal area, density, aboveground biomass, pft, and fire frequency while the other just includes fire frequencies per scenario for 
+# ease of managing data. 
+
+# Load appropriate packages into library
 library(ncdf4)
 library(car)
 
-all.runs <- dir("../extracted_output.v4/")
+all.runs <- dir("../extracted_output.v5/") # Stores all directories within filepath. 
 
-for(RUNID in all.runs){
-  path.nc <- file.path("../extracted_output.v4",RUNID) #Set up path files.
-  files.nc <- dir(path.nc,"ED2") #Lists the files in the RUNID folder; there is one file for each year. 
+for(RUNID in all.runs){ #Looks at each individual RUNID (scenario). 
+  path.nc <- file.path("../extracted_output.v5",RUNID) #Set up file paths for each RUNID.
+  files.nc <- dir(path.nc,"ED2") #Stores files in  RUNID folder, one file per year. 
+  print(paste0("----- Processing run: ", RUNID)) # Keep track of where function is currently working. 
   
-  print(RUNID) #Keep track of where the function is currently working.
-  
-  for(i in 1:length(files.nc)){ #looking at one year at a time
-    print(i) #Keep track of where function is currently working. Each i represents a year being opened 
-    ncT <- nc_open(file.path(path.nc,files.nc[i]))
+  for(y in 1:length(files.nc)){ #looking at one year at a time
+    print(paste0("*** Processing year: ", 2199+y)) # Keep track of where function is currently working. 
+    ncT <- nc_open(file.path(path.nc,files.nc[y])) # Open extracted output. 
     
+    # ---------------------------
+    # Retrieve cohort-level data
+    # ---------------------------
+    
+    # Cohort data is organized into table where row reprsents each cohort and column represents each month.
+    # Extract data cohort-level data from seventh row (July) for growing season data. Each row represents a different cohort. 
     dat.cohort <- data.frame(RUNID=RUNID,
-                             year=i,
-                             patch = ncvar_get(ncT, "Cohort_PatchID")[,7], #Just extract row 7, which represents the month of July
+                             year=y,
+                             patchID = ncvar_get(ncT, "Cohort_PatchID")[,7], #Identifies each cohort based on patch. 
                              pft   = ncvar_get(ncT, "Cohort_PFT")[,7], 
                              agb   = ncvar_get(ncT, "Cohort_AbvGrndBiom")[,7], # kgC/m2
                              dens  = ncvar_get(ncT, "Cohort_Density")[,7], # trees/m2
                              dbh   = ncvar_get(ncT, "Cohort_DBH")[,7], # DBH/tree
                              ba    = ncvar_get(ncT, "Cohort_BasalArea")[,7]) # cm2/m2
-    
-    # Calculate basal area: 
-    # dat.cohort$ba <- ((dat.cohort$dbh)/2)^2 #gives squared radius
-    # dat.cohort$ba <- (dat.cohort$ba)*pi*dat.cohort$dens 
-    
-    # Create placeholder columns for weighted variables:  
-    dat.cohort$p.dens <- NA #
-    dat.cohort$p.dbh <- NA 
-    dat.cohort$dbh.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dbh, NA) #Create a column of DBH that only includes trees with a diameter above our threshold (10 cm). 
+    # Create additional columns that exclusively includes output from trees with DBH > 10 cm. 
+    dat.cohort$dbh.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dbh, NA) 
     dat.cohort$dens.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dens, NA)
     dat.cohort$ba.tree <- ifelse(dat.cohort$dbh>=10,dat.cohort$ba,NA)
     
-    dat.cohort$p.dbh.tree <- NA # Creates a placeholder column for our weighted variables. 
-    dat.cohort$p.dens.tree <- NA
+    # --------------------------------------------------------------------------------------------------------------------
+    # Aggregate data from each cohort into a patch-level dataframe by averaging the output in dat.cohort based on density. 
+    # --------------------------------------------------------------------------------------------------------------------
     
-    for(PCH in unique(dat.cohort$patch)){ #looks only at each patch based on the unique patchID
-      for(PFT in unique(dat.cohort$pft)){ #looks at each PFT within each patchID
-        row.ind <- which(dat.cohort$patch==PCH & dat.cohort$pft==PFT) # Row numbers for this group. 
-        
-        dat.tmp <- dat.cohort[row.ind,] # Subset our data to something small for our sanity. 
-        dens.tot <- sum(dat.tmp$dens) # Sum of cohort densities by patch and PFT. 
-        dens.tree <- sum(dat.tmp$dens.tree, na.rm=T) # Total density of the trees with a DBH above our threshold value. 
-        
-        # Weight density: 
-        dat.tmp$p.dens <- dat.tmp$dens/dens.tot # Fractional density. 
-        dat.tmp$p.dens.tree <- dat.tmp$dens.tree/dens.tree # Proportional density of trees with a DBH above our threshold. 
-        
-        # Weight dbh: 
-        dat.tmp$p.dbh <- dat.tmp$dbh * dat.tmp$p.dens #Weights dbh by fractional density. 
-        dat.tmp$p.dbh.tree <- dat.tmp$dbh.tree * dat.tmp$p.dens.tree
-        
-        dat.cohort[row.ind,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] <- dat.tmp[,c("p.dens", "p.dbh", "p.dens.tree", "p.dbh.tree")] # Put the new values into our table.
-        
-      }# Close PFT loop
-    }# Close PCH loop
+    # First weight each cohort by density and create placeholder columns for weighted variables: 
+    dat.cohort$w.dbh <- NA # weighted diameter at breast height
+    dat.cohort$w.ba <- NA # weighted basal area
+    dat.cohort$w.dbh.tree <- NA # weighted dbh of trees >10 cm
+    dat.cohort$w.ba.tree <- NA # weighted basal area of trees >10 cm
+    # Note that density is not weighted. It will be directly summed instead of averaged. 
     
-    dat.patch <- aggregate(dat.cohort[,c("agb","dens","p.dbh","dens.tree","p.dbh","dens.tree","p.dbh.tree","ba","ba.tree")],by=dat.cohort[,c("patch","pft")], FUN=sum, na.rm=T)
-    dat.patch$dbh.max <- round(aggregate(dat.cohort$dbh, by=dat.cohort[,c("patch","pft")],FUN=max)[,"x"],2)
-    names(dat.patch) <- car::recode(names(dat.patch), "'p.dbh'='dbh'; 'p.dbh.tree'='dbh.tree'")
+    for(PCH in unique(dat.cohort$patchID)){ # Look only at each patch based on unique patchID
+      for(PFT in unique(dat.cohort$pft)){ # Look at each PFT within patch
+        row.ind <- which(dat.cohort$patchID==PCH & dat.cohort$pft==PFT) # Row numbers for this group. 
+        dat.tmp <- dat.cohort[row.ind,] # Subset dataframe based on patchID and pft 
+        
+        # Calculating density weight
+        dens.tot <- sum(dat.tmp$dens) # Sum cohort densities by patch and PFT. 
+        dens.tot.tree <- sum(dat.tmp$dens.tree, na.rm=T) # Total density of trees with DBH >10 cm 
+        dat.tmp$wght <- dat.tmp$dens/dens.tot # Assigns weight to each cohort based on desnity
+        dat.tmp$wght.tree <- dat.tmp$dens.tree/dens.tot.tree # Assigns weight to each cohort with trees >10 cm based on density
+        
+        # Weight the variables
+        dat.tmp$w.dbh <- dat.tmp$dbh*dat.tmp$wght # Weighted dbh
+        dat.tmp$w.dbh.tree <- dat.tmp$dbh.tree*dat.tmp$wght.tree # Weighted dbh for trees >10 cm
+
+        dat.cohort[row.ind,c("w.agb","w.dbh","w.ba","w.dbh.tree","w.ba.tree")] <- dat.tmp[,c("w.agb","w.dbh","w.ba","w.dbh.tree","w.ba.tree")] # Put the weighted variables into the columns assigned for weighted variables in lines 48-52. 
+        
+      } #End PFT loop. 
+    } # End PCH loop. 
+    
+    # AGGREGATE INTO PATCH-LEVEL DATA
+    # Note that aboveground biomass (agb), total plant density (dens), tree density (dens.tree), total basal area (ba), and tree basal
+    # area (ba.tree) are simply summed because they are per area and each cohort individually contributes to overall patch data. 
+    dat.patch <- aggregate(dat.cohort[,c("agb","dens","dens.tree","w.dbh","w.dbh.tree","ba","ba.tree")],by=dat.cohort[,c("patchID","pft")], FUN=sum, na.rm=T)
+    names(dat.patch) <- car::recode(names(dat.patch), "'w.dbh'='dbh'; 'w.dbh.tree'='dbh.tree'") # Recodes weighted DBH (w.dbh) as regular (or average) dbh. 
     
     
-    patch.area <- matrix(ncvar_get(ncT,"Patch_Area"),ncol=12)
-    patch.area <- data.frame(patch.area)
+    # -------------------------------
+    # Aggregate into site-level data 
+    # -------------------------------
+    
+    patch.area <- matrix(ncvar_get(ncT,"Patch_Area"),ncol=12) # fraction of total area occupied by each patch
+    patch.area <- data.frame(patch.area) 
     patch.area <- patch.area[,7]
-    patch.area <- data.frame(patch=1:length(patch.area),# matches up patch ID with patch area
+    patch.area <- data.frame(patchID=1:length(patch.area),# matches up patch ID with patch area
                              area=patch.area)
     
-    dat.patch <- merge(dat.patch, patch.area, all.x=T) #merges the dataframes based on patch ID (column named patch)
-    
+    dat.patch <- merge(dat.patch, patch.area, all.x=T) #merges the dataframes based on patchID
     dat.patch[dat.patch$dens.tree==0, "dbh.tree"] <- NA
-    dat.patch$p.agb <- dat.patch$agb * dat.patch$area
-    dat.patch$p.dbh <- dat.patch$dbh * dat.patch$area
-    dat.patch$p.dens <- dat.patch$dens * dat.patch$area
-    dat.patch$p.ba <- dat.patch$ba * dat.patch$area
-    dat.patch$p.dens.tree <- dat.patch$dens.tree * dat.patch$area
-    dat.patch$p.ba.tree <- dat.patch$ba.tree * dat.patch$area
+    
+    # Create columms for output weighted by patch area
+    dat.patch$w.agb <- dat.patch$agb * dat.patch$area
+    dat.patch$w.dbh <- dat.patch$dbh * dat.patch$area
+    dat.patch$w.dens <- dat.patch$dens * dat.patch$area
+    dat.patch$w.ba <- dat.patch$ba * dat.patch$area
+    dat.patch$w.ba.tree <- dat.patch$ba.tree * dat.patch$area
     
     # For trees, we need to weight by area of patches with TREES
     area.tree <- dat.patch[dat.patch$pft==10 & !is.na(dat.patch$dbh.tree),"area"]
-    dat.patch$p.dbh.tree <- dat.patch$dbh.tree * dat.patch$area/sum(area.tree)
+    dat.patch$w.dens.tree <- dat.patch$dens.tree * dat.patch$area/sum(area.tree)
+    dat.patch$w.dbh.tree <- dat.patch$dbh.tree * dat.patch$area/sum(area.tree)
+    dat.patch$w.ba.tree <- dat.patch$ba.tree * dat.patch$area/sum(area.tree)
     
-    dat.site <- aggregate(dat.patch[,c("p.agb","p.dens","p.dbh","p.ba","p.dens.tree","p.dbh.tree","p.ba.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
-    dat.site$dbh.max <- aggregate(dat.patch[,"dbh.max"], by=list(dat.patch$pft), FUN=max)[,"x"]
+    #Aggregate everything into site-level dataframe. 
+    dat.site <- aggregate(dat.patch[,c("w.agb","w.dens","w.dbh","w.ba","w.dens.tree","w.dbh.tree","w.ba.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
     
     #Make the pft's more user-friendly: 
     colnames(dat.site)[1] <- "pft"
@@ -96,7 +114,7 @@ for(RUNID in all.runs){
     
     # Add RUNID and year information: 
     dat.site <- data.frame(RUNID=RUNID,
-                           year=i,
+                           year=y-1,
                            dat.site)
     
     #Add soil information
@@ -123,9 +141,9 @@ for(RUNID in all.runs){
     # Add a binary fire variable:
     fire <- matrix(ncvar_get(ncT,"Fire_flux"))
     if(sum(fire)!=0){
-      fire <- "Yes" #Means that fire occured. 
+      fire <- 1 #Means that fire occured. 
     } else {
-      fire <- "No" #Means that fire did not occur. 
+      fire <- 0 #Means that fire did not occur. 
     }
     dat.site$fire <- fire
     
@@ -138,7 +156,32 @@ for(RUNID in all.runs){
     
     nc_close(ncT)
     
-  }# Close i loop
-}# Close RUNID loop
+    } # End y loop. 
+} # End RUNID loop. 
 
-write.csv(dat.out,paste0("./output_runs_v4.csv"), row.names=F) # Writes the output to one csv. 
+# --------------------------------
+# Calculate fire return intervals. 
+# --------------------------------
+
+dat.sub <- subset(dat.out, subset=dat.output$pft=="Hardwoods") #Soft-coded: hardwoods tend to appear in every year, in every run.
+
+RUNID <- c(unique(dat.sub$RUNID))
+RUNID <- unique(as.character(dat.sub$RUNID))
+class(RUNID)
+
+for(n in RUNID){
+  RUNID_temp <- subset(dat.sub, subset=dat.sub$RUNID==n) # Subset table based on runID
+  FRI <- length(RUNID_temp)/sum(dat.sub$fire) #Divides years in dataset by the number of times fire occurred.
+  FRI.df_temp <- data.frame(RUNID=n,
+                            FRI=FRI)
+  if(n==RUNID[1]){
+    FRI.df <- FRI.df_temp
+  } else {
+    FRI.df <- rbind(FRI.df,FRI.df_temp)
+  } #Close ifelse statement
+} # Close n loop
+
+dat.site <- merge(dat.site, FRI.df) # Add fire return intervals to table
+
+write.csv(FRI.df,paste0("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv"), row.names=F) # Writes fire return interval to 
+write.csv(dat.out,paste0("./output_runs_v5.csv"), row.names=F) # Writes site-level output to separate csv. 

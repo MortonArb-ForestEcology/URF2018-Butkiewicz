@@ -91,14 +91,14 @@ mytheme <- theme(plot.title = element_text(hjust = 0.5), # should center the tit
                  legend.text = element_text(size=55, margin = margin(t = 20)),
                  legend.key.size = unit(3, "line"))
 
-  facet_grid(. ~ SLXSAND) #Labels on the top represent proportion of sand in the soil. 
+  # facet_grid(. ~ SLXSAND) #Labels on the top represent proportion of sand in the soil. 
 # dev.off()
 
 dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
 
 summary(dat.all)
 
-# Plots basal area vs. soil texture
+# Plots basal area vs. soil texture, coded by SM_FIRE
 png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/basal_area.png", width = 2000, height = 2000)
 ggplot(dat.all, aes(x = SLXSAND, y = p.ba.tree, fill = SM_FIRE)) + 
   geom_boxplot(position = position_dodge(width=1), lwd=0.7) + 
