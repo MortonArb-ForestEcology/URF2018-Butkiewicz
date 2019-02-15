@@ -184,5 +184,5 @@ for(n in runID){
 
 dat.out <- merge(dat.out, FRI.df) # Add fire return intervals to table
 
-write.csv(FRI.df,paste0("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI.v5.csv"), row.names=F) # Writes fire return interval to separate csv.
+write.csv(FRI.df,paste0("./output_FRI.v5.csv"), row.names=F) # Writes fire return interval to separate csv.
 write.csv(dat.out,paste0("./output_runs.v5.csv"), row.names=F) # Writes site-level output to separate csv. 
