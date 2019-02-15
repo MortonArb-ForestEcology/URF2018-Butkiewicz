@@ -3,22 +3,21 @@
 ###########################
 
 # This script is meant to compile data from the Step 3 (spin finish) extracted output into two tables: one master table containing
-# basal area, density, aboveground biomass, pft, and fire frequency while the other just includes fire frequencies per scenario for 
-# ease of managing data. 
+# basal area, density, aboveground biomass, pft, and fire return interval while the other includes fire frequencies per scenario.
 
 # Load appropriate packages into library
 library(ncdf4)
 library(car)
 
-all.runs <- dir("../extracted_output.v5/") # Stores all directories within filepath. 
+all.runs <- dir("../extracted_output.v5/") # Stores all directories within filepath.
 
 for(RUNID in all.runs){ #Looks at each individual RUNID (scenario). 
-  path.nc <- file.path("../extracted_output.v5",RUNID) #Set up file paths for each RUNID.
+  path.nc <- file.path("../extracted_output.v5/",RUNID) #Set up file paths for each RUNID.
   files.nc <- dir(path.nc,"ED2") #Stores files in  RUNID folder, one file per year. 
   print(paste0("----- Processing run: ", RUNID)) # Keep track of where function is currently working. 
   
   for(y in 1:length(files.nc)){ #looking at one year at a time
-    print(paste0("*** Processing year: ", 2199+y)) # Keep track of where function is currently working. 
+    # print(paste0("*** Processing year: ", 2199+y)) # Keep track of where function is currently working. 
     ncT <- nc_open(file.path(path.nc,files.nc[y])) # Open extracted output. 
     
     # ---------------------------
@@ -40,15 +39,13 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
     dat.cohort$dens.tree <- ifelse(dat.cohort$dbh>=10, dat.cohort$dens, NA)
     dat.cohort$ba.tree <- ifelse(dat.cohort$dbh>=10,dat.cohort$ba,NA)
     
-    # --------------------------------------------------------------------------------------------------------------------
-    # Aggregate data from each cohort into a patch-level dataframe by averaging the output in dat.cohort based on density. 
-    # --------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------------
+    # Aggregate data from each cohort into a patch-level dataframe by summing agb, dens, and ba but averaging dbh based on density. 
+    # -----------------------------------------------------------------------------------------------------------------------------
     
-    # First weight each cohort by density and create placeholder columns for weighted variables: 
+    # First weight each cohort by density and create placeholder columns for weighted dbh: 
     dat.cohort$w.dbh <- NA # weighted diameter at breast height
-    dat.cohort$w.ba <- NA # weighted basal area
-    dat.cohort$w.dbh.tree <- NA # weighted dbh of trees >10 cm
-    dat.cohort$w.ba.tree <- NA # weighted basal area of trees >10 cm
+    dat.cohort$w.dbh.tree <- NA # weighted diameter at breast height for trees >10 cm
     # Note that density is not weighted. It will be directly summed instead of averaged. 
     
     for(PCH in unique(dat.cohort$patchID)){ # Look only at each patch based on unique patchID
@@ -66,7 +63,7 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
         dat.tmp$w.dbh <- dat.tmp$dbh*dat.tmp$wght # Weighted dbh
         dat.tmp$w.dbh.tree <- dat.tmp$dbh.tree*dat.tmp$wght.tree # Weighted dbh for trees >10 cm
 
-        dat.cohort[row.ind,c("w.agb","w.dbh","w.ba","w.dbh.tree","w.ba.tree")] <- dat.tmp[,c("w.agb","w.dbh","w.ba","w.dbh.tree","w.ba.tree")] # Put the weighted variables into the columns assigned for weighted variables in lines 48-52. 
+        dat.cohort[row.ind,c("w.dbh","w.dbh.tree")] <- dat.tmp[,c("w.dbh","w.dbh.tree")] # Put the weighted variables into the columns assigned for weighted variables in lines 48-49. 
         
       } #End PFT loop. 
     } # End PCH loop. 
@@ -108,7 +105,7 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
     dat.site <- aggregate(dat.patch[,c("w.agb","w.dens","w.dbh","w.ba","w.dens.tree","w.dbh.tree","w.ba.tree")], by=list(dat.patch$pft), FUN=sum, na.rm=T)
     
     #Make the pft's more user-friendly: 
-    colnames(dat.site)[1] <- "pft"
+    colnames(dat.site)[1] <- "pft" # Soft-coded because pft should be the first column.  
     dat.site <- subset(dat.site, subset=pft!=0)
     dat.site$pft <- car::recode(dat.site$pft, "'5'='Grasses'; '10'='Hardwoods'")
     
@@ -148,7 +145,7 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
     dat.site$fire <- fire
     
     # Combine it into a new dataframe: 
-    if(i==1 & RUNID==all.runs[1]){
+    if(y==1 & RUNID==all.runs[1]){
       dat.out <- dat.site
     } else {
       dat.out <- rbind(dat.out, dat.site)
@@ -163,25 +160,29 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
 # Calculate fire return intervals. 
 # --------------------------------
 
-dat.sub <- subset(dat.out, subset=dat.output$pft=="Hardwoods") #Soft-coded: hardwoods tend to appear in every year, in every run.
+# yrs <- unique(dat.out$year)
+runID <- c(unique(dat.out$RUNID))
+runID <- unique(as.character(dat.out$RUNID))
+# class(runID) # A check to make sure that runID is stored as a character. 
 
-RUNID <- c(unique(dat.sub$RUNID))
-RUNID <- unique(as.character(dat.sub$RUNID))
-class(RUNID)
+#Subset the data to only preserve unique years.  
 
-for(n in RUNID){
-  RUNID_temp <- subset(dat.sub, subset=dat.sub$RUNID==n) # Subset table based on runID
-  FRI <- length(RUNID_temp)/sum(dat.sub$fire) #Divides years in dataset by the number of times fire occurred.
+# unique(dat.cohort$pft)
+
+for(n in runID){
+  dat.sub <- subset(dat.out, subset=dat.out$RUNID==n) # Subset table based on RUNID. 
+  dat.sub <- subset(dat.sub, subset=!duplicated(year)) # Subset table based on unique years. 
+  FRI <- length(dat.sub$year)/sum(dat.sub$fire) # Divides years in dataset by the number of times fire occurred.
   FRI.df_temp <- data.frame(RUNID=n,
                             FRI=FRI)
-  if(n==RUNID[1]){
+  if(n==runID[1]){
     FRI.df <- FRI.df_temp
   } else {
     FRI.df <- rbind(FRI.df,FRI.df_temp)
   } #Close ifelse statement
 } # Close n loop
 
-dat.site <- merge(dat.site, FRI.df) # Add fire return intervals to table
+dat.out <- merge(dat.out, FRI.df) # Add fire return intervals to table
 
-write.csv(FRI.df,paste0("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI_v4.csv"), row.names=F) # Writes fire return interval to 
-write.csv(dat.out,paste0("./output_runs_v5.csv"), row.names=F) # Writes site-level output to separate csv. 
+write.csv(FRI.df,paste0("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/Project_Output/v4/output_FRI.v5.csv"), row.names=F) # Writes fire return interval to separate csv.
+write.csv(dat.out,paste0("./output_runs.v5.csv"), row.names=F) # Writes site-level output to separate csv. 
