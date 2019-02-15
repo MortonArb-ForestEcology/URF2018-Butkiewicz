@@ -9,7 +9,7 @@ mstmip_local <- read.csv("../0_setup/pecan.utils/mstmip_local.csv", sep=";")
 sitelat =  45.54127
 sitelon = -95.5313
 start_date <- "1800-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
-end_date = "2015-12-31"
+end_date = "2014-12-31"
 
 ## Original
 runs.dir <- "URF2018_runs.v5" # Where our output is
