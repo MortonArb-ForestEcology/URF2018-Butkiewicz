@@ -31,9 +31,9 @@ dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) 
 # min_FRI <- min(FRI$FRI)
 # max_FRI <- max(FRI$FRI)
 
-# -----
+# -----------------------
 # Set up theme for graphs
-# ----------
+# -----------------------
 
 mytheme <- theme(plot.title = element_text(hjust = 0.5), # should center the title somewhat
                  panel.background = element_rect(fill="white"), # makes panel background white
