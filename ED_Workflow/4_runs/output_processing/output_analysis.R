@@ -47,9 +47,27 @@ subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Grea
 # s3-f2 (66% sand, 0.03 fire threshold) --> most unstable
 # s1-f1 (93% sand, 0.04 fire threshold) --> most stable
 
-  ###################
-  # Patterns in Soil
-  ###################
+
+# Figure to demonstrate above patterns
+# -------------------------------------
+
+# I elected to use a bar graph because I believe it shows the simple increase most effectively. 
+# Although I could demonstrate similar results using a box-and-whisker plot, the difference in agb
+# is large enough that it is difficult to tell which boxes are paired, and it is difficult to tell 
+# how much the agb increased between scenarios. 
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/all_runs_increase.pdf")
+ggplot2::ggplot(dat.analy, aes(x = SLXSAND, y = difference, fill=SM_FIRE)) + 
+  geom_bar(stat="identity", position="dodge") +
+  theme_bw() +  
+  scale_fill_manual(name = "Fire\nThreshold", values = c("orange", "gold3", "lightgoldenrod3", "olivedrab3", "olivedrab4")) + 
+  xlab("Sand Fraction") + 
+  ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
+  ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years")
+dev.off()
+
+  #################### 
+  # Patterns in Soil # 
+  #################### 
 
   dat.soil <- aggregate(dat.analy["difference"], by=dat.analy["SLXSAND"], FUN=mean)
   dat.sd <- aggregate(dat.analy["difference"], by=dat.analy["SLXSAND"], FUN=sd)
@@ -63,6 +81,23 @@ subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Grea
   
   # 66% sand --> most unstable
   # 93% sand --> most stable
+  
+  # Run an ANOVA test on the patterns
+  soil.aov <- aov(difference ~ SLXSAND, data=dat.analy)
+  summary(soil.aov)
+  
+  # Figure to demonstrate patterns in soil
+  # --------------------------------------
+  
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soil_increase.pdf")
+  ggplot2::ggplot(dat.soil, aes(x = SLXSAND, y = difference)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = difference - sd, ymax = difference + sd, width=0.1)) + 
+    theme_bw() +  
+    xlab("Sand Fraction") + 
+    ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
+    ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years")
+  dev.off()
   
   ###################
   # Patterns in Fire
@@ -79,3 +114,24 @@ subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Grea
   
   # Moderately able to catch fire (SM_FIRE = 0.02) --> least stable
   # Easily able to catch fire (SM_FIRE = 0.04) --> most stable
+  
+  # Run an ANOVA test on the patterns
+  fire.aov <- aov(difference ~ SM_FIRE, data=dat.analy)
+  summary(fire.aov)
+  
+  # Now run Tukey's Means Comparison Test
+  dat.analy$SM_FIRE <- as.character(dat.analy$SM_FIRE)
+  posthoc <- TukeyHSD(x=fire.aov, dat.analy$SM_FIRE)
+  
+  # Figure to demonstrate patterns in fire
+  # --------------------------------------
+  
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/fire_increase.pdf")
+  ggplot2::ggplot(dat.fire, aes(x = SM_FIRE, y = difference)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = difference - sd, ymax = difference + sd, width=0.1)) + 
+    theme_bw() +  
+    xlab("Fire Threshold") + 
+    ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
+    ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years")
+  dev.off()
