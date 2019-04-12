@@ -19,9 +19,9 @@ dat.all$SM_FIRE <- car::recode(dat.all$Fire, "'1'='0.04'; '2'='0.03'; '3'='0.02'
 dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0)) #says SM_FIRE is a factor and telling it what order we should always list things in 
 
 # Only look at agb because it is most commonly looked at in modeling papers
-dat.agb <- dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","pft","w.agb")] # Subset original datatable to only include agb so that the data is reasonable
-dat.agb <- aggregate(dat.agb[,c("w.agb")], by=dat.agb[,c("SLXSAND","SM_FIRE","RUNID","year")], FUN=sum, na.rm = T) # Sum agb across pfts for each RUNID
-colnames(dat.agb) <- c("SLXSAND","SM_FIRE","RUNID","year","agb") # Aggregate gives you a column labeled "x" for some reason, so I've changed it to agb
+dat.agb <- dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","pft","w.agb","fire")] # Subset original datatable to only include agb so that the data is reasonable
+dat.agb <- aggregate(dat.agb[,c("w.agb")], by=dat.agb[,c("SLXSAND","SM_FIRE","RUNID","year","fire")], FUN=sum, na.rm = T) # Sum agb across pfts for each RUNID
+colnames(dat.agb) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","agb") # Aggregate gives you a column labeled "x" for some reason, so I've changed it to agb
 
 # This splits the data into two tables so that I can find the mean for the first 25 years and the mean for the last 25 years. 
 
@@ -135,3 +135,50 @@ dev.off()
     ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
     ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years")
   dev.off()
+  
+#############################################
+# Why does easy fire have the LEAST change? #
+#############################################
+  
+# Calculate fire regimes for each scenario
+dat.regime <- aggregate(dat.all[c("fire")], by=dat.all[c("RUNID","pft")], FUN=sum) # Find fire regime
+dat.regime <- subset(dat.regime, subset=dat.regime$pft=="Hardwoods") # Remove redundancies
+dat.regime <- dat.regime[,c("RUNID","fire")] # Remove unnecessary pft column
+colnames(dat.regime) <- c("RUNID","nfire") # Rename columns. Here nfire means "number of fires"
+dat.regime$FRI <- max(dat.all$year)/dat.regime$nfire # Calculates the fire return interval by divinding the number of fires per scenario by the number of fires
+dat.regime$FRI <-car::recode(dat.regime$FRI, "'Inf'='214'")
+  
+dat.agb <- merge(dat.agb, dat.regime)
+dat.soil_fire <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SLXSAND")], FUN=mean)
+dat.soil_fire.sd <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SLXSAND")], FUN=sd)
+colnames(dat.soil_fire.sd) <- c("SLXSAND","nfire.sd")
+dat.soil_FRI <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SLXSAND")], FUN=mean)
+dat.soil_FRI.sd <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SLXSAND")], FUN=sd)
+colnames(dat.soil_FRI.sd) <- c("SLXSAND","FRI.sd")
+dat.regime <- merge(dat.soil_fire, dat.soil_fire.sd) # Write over old dat.regime table
+dat.regime <- merge(dat.regime, dat.soil_FRI)
+dat.regime <- merge(dat.regime, dat.soil_FRI.sd)
+rm(dat.soil_fire, dat.soil_fire.sd, dat.soil_FRI, dat.soil_FRI.sd) # Get rid of excess variables
+
+  # Figure to compare number of fires
+  # ------
+
+  library(ggplot2)
+  ggplot(dat.regime, aes(x = SLXSAND, y = nfire)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = nfire - nfire.sd, ymax = nfire + nfire.sd, width=0.1)) + 
+    theme_bw() +  
+    xlab("Sand Fraction") + 
+    ylab (expression(bold(paste("Number of Fires")))) + 
+    ggtitle("Number of Fires across Soil Textures")
+
+  # Figure to compare fire return intervals
+  # ------
+  
+  ggplot(dat.regime, aes(x = SLXSAND, y = FRI)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = FRI - FRI.sd, ymax = FRI + FRI.sd, width=0.1)) + 
+    theme_bw() +  
+    xlab("Sand Fraction") + 
+    ylab (expression(bold(paste("Fire Return Interval (years)")))) + 
+    ggtitle("Fire Return Intervals across Soil Textures")
