@@ -4,8 +4,10 @@
 
 # The first part of this analysis is meant to find patterns in the data. 
 # ------------------------------------------------------------------------
-
-dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_tables/output_runs.v5.csv")
+path.google <- "/Volumes/GoogleDrive/My Drive/URF 2018 Butkiewicz"
+# dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_tables/output_runs.v5.csv")
+dat.all <- read.csv(file.path(path.google, "v5_tables", "output_runs.v5.csv"))
+summary(dat.all)
 
 # Add columns that individually specify soil and fire values 
 RUNID <- as.character(dat.all$RUNID) # Stores RUNID as a character
@@ -61,8 +63,9 @@ subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Grea
 # Although I could demonstrate similar results using a box-and-whisker plot, the difference in agb
 # is large enough that it is difficult to tell which boxes are paired, and it is difficult to tell 
 # how much the agb increased between scenarios. 
+library(ggplot2)
 pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/all_runs_increase.pdf")
-ggplot2::ggplot(dat.analy, aes(x = SLXSAND, y = difference, fill=SM_FIRE)) + 
+ggplot(dat.analy, aes(x = SLXSAND, y = difference, fill=SM_FIRE)) + 
   geom_bar(stat="identity", position="dodge") +
   theme_bw() +  
   scale_fill_manual(name = "Fire\nThreshold", values = c("orange", "gold3", "lightgoldenrod3", "olivedrab3", "olivedrab4")) + 
@@ -89,8 +92,16 @@ dev.off()
   # 93% sand --> most stable
   
   # Run an ANOVA test on the patterns
-  soil.aov <- aov(difference ~ SLXSAND, data=dat.analy)
+  soil.aov <- aov(difference ~ SLXSAND, data=dat.analy) 
   summary(soil.aov)
+
+  # Doing the same thing with a linear model
+  soil.lm  <- lm(difference ~ SLXSAND, data=dat.analy) # Effects parameterizaiton --> relative effects
+  soil.lm2  <- lm(difference ~ SLXSAND-1, data=dat.analy) # looks at the effect of each category relative to 0 (force overall itnercept through 0); means parameterization --> absolute effects
+  summary(soil.lm)
+  anova(soil.lm)
+  summary(soil.lm2)
+
   
   # Figure to demonstrate patterns in soil
   # --------------------------------------
@@ -124,6 +135,17 @@ dev.off()
   # Run an ANOVA test on the patterns
   fire.aov <- aov(difference ~ SM_FIRE, data=dat.analy)
   summary(fire.aov)
+  
+  # Do a lm with fire off as our reference (= control!)
+  fire.lm <- lm(difference ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
+  fire.sum <- summary(fire.lm)
+  anova(fire.lm)
+  
+  # Looking at how much easy fire decreases biomass through elegant coding
+  fire.sum$coefficients[2,1]/fire.sum$coefficients[1,1] # comparing relative change of easy fire from no fire
+ 
+ 
+
   
   # Now run Tukey's Means Comparison Test
   dat.analy$SM_FIRE <- as.character(dat.analy$SM_FIRE)
