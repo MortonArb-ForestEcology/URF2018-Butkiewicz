@@ -345,11 +345,63 @@ rm(dat.soil_fire, dat.soil_fire.sd, dat.soil_FRI, dat.soil_FRI.sd) # Get rid of 
     ggtitle("Change in Fire Return Interval\nBetween Spinups and Runs")
   dev.off()
   
-# Prediction 2: Most change in fire from spinup to modern OR
+# Prediction 2: Greatest change in mean soil moisture from spinup to end
 # Test: compare mean soil moisture from first 25 years to mean soil moisture from last 25 years; 
 # compare BETWEEN time slice
   
 dat.soil <- subset(dat.all, subset = dat.all$pft=="Hardwoods")
 dat.soil <- dat.soil[,c("RUNID","SLXSAND","SM_FIRE","year","w.agb","soil_moist","fire")]
 dat.soil_first <- subset(dat.soil, subset = dat.soil$year<=25)
+dat.sd <- aggregate(dat.soil_first[c("soil_moist")], by = dat.soil_first[c("RUNID","SLXSAND","SM_FIRE")], FUN = sd)
+colnames(dat.sd) <- c("RUNID","SLXSAND","SM_FIRE","soil_moist.sd")
+dat.soil_first <- aggregate(dat.soil_first[c("soil_moist")], by = dat.soil_first[c("RUNID","SLXSAND","SM_FIRE")], FUN = mean)
+dat.soil_first <- merge(dat.soil_first, dat.sd)
+
 dat.soil_last <- subset(dat.soil, subset = dat.soil$year>=max(dat.soil$year)-25)
+dat.sd <- aggregate(dat.soil_last[c("soil_moist")], by = dat.soil_last[c("RUNID","SLXSAND","SM_FIRE")], FUN = sd)
+colnames(dat.sd) <- c("RUNID","SLXSAND","SM_FIRE","soil_moist.sd")
+dat.soil_last <- aggregate(dat.soil_last[c("soil_moist")], by = dat.soil_last[c("RUNID","SLXSAND","SM_FIRE")], FUN = mean)
+dat.soil_last <- merge(dat.soil_last, dat.sd)
+
+  # -----------------------------------------------------------------
+  # Figure examining average change in soil moisture across all runs 
+  # -----------------------------------------------------------------
+
+dat.soil_last$slice <- "Last 25 Years"
+dat.soil_first$slice <- "First 25 Years"
+dat.soil <- rbind(dat.soil_first, dat.soil_last)
+dat.sd <- aggregate(dat.soil[c("soil_moist")], by = dat.soil[c("slice")], FUN=sd)
+colnames(dat.sd) <- c("slice","soil_moist.sd")
+dat.soil <- aggregate(dat.soil[c("soil_moist")], by = dat.soil[c("slice")], FUN=mean)
+dat.soil <- merge(dat.soil, dat.sd)
+
+library(ggplot2)
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff")
+ggplot(dat.soil, aes(x = slice, y=soil_moist)) + 
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = soil_moist - soil_moist.sd, ymax = soil_moist + soil_moist.sd, width = 0.1)) +
+  theme_bw() + 
+  xlab("Time Slice") + 
+  ylab (expression(bold(paste("Soil Moisture (kg", " m"^"-2",")")))) + 
+  ggtitle("Change in Soil Moisture")
+dev.off()
+       
+colnames(dat.soil_first) <- c("RUNID","SLXSAND","SM_FIRE","soilmoist_first","soilmoist_first.sd")
+colnames(dat.soil_last) <- c("RUNID","SLXSAND","SM_FIRE","soilmoist_last","soilmoist_last.sd")
+dat.soil <- merge(dat.soil_first, dat.soil_last)
+dat.soil$soilmoist.diff <- dat.soil$soilmoist_last - dat.soil$soilmoist_first
+dat.sd <- aggregate(dat.soil[c("soilmoist.diff")], by = dat.soil[c("SM_FIRE")], FUN = sd)
+colnames(dat.sd) <- c("SM_FIRE","sd")
+dat.soil <- aggregate(dat.soil[c("soilmoist.diff")], by = dat.soil[c("SM_FIRE")], FUN = mean)
+dat.soil <- merge(dat.soil, dat.sd)
+
+pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff_fire_thresholds")
+ggplot(dat.soil, aes(x = SM_FIRE, y = soilmoist.diff)) + 
+  geom_bar(stat = "identity") + 
+  geom_errorbar(aes(ymin = soilmoist.diff - sd, ymax = soilmoist.diff + sd, width = 0.1)) + 
+  theme_bw() + 
+  xlab("Fire Threshold") + 
+  ylab (expression(bold(paste("Difference in Mean Soil Moisture\nbetween First and Last 25 Years (kg", " m"^"-2",")")))) + 
+  ggtitle("Change in Soil Moisture\nbetween First and Last 25 Years")
+dev.off()
+  
