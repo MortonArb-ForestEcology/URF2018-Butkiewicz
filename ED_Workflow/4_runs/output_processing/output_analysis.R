@@ -27,13 +27,19 @@ colnames(dat.agb) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","agb") # Aggreg
 
   # Calculate the mean agb for the first 25 years of the simulation
   dat.first <- subset(dat.agb, subset = dat.agb$year<=min(dat.agb$year)+25) # Create dataframe with only first 25 years
+  dat.sd <- aggregate(dat.first["agb"], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd) # Find mean for each soil texture
+  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
   dat.first <- aggregate(dat.first["agb"], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean) # Find mean for each soil texture
-  colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","first_agb") # Rename columns to make merge in line 39 easier
+  dat.first <- merge(dat.first, dat.sd)
+  colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","first_agb","first_agb.sd") # Rename columns to make merge in line 39 easier
 
   # Calculaate the mean agb for the last 25 years of the simulation
   dat.last <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-25)
+  dat.sd <- aggregate(dat.last["agb"], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd) # Find mean for each soil texture
+  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
   dat.last <- aggregate(dat.last["agb"], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-  colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","last_agb") # Rename columns to make merge in line 39 easier
+  dat.last <- merge(dat.last, dat.sd)
+  colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","last_agb", "last_agb.sd") # Rename columns to make merge in line 39 easier
 
 # Make dataframe to analyze differences in soil and fire
 dat.analy <- merge(dat.first,dat.last)
@@ -139,7 +145,12 @@ dev.off()
 #############################################
 # Why does easy fire have the LEAST change? #
 #############################################
-  
+
+# Hypothesis: Frequent fire prevents aboveground biomass accumulation
+# Prediction: Easy fire scenarios have more fire occurrences and more frequent fires than hard fire
+# scenarios. 
+# Test: Compare fire frequencies across fire settings
+    
 # Calculate fire regimes for each scenario
 dat.regime <- aggregate(dat.all[c("fire")], by=dat.all[c("RUNID","pft")], FUN=sum) # Find fire regime
 dat.regime <- subset(dat.regime, subset=dat.regime$pft=="Hardwoods") # Remove redundancies
@@ -149,36 +160,196 @@ dat.regime$FRI <- max(dat.all$year)/dat.regime$nfire # Calculates the fire retur
 dat.regime$FRI <-car::recode(dat.regime$FRI, "'Inf'='214'")
   
 dat.agb <- merge(dat.agb, dat.regime)
-dat.soil_fire <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SLXSAND")], FUN=mean)
-dat.soil_fire.sd <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SLXSAND")], FUN=sd)
-colnames(dat.soil_fire.sd) <- c("SLXSAND","nfire.sd")
-dat.soil_FRI <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SLXSAND")], FUN=mean)
-dat.soil_FRI.sd <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SLXSAND")], FUN=sd)
-colnames(dat.soil_FRI.sd) <- c("SLXSAND","FRI.sd")
+dat.soil_fire <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SM_FIRE")], FUN=mean)
+dat.soil_fire.sd <- aggregate(dat.agb[c("nfire")], by=dat.agb[c("SM_FIRE")], FUN=sd)
+colnames(dat.soil_fire.sd) <- c("SM_FIRE","nfire.sd")
+dat.soil_FRI <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SM_FIRE")], FUN=mean)
+dat.soil_FRI.sd <- aggregate(dat.agb[c("FRI")], by=dat.agb[c("SM_FIRE")], FUN=sd)
+colnames(dat.soil_FRI.sd) <- c("SM_FIRE","FRI.sd")
 dat.regime <- merge(dat.soil_fire, dat.soil_fire.sd) # Write over old dat.regime table
 dat.regime <- merge(dat.regime, dat.soil_FRI)
 dat.regime <- merge(dat.regime, dat.soil_FRI.sd)
 rm(dat.soil_fire, dat.soil_fire.sd, dat.soil_FRI, dat.soil_FRI.sd) # Get rid of excess variables
 
+  # --------------------------------------
   # Figure to compare number of fires
-  # ------
+  # ---------------------------------
 
   library(ggplot2)
-  ggplot(dat.regime, aes(x = SLXSAND, y = nfire)) + 
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/nfire_within_SMFIRE.pdf")
+  ggplot(dat.regime, aes(x = SM_FIRE, y = nfire)) + 
     geom_bar(stat="identity") +
     geom_errorbar(aes(ymin = nfire - nfire.sd, ymax = nfire + nfire.sd, width=0.1)) + 
     theme_bw() +  
-    xlab("Sand Fraction") + 
+    xlab("Fire Threshold") + 
     ylab (expression(bold(paste("Number of Fires")))) + 
     ggtitle("Number of Fires across Soil Textures")
+  dev.off()
 
+  # --------------------------------------
   # Figure to compare fire return intervals
-  # ------
+  # ---------------------------------------
   
-  ggplot(dat.regime, aes(x = SLXSAND, y = FRI)) + 
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/FRI_within_SMFIRE.pdf")
+  ggplot(dat.regime, aes(x = SM_FIRE, y = FRI)) + 
     geom_bar(stat="identity") +
     geom_errorbar(aes(ymin = FRI - FRI.sd, ymax = FRI + FRI.sd, width=0.1)) + 
     theme_bw() +  
-    xlab("Sand Fraction") + 
+    xlab("Fire Threshold") + 
     ylab (expression(bold(paste("Fire Return Interval (years)")))) + 
     ggtitle("Fire Return Intervals across Soil Textures")
+  dev.off()
+
+##########################################################################
+# Why does intermediate fire (not difficult fire) have the LEAST change? #
+##########################################################################
+  
+# Hypothesis 1: Intermediate disturbance hypothesis
+# Prediction: Intermediate scenarios have the most biomass out of all the scenarios; they have some 
+# fire, but less than easy fire scenario
+# Test: Compare mean biomass from first & last 25 year; comparing WITHIN time slices but ACROSS soils
+  
+  dat.idh <- aggregate(dat.analy[,c("first_agb","last_agb")], by = dat.analy[c("SM_FIRE")], FUN = mean)
+  dat.sd <- aggregate(dat.analy[,c("first_agb","last_agb")], by = dat.analy[c("SM_FIRE")], FUN = sd)
+  colnames(dat.sd) <- c("SM_FIRE","first_agb.sd","last_agb.sd")
+  dat.idh <- merge(dat.idh, dat.sd)
+  rm(dat.sd)
+  
+  # -----------------------------------------
+  # Figure to compare first twenty-five years
+  # -----------------------------------------
+  
+  library(ggplot2)
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/first_25_years")
+  ggplot(dat.idh, aes(x = SM_FIRE, y = first_agb)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = first_agb - first_agb.sd, ymax = first_agb + first_agb.sd, width=0.1)) +
+    theme_bw() +  
+    xlab("Fire Threshold") + 
+    ylab (expression(bold(paste("Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
+    ggtitle("Intermediate Disturbance Hypothesis:\nFirst 25 Years of Simulation")
+  dev.off()
+  
+  # ----------------------------------------
+  # Figure to compare last twenty-five years
+  # ----------------------------------------
+  
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/last_25_years")
+  ggplot(dat.idh, aes(x = SM_FIRE, y = last_agb)) + 
+    geom_bar(stat="identity") +
+    geom_errorbar(aes(ymin = last_agb - last_agb.sd, ymax = last_agb + last_agb.sd, width=0.1)) +
+    theme_bw() +  
+    xlab("Fire Threshold") + 
+    ylab (expression(bold(paste("Aboveground Biomass (Kg C", " m"^"-2",")")))) + 
+    ggtitle("Intermediate Disturbance Hypothesis:\nLast 25 Years of Simulation")
+  dev.off()
+  
+# Hypothesis 2: Intermediate fire setting shows the greatest change in fire frequency from spinup to 
+# 2015
+# ----------
+  
+# Prediction 1: Most change in fire from spinup to modern OR
+# Test: compare number of fires over 150 year interval; compare number of fires during first/last 25,
+# comparing BETWEEN time slices. 
+  
+  # Need to find fire regimes for spinup
+  dat.spinup <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_tables/output_FRI.spinfinish.v5.csv")
+  
+  # Set up datatable so I can average by SM_FIRE
+  RUNID <- as.character(dat.spinup$RUNID) # Stores RUNID as a character
+  factors <- t(data.frame(strsplit(RUNID, split="-f")))
+  rownames(factors) <- c() # Gets rid of the row names that show up.
+  colnames(factors) <- c("Soil","Fire") # Generate more user-friendly column names. 
+  factors <- data.frame(factors)
+  dat.spinup <- cbind(factors,dat.spinup) # Allows me to sort data based on soil or fire, instead of soil and fire combinations. 
+  dat.spinup$SLXSAND <- car::recode(dat.spinup$Soil, "'s1'='0.93'; 's2'='0.8'; 's3'='0.66'; 's4'='0.52'; 's5'='0.38'")
+  dat.spinup$SM_FIRE <- car::recode(dat.spinup$Fire, "'1'='0.04'; '2'='0.03'; '3'='0.02'; '4'='0.01'; '5'='0'")
+  dat.spinup$SM_FIRE <- factor(dat.spinup$SM_FIRE, levels=c(0.04, 0.03, 0.02, 0.01, 0))
+  dat.spinup$FRI <- car::recode(dat.spinup$FRI, "'Inf'='100'")
+  
+  dat.sd <- aggregate(dat.spinup[c("FRI")], by=dat.spinup[c("SM_FIRE")], FUN=sd)
+  colnames(dat.sd) <- c("SM_FIRE","FRI.sd")
+  dat.spinup <- aggregate(dat.spinup[c("FRI")], by=dat.spinup[c("SM_FIRE")], FUN=mean)
+  dat.spinup <- merge(dat.spinup, dat.sd)
+  rm(dat.sd)
+  dat.spinup <- dat.spinup[,c("SM_FIRE","FRI","FRI.sd")]
+  dat.spinup$Phase <- "spinup"
+  
+  dat.compare <- dat.spinup[c("SM_FIRE","FRI")]
+  colnames(dat.compare) <- c("SM_FIRE","FRI.spinup")
+  
+  # Have fire regimes for this table from dat.regime
+  dat.temp <- subset(dat.agb, subset=dat.agb$year>=max(dat.agb$year)-100)
+  lapse <- max(dat.temp$year)-min(dat.temp$year)
+  lapse
+  dat.temp <- aggregate(dat.all[c("fire")], by=dat.all[c("RUNID","SLXSAND","SM_FIRE")], FUN=sum) # Find fire regime
+  dat.temp$FRI <- lapse/dat.temp$fire # Calculates the fire return interval by divinding the number of fires per scenario by the number of fires
+  dat.temp$FRI <- car::recode(dat.temp$FRI, "'Inf'='100'")
+  dat.sd <- aggregate(dat.temp[c("FRI")], by=dat.temp[c("SM_FIRE")], FUN=sd)
+  colnames(dat.sd) <- c("SM_FIRE","FRI.sd")
+  dat.temp <- aggregate(dat.temp[c("FRI")], by=dat.temp[c("SM_FIRE")], FUN=mean)
+  dat.temp <- merge(dat.temp, dat.sd)
+  dat.temp$Phase <- "run"
+  dat.spinup <- rbind(dat.spinup, dat.temp)
+  
+  dat.compare$FRI.run <- dat.temp$FRI
+  rm(dat.temp)
+  dat.compare$FRI.diff <- dat.compare$FRI.spinup - dat.compare$FRI.run
+  
+    # ------------------------------------------------------------------------------
+    # Figure to compare fire frequency between spinup and runs across fire scenarios
+    # ------------------------------------------------------------------------------
+    
+    library(ggplot2)
+    pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_FRI")
+    ggplot(dat.spinup, aes(x = SM_FIRE, y = FRI, fill = Phase)) + 
+      geom_bar(stat="identity", position="dodge") +
+      geom_errorbar(aes(ymin = FRI - FRI.sd, ymax = FRI + FRI.sd, width=0.1), position = position_dodge(0.9)) +
+      theme_bw() +  
+      xlab("Fire Threshold") + 
+      ylab("Fire Return Interval (years)") + 
+      ggtitle("Fire Return Intervals:\nComparing Spinup and Runs")
+    dev.off()
+
+  # ---------------------------------------------------------------------------------
+  # Graph differences in fire frequency between spinup and runs across fire scenarios
+  # ----------------------------------------------------------------------------------
+  
+  dat.spinup <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_tables/output_FRI.spinfinish.v5.csv")
+  dat.spinup$FRI <-car::recode(dat.spinup$FRI, "'Inf'='100'")
+  
+  dat.temp <- subset(dat.agb, subset=dat.agb$year>=max(dat.agb$year)-100)
+  dat.regime <- aggregate(dat.temp[c("fire")], by=dat.temp[c("RUNID","SM_FIRE","SLXSAND")], FUN = sum) # Find fire regime
+  dat.regime$FRI.runs <- lapse/dat.regime$fire # Calculates the fire return interval by divinding the number of fires per scenario by the number of fires
+  dat.regime$FRI.runs <-car::recode(dat.regime$FRI, "'Inf'='100'")
+  dat.regime <- dat.regime[,c("RUNID","SLXSAND","SM_FIRE","FRI.runs")]
+  
+  dat.FRI <- merge(dat.spinup, dat.regime)
+  dat.FRI$FRI.diff <- dat.FRI$FRI.runs-dat.FRI$FRI
+  dat.FRI_compare <- aggregate(dat.FRI[c("FRI.diff")], by = dat.FRI[c("SM_FIRE")], FUN = mean)
+  dat.sd <- aggregate(dat.FRI[c("FRI.diff")], by = dat.FRI[c("SM_FIRE")], FUN = sd)
+  colnames(dat.sd) <- c("SM_FIRE","FRI.diff.sd")
+  dat.FRI_compare <- merge(dat.FRI_compare, dat.sd)
+  
+  # To understand the pattern in the data
+  subset(dat.FRI, subset=dat.FRI$FRI.diff==max(dat.FRI$FRI.diff))
+  
+  # Graph 
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/FRI_difference")
+  ggplot(dat.FRI_compare, aes(x = SM_FIRE, y = FRI.diff)) + 
+    geom_bar(stat="identity", position="dodge") +
+    geom_errorbar(aes(ymin = FRI.diff - FRI.diff.sd, ymax = FRI.diff + FRI.diff.sd, width=0.1)) +
+    theme_bw() +  
+    xlab("Fire Threshold") + 
+    ylab("Difference in Fire Return Interval (years)") + 
+    ggtitle("Change in Fire Return Interval\nBetween Spinups and Runs")
+  dev.off()
+  
+# Prediction 2: Most change in fire from spinup to modern OR
+# Test: compare mean soil moisture from first 25 years to mean soil moisture from last 25 years; 
+# compare BETWEEN time slice
+  
+dat.soil <- subset(dat.all, subset = dat.all$pft=="Hardwoods")
+dat.soil <- dat.soil[,c("RUNID","SLXSAND","SM_FIRE","year","w.agb","soil_moist","fire")]
+dat.soil_first <- subset(dat.soil, subset = dat.soil$year<=25)
+dat.soil_last <- subset(dat.soil, subset = dat.soil$year>=max(dat.soil$year)-25)
