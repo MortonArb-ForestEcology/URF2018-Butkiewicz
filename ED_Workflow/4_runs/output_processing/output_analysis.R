@@ -143,7 +143,7 @@ ggplot(dat.soil, aes(x = SLXSAND, y = difference)) +
   ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years") + 
   xlab("Sand Fraction") + 
   ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")"))))
-dev.off()
+# dev.off()
 
 rm(dat.soil) # Remove unnecessary variables
   
@@ -178,6 +178,7 @@ TukeyHSD(x=fire.aov, "SM_FIRE")
 # -------------------------------------
 
 # Do a lm with fire off as our reference (= control!)
+# There's an error here where things are not re-leveling. Will check that out later. 
 fri.lm <- lm(difference ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
 fire.sum <- summary(fire.lm)
 anova(fire.lm)
@@ -286,8 +287,57 @@ dat.spinup$FRI <- car::recode(dat.spinup$FRI, "'Inf'='100'")
 ###########################################################################
 # ANOVA TO TEST WHICH FIRE RETURN INTERVALS ARE DIFFERENT FROM EACH OTHER #
 ###########################################################################
-  
-# Find 
+
+# Set up table for ANOVA
+# Find fire regime
+dat.temp <- subset(dat.agb, subset = dat.agb$year<=100)
+print(paste0("Minimum Year in dat.temp: ", min(dat.temp$year)))
+print(paste0("Maximum Year in dat.temp: ", max(dat.temp$year)))
+lapse <- max(dat.temp$year) - min(dat.temp$year)
+print(paste0("Number of Years included in dat.temp: ", lapse))
+dat.temp <- aggregate(dat.temp[c("fire")], by = dat.temp[c("RUNID","SLXSAND","SM_FIRE")], FUN = sum) #find number of fires that occur
+dat.temp$FRI <- lapse / dat.temp$fire
+dat.temp$FRI <- car::recode(dat.temp$FRI, "'Inf'='100'")
+
+dat.temp2 <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-100)
+print(paste0("Minimum Year in dat.temp2: ", min(dat.temp2$year)))
+print(paste0("Maximum Year in dat.temp2: ", max(dat.temp2$year)))
+lapse2 <- max(dat.temp2$year) - min(dat.temp2$year)
+print(paste0("Number of Years included in dat.temp2: ", lapse2))
+dat.temp2 <- aggregate(dat.temp2[c("fire")], by = dat.temp2[c("RUNID","SLXSAND","SM_FIRE")], FUN = sum)
+dat.temp2$FRI.end <- lapse2 / dat.temp2$fire
+dat.temp2$FRI.end <- car::recode(dat.temp2$FRI, "'Inf'='100'")
+colnames(dat.temp2) <- c("RUNID","SLXSAND","SM_FIRE","fire.end","FRI.end")
+
+dat.fri <- merge(dat.temp, dat.temp2)
+dat.fri$change <- dat.fri$FRI.end - dat.fri$FRI
+
+# ANOVA
+deltafri.aov <- aov(change ~ SM_FIRE, data=dat.fri)
+summary(deltafri.aov)
+
+# Tukey's Means Comparison Test
+TukeyHSD(x=deltafri.aov, "SM_FIRE")
+
+#####################################################################################
+# PAIRED T-TESTS TO SEE WHICH FIRE REGIMES CHANGE OVER THE COURSE OF THE SIMULATION # 
+#####################################################################################
+
+# Which fire settings have significantly different changes in fire? 
+sm_fire <- c(unique(as.numeric(as.character(dat.temp$SM_FIRE))))
+for(i in sm_fire){
+  dat.tmp1 <- subset(dat.temp, subset = dat.temp$SM_FIRE==i)
+  dat.tmp2 <- subset(dat.temp2, subset = dat.temp2$SM_FIRE==i)
+  test1 <- t.test(dat.tmp1$FRI, dat.tmp2$FRI, paired = TRUE)
+  print(paste0("Paired t-test for SM_FIRE = ", i))
+  print(test1)
+}
+rm(dat.tmp1, dat.tmp2, sm_fire)
+# Actually, SM_FIRE = 0.04 seems to have changed the most compared to the others. 
+
+
+
+### Other stuff
 dat.sd <- aggregate(dat.spinup[c("FRI")], by=dat.spinup[c("SM_FIRE")], FUN=sd)
 colnames(dat.sd) <- c("SM_FIRE","FRI.sd")
 dat.spinup <- aggregate(dat.spinup[c("FRI")], by=dat.spinup[c("SM_FIRE")], FUN=mean)
