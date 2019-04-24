@@ -62,6 +62,11 @@ dat.analy <- merge(dat.first,dat.last)
 rm(dat.first, dat.last, dat.sd) # Remove unnecessary variables from the environment
 dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb # Creates column with difference between first and last agb through time. 
 
+# Calculate mean increase
+mean(dat.analy$difference)
+sd(dat.analy$difference)
+mean(dat.analy$difference) / mean(dat.analy$first_agb)
+
 # Preliminary look at some general patterns
 subset(dat.analy, subset=dat.analy$difference==max(dat.analy$difference)) # Least stability?
 subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Greatest stability?
@@ -179,7 +184,7 @@ TukeyHSD(x=fire.aov, "SM_FIRE")
 
 # Do a lm with fire off as our reference (= control!)
 # There's an error here where things are not re-leveling. Will check that out later. 
-fri.lm <- lm(difference ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
+fire.lm <- lm(difference ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
 fire.sum <- summary(fire.lm)
 anova(fire.lm)
   
@@ -223,6 +228,10 @@ summary(fri.aov)
 
 # Tukey's Means Comparison Test
 TukeyHSD(x=fri.aov, "SM_FIRE")
+
+nfire.aov <- aov(nfire ~ SM_FIRE, data = dat.regime)
+summary(nfire.aov)
+TukeyHSD(x = nfire.aov, "SM_FIRE")
 
 # Figures comparing fire regimes across fire thresholds
 # -------------------------------------------------------
@@ -311,6 +320,7 @@ colnames(dat.temp2) <- c("RUNID","SLXSAND","SM_FIRE","fire.end","FRI.end")
 
 dat.fri <- merge(dat.temp, dat.temp2)
 dat.fri$change <- dat.fri$FRI.end - dat.fri$FRI
+dat.fri$nchange <- dat.fri$fire - dat.fri$fire.end
 
 # ANOVA
 deltafri.aov <- aov(change ~ SM_FIRE, data=dat.fri)
@@ -318,6 +328,11 @@ summary(deltafri.aov)
 
 # Tukey's Means Comparison Test
 TukeyHSD(x=deltafri.aov, "SM_FIRE")
+
+# Run ANOVA on number of fires instead of 
+deltafire.aov <- aov(nchange ~ SM_FIRE, data = dat.fri)
+summary(deltafire.aov)
+TukeyHSD(x = deltafire.aov, "SM_FIRE")
 
 #####################################################################################
 # PAIRED T-TESTS TO SEE WHICH FIRE REGIMES CHANGE OVER THE COURSE OF THE SIMULATION # 
@@ -334,6 +349,17 @@ for(i in sm_fire){
 }
 rm(dat.tmp1, dat.tmp2, sm_fire)
 # Actually, SM_FIRE = 0.04 seems to have changed the most compared to the others. 
+
+# Run t-tests on number of fires instead of FRI
+sm_fire <- c(unique(as.numeric(as.character(dat.temp$SM_FIRE))))
+for(i in sm_fire){
+  dat.tmp1 <- subset(dat.temp, subset = dat.temp$SM_FIRE==i)
+  dat.tmp2 <- subset(dat.temp2, subset = dat.temp2$SM_FIRE==i)
+  test1 <- t.test(dat.tmp1$fire, dat.tmp2$fire.end, paired = TRUE)
+  print(paste0("Paired t-test for SM_FIRE = ", i))
+  print(test1)
+}
+rm(dat.tmp1, dat.tmp2, sm_fire)
 
 
 
