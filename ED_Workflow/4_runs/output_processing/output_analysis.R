@@ -64,7 +64,6 @@ dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) 
 dat.analy <- merge(dat.first,dat.last)
 rm(dat.first, dat.last, dat.sd) # Remove unnecessary variables from the environment
 dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb # Creates column with difference between first and last agb through time. 
-rm(dat.first, dat.last)
 
 # Compare mean agb for first and last 25 years across soil textures and fire settings using ANOVA and Tukey's Mean HSD
 agb_firstsoil.aov <- aov(first_agb ~ SLXSAND, data = dat.analy) # First 25 years across soils
@@ -276,7 +275,6 @@ dat.fri <- merge(dat.fri, dat.sd)
     ggtitle("Number of Fires across Soil Textures")
   # dev.off()
   
-  rm(dat.regime, dat.fri) # Clean up unnecessary variables
   # ---------
 
   # Figure to comparing fire return intervals
@@ -292,6 +290,7 @@ dat.fri <- merge(dat.fri, dat.sd)
     ggtitle("Fire Return Intervals across Soil Textures")
   # dev.off()
   # ---------
+rm(dat.regime, dat.fri) # Clean up unnecessary variables
   
 # HYPOTHESIS 2: Fire return intervals changed the least between the spinup and the final runs in the 
 # easy fire setting. 
@@ -349,11 +348,9 @@ for(i in sm_fire){
   print(paste0("Paired t-test for SM_FIRE = ", i))
   print(test1)
 }
-rm(dat.tmp1, dat.tmp2, sm_fire)
 # Actually, SM_FIRE = 0.04 seems to have changed the most compared to the others. 
 
 # Which fire settings have significantly different changes in number of fires? 
-sm_fire <- c(unique(as.numeric(as.character(dat.temp$SM_FIRE))))
 for(i in sm_fire){
   dat.tmp1 <- subset(dat.temp, subset = dat.temp$SM_FIRE==i)
   dat.tmp2 <- subset(dat.temp2, subset = dat.temp2$SM_FIRE==i)
@@ -382,7 +379,7 @@ dat.temp2 <- merge(dat.temp2, dat.sd2)
 dat.temp <- rbind(dat.temp, dat.temp2)
 
 # Graph it
-pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_FRI")
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_FRI.pdf")
 ggplot(dat.temp, aes(x = SM_FIRE, y = FRI, fill = slice)) + 
   geom_bar(stat="identity", position="dodge") +
   geom_errorbar(aes(ymin = FRI - FRI.sd, ymax = FRI + FRI.sd, width=0.3), position = position_dodge(0.9)) +
@@ -399,10 +396,10 @@ ggplot(dat.temp, aes(x = SM_FIRE, y = FRI, fill = slice)) +
   xlab("Fire Threshold") + 
   ylab("Fire Return Interval (years)")
 # ggtitle("Fire Return Intervals:\nComparing Spinup and Runs")
-dev.off()
+# dev.off()
 
 # This graph looks like it could benefit from either becoming a box and whisker plot or using range instead of sd. But that would require more coding. 
-pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_nfire")
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_nfire.pdf")
 ggplot(dat.temp, aes(x = SM_FIRE, y = fire, fill = slice)) + 
   geom_bar(stat="identity", position="dodge") +
   geom_errorbar(aes(ymin = fire - fire.sd, ymax = fire + fire.sd, width=0.3), position = position_dodge(0.9)) +
@@ -424,43 +421,6 @@ dev.off()
 # -----
 # GRAPH CHANGES IN SOIL MOISTURE
 # -----
-
-######
-# Graph for poster
-#######
-
-pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/change_in_FRI")
-ggplot(dat.FRI_test, aes(x = SM_FIRE, y = FRI, fill = slice)) + 
-  geom_bar(stat="identity", position="dodge") +
-  geom_errorbar(aes(ymin = FRI - sd, ymax = FRI + sd, width=0.3), position = position_dodge(0.9)) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 55, margin = margin(t=20)),
-        axis.text.y = element_text(size = 55, margin = margin(r=20)),
-        axis.title.x = element_text(size = 60, face = "bold", margin = margin(t = 20)),
-        axis.title.y = element_text(size = 60, face = "bold", margin = margin(t = 50, r = 20)),
-        legend.title = element_text(size=60),
-        legend.text = element_text(size=55, margin = margin(t = 20)),
-        legend.key.size = unit(3, "line")) +
-  scale_fill_manual(name = "Time Frame", values = c("orange","olivedrab4")) +
-  xlab("Fire Threshold") + 
-  ylab("Fire Return Interval (years)")
-# ggtitle("Fire Return Intervals:\nComparing Spinup and Runs")
-dev.off()
-
-# Graph 
-pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/FRI_difference")
-ggplot(dat.FRI_compare, aes(x = SM_FIRE, y = FRI.diff)) + 
-  geom_bar(stat="identity", position="dodge") +
-  geom_errorbar(aes(ymin = FRI.diff - FRI.diff.sd, ymax = FRI.diff + FRI.diff.sd, width=0.1)) +
-  theme_bw() +  
-  xlab("Fire Threshold") + 
-  ylab("Difference in Fire Return Interval (years)") + 
-  ggtitle("Change in Fire Return Interval\nBetween Spinups and Runs")
-dev.off()
-
-# Prediction 2: Greatest change in mean soil moisture from spinup to end
-# Test: compare mean soil moisture from first 25 years to mean soil moisture from last 25 years; 
-# compare BETWEEN time slice
 
 dat.soil <- subset(dat.all, subset = dat.all$pft=="Hardwoods")
 dat.soil <- dat.soil[,c("RUNID","SLXSAND","SM_FIRE","year","w.agb","soil_moist","fire")]
@@ -490,20 +450,20 @@ dat.soil <- aggregate(dat.soil[c("soil_moist")], by = dat.soil[c("SLXSAND","slic
 dat.soil <- merge(dat.soil, dat.sd)
 dat.soil$slice <- factor(dat.soil$slice, levels=c("First 25 Years","Last 25 Years"))
 
-# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff")
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff.pdf")
 ggplot(dat.soil, aes(x = SLXSAND, y=soil_moist, fill = slice)) + 
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = soil_moist - soil_moist.sd, ymax = soil_moist + soil_moist.sd, width = 0.3), position = position_dodge(0.9)) +
   theme_bw() + 
-  theme(axis.text.x = element_text(size = 55, margin = margin(t=20)),
-        axis.text.y = element_text(size = 55, margin = margin(r=20)),
-        axis.title.x = element_text(size = 60, face = "bold", margin = margin(t = 20)),
-        axis.title.y = element_text(size = 60, face = "bold", margin = margin(t = 50, r = 20)),
-        legend.title = element_text(size=60),
-        legend.text = element_text(size=55, margin = margin(t = 20)),
-        legend.key.size = unit(3, "line")) +
-  scale_fill_manual(name = "Time Slice", values = c("gold3","olivedrab3")) +
+  # theme(axis.text.x = element_text(size = 55, margin = margin(t=20)),
+  #       axis.text.y = element_text(size = 55, margin = margin(r=20)),
+  #       axis.title.x = element_text(size = 60, face = "bold", margin = margin(t = 20)),
+  #       axis.title.y = element_text(size = 60, face = "bold", margin = margin(t = 50, r = 20)),
+  #       legend.title = element_text(size=60),
+  #       legend.text = element_text(size=55, margin = margin(t = 20)),
+  #       legend.key.size = unit(3, "line")) +
+  scale_fill_manual(name = "Time Slice", values = c("darkgray","dimgray")) +
   xlab("Sand Fraction") + 
-  ylab (expression(bold(paste("Soil Moisture (kg", " m"^"-2",")")))) 
-# ggtitle("Change in Soil Moisture")
-dev.off()
+  ylab (expression(bold(paste("Soil Moisture (kg", " m"^"-2",")")))) + 
+  ggtitle("Change in Soil Moisture")
+# dev.off()
