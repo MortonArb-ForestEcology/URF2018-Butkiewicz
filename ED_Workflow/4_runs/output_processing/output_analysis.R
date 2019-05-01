@@ -31,9 +31,9 @@ dat.all$SLXSAND <- car::recode(dat.all$SLXSAND, "'s1'='0.93'; 's2'='0.8'; 's3'='
 dat.all$SM_FIRE <- car::recode(dat.all$SM_FIRE, "'1'='0.04'; '2'='0.03'; '3'='0.02'; '4'='0.01'; '5'='0'")
 dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) #says SM_FIRE is a factor and telling it what order we should always list things in 
 
-#########################################
-# Preparing main figure for publication # 
-#########################################
+############################
+# PATTERNS ACROSS ALL RUNS # 
+############################
 
 # Prepare subset dat.all to a manageable table that examines agb
 # --------------------------------------------------------------
@@ -62,8 +62,27 @@ dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) 
   
 # Make dataframe to compare first and last means
 dat.analy <- merge(dat.first,dat.last)
-rm(dat.first, dat.last, dat.sd) # Remove unnecessary variables from the environment
 dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb # Creates column with difference between first and last agb through time. 
+dat.analy$proportional_change <- dat.analy$difference / dat.analy$first_agb
+
+# Okay! Let's look at a two-way ANOVA for the differences or whatever
+agb.aov2 <- aov(agb ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.last)
+summary(agb.aov2)
+
+# Alternative code
+# dat.first <- subset(dat.agb, subset = dat.agb$year<=min(dat.agb$year)+25) # Create dataframe with only first 25 years
+# dat.last <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-25)
+# colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","first_agb")
+# colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","last_agb")
+# dat.last$year <- dat.last(rep(0:length(dat.last$year), each = 25))
+# dat.last$year <- rep(0:25, each = 25)
+# dat.analy <- merge(dat.last, dat.first)
+# dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb
+# dat.test <- aggregate(dat.analy["difference"], by = dat.analy[c("SLXSAND","SM_FIRE")], FUN = mean)
+# dat.test <- aggregate(dat.analy["difference"], by = dat.analy[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+# mean(dat.test$difference)
+# agb.aov2 <- aov(difference ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.analy)
+# summary(agb.aov2)
 
 # Compare mean agb for first and last 25 years across soil textures and fire settings using ANOVA and Tukey's Mean HSD
 agb_firstsoil.aov <- aov(first_agb ~ SLXSAND, data = dat.analy) # First 25 years across soils
@@ -82,6 +101,14 @@ TukeyHSD(agb_lastfire.aov, "SM_FIRE")
 
 rm(agb_firstfire.aov, agb_lastfire.aov, agb_firstsoil.aov, agb_lastsoil.aov) # Remove variables that you won't use again
 
+# Calculate mean biomass for first 25 years across all runs
+print(paste0("Mean biomass for first 25 years: ",mean(dat.analy$first_agb)))
+print(paste0("Standard Deviation for first 25 years: ",sd(dat.analy$first_agb)))
+
+# Calculate mean biomass for last 25 years across all runs
+print(paste0("Mean biomass for last 25 years: ",mean(dat.analy$last_agb)))
+print(paste0("Standard Deviation for last 25 years: ",sd(dat.analy$last_agb)))
+
 # Calculate mean increase in agb across all runs
 mean(dat.analy$difference)
 sd(dat.analy$difference)
@@ -94,18 +121,25 @@ subset(dat.analy, subset=dat.analy$difference==min(dat.analy$difference)) # Grea
 # s3-f2 (66% sand, 0.03 fire threshold) --> most unstable
 # s1-f1 (93% sand, 0.04 fire threshold) --> most stable
 
-# MAIN FIGURE FOR PAPER
+# FIGURE ONE
 # -------------------------------------
 
-# I elected to use a bar graph because I believe it shows the simple increase most effectively. 
-# Although I could demonstrate similar results using a box-and-whisker plot, the difference in agb
-# is large enough that it is difficult to tell which boxes are paired, and it is difficult to tell 
-# how much the agb increased between scenarios. 
+# Prepare table for graph
+colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","agb","sd")
+colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","agb","sd")
+dat.first$slice <- "First 25 Years"
+dat.last$slice <- "Last 25 Years"
+dat.first$years <- "1800 - 1825"
+dat.last$years <- "1989 - 2014"
+dat.graph <- rbind(dat.first, dat.last)
+rm(dat.first, dat.last, dat.sd)
 
-# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/all_runs_increase.pdf")
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/agb_all_runs.pdf")
 # png("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/poster_agb.pdf", width = 2000, height = 1500)
-ggplot(dat.analy, aes(x = SM_FIRE, y = difference, fill=SLXSAND)) + 
+ggplot(dat.graph, aes(x = SM_FIRE, y = agb, fill=SLXSAND)) + 
+  facet_grid(slice ~ .) + 
   geom_bar(stat="identity", position="dodge") +
+  geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
   theme_bw() + 
   # Lines 88-94 are only used for poster text. 
   # theme(axis.text.x = element_text(size = 55, margin = margin(t=20)),
@@ -116,9 +150,9 @@ ggplot(dat.analy, aes(x = SM_FIRE, y = difference, fill=SLXSAND)) +
   #       legend.text = element_text(size=55, margin = margin(t = 20)),
   #       legend.key.size = unit(3, "line")) + 
   scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-  ggtitle("Change in Mean Aboveground Biomass\nbetween First and Last 25 Years")+ 
+  # ggtitle("Aboveground")+ 
   xlab("Fire Threshold") + 
-  ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")"))))
+  ylab (expression(bold(paste("Aboveground Biomass (Kg C", " m"^"-2",")"))))
 # dev.off()
 
 ###################################
@@ -235,16 +269,12 @@ ggplot2::ggplot(dat.fire, aes(x = SM_FIRE, y = difference)) +
 dat.regime <- aggregate(dat.agb[c("fire")], by=dat.agb[c("RUNID","SM_FIRE","SLXSAND")], FUN=sum) # Find fire regime
 dat.regime <- dat.regime[,c("RUNID","SM_FIRE","SLXSAND","fire")] # Remove unnecessary pft column
 colnames(dat.regime) <- c("RUNID","SM_FIRE","SLXSAND","nfire") # Rename columns. Here nfire means "number of fires"
-dat.regime$FRI <- max(dat.agb$year)/dat.regime$nfire # Calculates the fire return interval by divinding the number of fires per scenario by the number of fires
-dat.regime$FRI <-car::recode(dat.regime$FRI, "'Inf'='214'")
 
-# Run an ANOVA test on FRI
-# -------------------------
-fri.aov <- aov(FRI ~ SM_FIRE, data=dat.regime)
-summary(fri.aov)
+subset(dat.regime, subset = dat.regime$nfire==max(dat.regime$nfire))
+subset(dat.regime, subset = dat.regime$nfire==min(dat.regime$nfire))
 
-# Tukey's Means Comparison Test
-TukeyHSD(x=fri.aov, "SM_FIRE")
+# Run an ANOVA test on nfire
+# --------------------------
 
 nfire.aov <- aov(nfire ~ SM_FIRE, data = dat.regime)
 summary(nfire.aov)
@@ -256,41 +286,28 @@ rm(fri.aov, nfire.aov) # Remove unnecessary variables once done
 # -------------------------------------------------------
 
 # Prepare tables to graphically compare means 
-dat.fri <- aggregate(dat.regime[c("nfire","FRI")], by = dat.regime[c("SM_FIRE")], FUN = mean)
-dat.sd <- aggregate(dat.regime[c("nfire","FRI")], by = dat.regime[c("SM_FIRE")], FUN = sd)
-colnames(dat.sd) <- c("SM_FIRE","nfire.sd","FRI.sd")
-dat.fri <- merge(dat.fri, dat.sd)
+dat.nfire <- aggregate(dat.regime["nfire"], by = dat.regime[c("SM_FIRE")], FUN = mean)
+dat.sd <- aggregate(dat.regime["nfire"], by = dat.regime[c("SM_FIRE")], FUN = sd)
+colnames(dat.sd) <- c("SM_FIRE","sd")
+dat.nfire <- merge(dat.nfire, dat.sd)
 
-  # ---------------------------------
-  # Figure comparing number of fires
-  # ---------------------------------
+subset(dat.nfire, subset = dat.nfire$nfire==max(dat.nfire$nfire))
+subset(dat.nfire, subset = dat.nfire$nfire==min(dat.nfire$nfire))
 
-  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/nfire_within_SMFIRE.pdf")
-  ggplot(dat.fri, aes(x = SM_FIRE, y = nfire)) + 
-    geom_bar(stat="identity") +
-    geom_errorbar(aes(ymin = nfire - nfire.sd, ymax = nfire + nfire.sd, width=0.1)) + 
+  # ---------
+  # FIGURE 4
+  # ---------
+
+  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/nfire.pdf")
+  ggplot(dat.regime, aes(x = SM_FIRE, y = nfire)) + 
+    geom_boxplot() +
     theme_bw() +  
     xlab("Fire Threshold") + 
     ylab (expression(bold(paste("Number of Fires")))) + 
-    ggtitle("Number of Fires across Soil Textures")
-  # dev.off()
+    ggtitle("Number of Fires")
+  dev.off()
   
   # ---------
-
-  # Figure to comparing fire return intervals
-  # -----------------------------------------
-  
-  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/FRI_within_SMFIRE.pdf")
-  ggplot(dat.fri, aes(x = SM_FIRE, y = FRI)) + 
-    geom_bar(stat="identity") +
-    geom_errorbar(aes(ymin = FRI - FRI.sd, ymax = FRI + FRI.sd, width=0.1)) + 
-    theme_bw() +  
-    xlab("Fire Threshold") + 
-    ylab (expression(bold(paste("Fire Return Interval (years)")))) + 
-    ggtitle("Fire Return Intervals across Soil Textures")
-  # dev.off()
-  # ---------
-rm(dat.regime, dat.fri) # Clean up unnecessary variables
   
 # HYPOTHESIS 2: Fire return intervals changed the least between the spinup and the final runs in the 
 # easy fire setting. 
@@ -308,8 +325,6 @@ rm(dat.regime, dat.fri) # Clean up unnecessary variables
   lapse <- max(dat.temp$year) - min(dat.temp$year)
   print(paste0("Number of Years included in dat.temp: ", lapse))
   dat.temp <- aggregate(dat.temp[c("fire")], by = dat.temp[c("RUNID","SLXSAND","SM_FIRE")], FUN = sum) #find number of fires that occur
-  dat.temp$FRI <- lapse / dat.temp$fire
-  dat.temp$FRI <- car::recode(dat.temp$FRI, "'Inf'='100'")
   
   dat.temp2 <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-100)
   print(paste0("Minimum Year in dat.temp2: ", min(dat.temp2$year)))
@@ -317,21 +332,13 @@ rm(dat.regime, dat.fri) # Clean up unnecessary variables
   lapse2 <- max(dat.temp2$year) - min(dat.temp2$year)
   print(paste0("Number of Years included in dat.temp2: ", lapse2))
   dat.temp2 <- aggregate(dat.temp2[c("fire")], by = dat.temp2[c("RUNID","SLXSAND","SM_FIRE")], FUN = sum)
-  dat.temp2$FRI.end <- lapse2 / dat.temp2$fire
-  dat.temp2$FRI.end <- car::recode(dat.temp2$FRI, "'Inf'='100'")
-  colnames(dat.temp2) <- c("RUNID","SLXSAND","SM_FIRE","fire.end","FRI.end")
+  colnames(dat.temp2) <- c("RUNID","SLXSAND","SM_FIRE","fire.end")
   
   dat.fri <- merge(dat.temp, dat.temp2)
-  dat.fri$change <- dat.fri$FRI.end - dat.fri$FRI
-  dat.fri$nchange <- dat.fri$fire - dat.fri$fire.end
+  dat.fri$change <- dat.fri$fire - dat.fri$fire.end
   
-  # Run ANOVA on FRI
-  deltafri.aov <- aov(change ~ SM_FIRE, data=dat.fri)
-  summary(deltafri.aov)
-  TukeyHSD(x=deltafri.aov, "SM_FIRE") # Tukey's Means Comparison Test
-  
-  # Run ANOVA on number of fires instead of 
-  deltafire.aov <- aov(nchange ~ SM_FIRE, data = dat.fri)
+  # Run ANOVA on number of fires 
+  deltafire.aov <- aov(change ~ SM_FIRE, data = dat.fri)
   summary(deltafire.aov)
   TukeyHSD(x = deltafire.aov, "SM_FIRE")   # Tukey's Means Comparison Test
 
@@ -344,7 +351,7 @@ sm_fire <- c(unique(as.numeric(as.character(dat.temp$SM_FIRE))))
 for(i in sm_fire){
   dat.tmp1 <- subset(dat.temp, subset = dat.temp$SM_FIRE==i)
   dat.tmp2 <- subset(dat.temp2, subset = dat.temp2$SM_FIRE==i)
-  test1 <- t.test(dat.tmp1$FRI, dat.tmp2$FRI, paired = TRUE)
+  test1 <- t.test(dat.tmp1$fire, dat.tmp2$fire, paired = TRUE)
   print(paste0("Paired t-test for SM_FIRE = ", i))
   print(test1)
 }
@@ -359,6 +366,10 @@ for(i in sm_fire){
   print(test1)
 }
 rm(dat.tmp1, dat.tmp2, sm_fire)
+dat.sum <- aggregate(dat.fri[c("fire","fire.end","change")], by = dat.fri["SM_FIRE"], FUN = mean)
+dat.sd <- aggregate(dat.fri[c("fire","fire.end","change")], by = dat.fri["SM_FIRE"], FUN = sd)
+colnames(dat.sd) <- c("SM_FIRE","fire.sd","fire.end.sd","change.sd")
+dat.sum <- merge(dat.sum, dat.sd)
 
 # FIGURE DEMONSTRATING CHANGES IN FIRE REGIMES INTERVALS 
 # ------------------------------------------------------
