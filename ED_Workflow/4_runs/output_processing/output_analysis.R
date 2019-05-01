@@ -13,6 +13,7 @@ summary(dat.all)
 
 # Since there will be graphs load ggplot2
 library(ggplot2)
+library(dplyr) # I'll learn to use this later, when I'm cleaning up the code
 
 # ###########################
 # Prepare the full datatable
@@ -110,9 +111,9 @@ print(paste0("Mean biomass for last 25 years: ",mean(dat.analy$last_agb)))
 print(paste0("Standard Deviation for last 25 years: ",sd(dat.analy$last_agb)))
 
 # Calculate mean increase in agb across all runs
-mean(dat.analy$difference)
-sd(dat.analy$difference)
-mean(dat.analy$difference) / mean(dat.analy$first_agb)
+print(paste0("Mean change in biomass: ", mean(dat.analy$difference)))
+print(paste0("Standard deviation of change in biomass: ", sd(dat.analy$difference)))
+print(paste0("Mean proportion change in biomass: ", mean(dat.analy$difference) / mean(dat.analy$first_agb)))
 
 # Preliminary look at some general patterns
 subset(dat.analy, subset=dat.analy$difference==max(dat.analy$difference)) # Least stability?
@@ -160,9 +161,9 @@ ggplot(dat.graph, aes(x = SM_FIRE, y = agb, fill=SLXSAND)) +
 ################################### 
 
 # Prepare dataframe to compare across soils, averaging AGB across fire settings. 
-dat.soil <- aggregate(dat.analy["difference"], by=dat.analy["SLXSAND"], FUN=mean) # Find average agb for each soil texture 
-dat.sd <- aggregate(dat.analy["difference"], by=dat.analy["SLXSAND"], FUN=sd)
-colnames(dat.sd) <- c("SLXSAND","sd") # Here sd stands for "standard deviation"
+dat.soil <- aggregate(dat.analy[c("difference","proportional_change")], by=dat.analy["SLXSAND"], FUN=mean) # Find average agb for each soil texture 
+dat.sd <- aggregate(dat.analy[c("difference","proportional_change")], by=dat.analy["SLXSAND"], FUN=sd)
+colnames(dat.sd) <- c("SLXSAND","diff.sd","prop.sd") # Here sd stands for "standard deviation"
 dat.soil <- merge(dat.soil, dat.sd) # Include standard deviation
 rm(dat.sd) # Remove unnecessary variables
   
@@ -176,14 +177,14 @@ subset(dat.soil, subset=dat.soil$difference==min(dat.soil$difference)) # Greates
 # Run an ANOVA test on the patterns
 # ----------------------------------
 
-soil.aov <- aov(difference ~ SLXSAND, data=dat.analy) 
+soil.aov <- aov(proportional_change ~ SLXSAND, data=dat.analy) 
 summary(soil.aov)
 
 # Apply a Linear Model to the patterns
 # -------------------------------------
 
-soil.lm  <- lm(difference ~ SLXSAND, data=dat.analy) # Effects parameterizaiton --> relative effects
-soil.lm2  <- lm(difference ~ SLXSAND-1, data=dat.analy) # looks at the effect of each category relative to 0 (force overall itnercept through 0); means parameterization --> absolute effects
+soil.lm  <- lm(proportional_change ~ SLXSAND, data=dat.analy) # Effects parameterizaiton --> relative effects
+soil.lm2  <- lm(proportional_change ~ SLXSAND-1, data=dat.analy) # looks at the effect of each category relative to 0 (force overall itnercept through 0); means parameterization --> absolute effects
 summary(soil.lm)
 anova(soil.lm)
 summary(soil.lm2)
@@ -191,14 +192,14 @@ summary(soil.lm2)
 # Figure to demonstrate (lack of) patterns in soil
 # ------------------------------------------------
   
-# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soil_increase.pdf")
-ggplot(dat.soil, aes(x = SLXSAND, y = difference)) + 
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soil_increase_prop.pdf")
+ggplot(dat.soil, aes(x = SLXSAND, y = proportional_change)) + 
   geom_bar(stat="identity") +
-  geom_errorbar(aes(ymin = difference - sd, ymax = difference + sd, width=0.1)) + 
+  geom_errorbar(aes(ymin = proportional_change - prop.sd, ymax = proportional_change + prop.sd, width=0.1)) + 
   theme_bw() +  
   ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years") + 
   xlab("Sand Fraction") + 
-  ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")"))))
+  ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
 # dev.off()
 
 rm(dat.soil, soil.aov, soil.lm, soil.lm2) # Remove unnecessary variables
@@ -208,52 +209,55 @@ rm(dat.soil, soil.aov, soil.lm, soil.lm2) # Remove unnecessary variables
 ##################################
   
 # Prepare dataframe to compare across fire settings, averaging agb across all soils for each setting. 
-dat.fire <- aggregate(dat.analy["difference"], by=dat.analy["SM_FIRE"], FUN=mean)
-dat.sd <- aggregate(dat.analy["difference"], by=dat.analy["SM_FIRE"], FUN=sd)
-colnames(dat.sd) <- c("SM_FIRE","sd") # Here sd stands for "standard deviation"
+dat.fire <- aggregate(dat.analy[c("difference","proportional_change")], by=dat.analy["SM_FIRE"], FUN=mean)
+dat.sd <- aggregate(dat.analy[c("difference","proportional_change")], by=dat.analy["SM_FIRE"], FUN=sd)
+colnames(dat.sd) <- c("SM_FIRE","diff.sd","prop.sd") # Here sd stands for "standard deviation"
 dat.fire <- merge(dat.fire, dat.sd) # Include standard deviation
 rm(dat.sd) # Remove unnecessary variables
   
 # Preliminary test for patterns in the data
-subset(dat.fire, subset=dat.fire$difference==max(dat.fire$difference)) # Least stability?
-subset(dat.fire, subset=dat.fire$difference==min(dat.fire$difference)) # Greatest stability?
+subset(dat.fire, subset=dat.fire$proportional_change==max(dat.fire$proportional_change)) # Least stability?
+subset(dat.fire, subset=dat.fire$proportional_change==min(dat.fire$proportional_change)) # Greatest stability?
   
 # Moderately able to catch fire (SM_FIRE = 0.02) --> least stable
 # Easily able to catch fire (SM_FIRE = 0.04) --> most stable
   
-# Run an ANOVA test on the patterns
-# ----------------------------------
-fire.aov <- aov(difference ~ SM_FIRE, data=dat.analy)
+# Run an ANOVA test on PROPORTIONAL CHANGE
+# ----------------------------------------
+fire.aov <- aov(proportional_change ~ SM_FIRE, data=dat.analy)
 summary(fire.aov)
 
 # Now run Tukey's Means Comparison Test
 dat.analy$SM_FIRE <- as.character(dat.analy$SM_FIRE)
-TukeyHSD(x=fire.aov, "SM_FIRE")
+fire.hsd <- TukeyHSD(x=fire.aov, "SM_FIRE")
   
-# Apply a Linear Model on the patterns
-# -------------------------------------
+# Apply a Linear Model on the PROPORTIONAL CHANGE
+# -----------------------------------------------
 
 # Do a lm with fire off as our reference (= control!)
 dat.analy$SM_FIRE <- factor(dat.analy$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) # Turns SM_FIRE values into factors so that line 187 works. They should already be factors from the code in line 29, but they're not. 
-fire.lm <- lm(difference ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
+fire.lm <- lm(proportional_change ~ relevel(SM_FIRE, ref="0"), data=dat.analy)
 fire.sum <- summary(fire.lm)
 anova(fire.lm)
   
-# How much "easy fire" decreases biomass
+# How much "easy fire" decreases biomass (SM_FIRE = 0.04)
 fire.sum$coefficients[5,1]/fire.sum$coefficients[1,1] # comparing relative change of easy fire from no fire
+# How much "moderately easy fire" decreases biomass (SM_FIRE = 0.03)
+fire.sum$coefficients[4,1]/fire.sum$coefficients[1,1]
+
 rm(fire.lm, fire.sum, fire.aov)
 
 # Figure to demonstrate patterns in fire
 # --------------------------------------
   
-# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/fire_increase.pdf")
-ggplot2::ggplot(dat.fire, aes(x = SM_FIRE, y = difference)) + 
+# pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/prop_fire_increase.pdf")
+ggplot(dat.fire, aes(x = SM_FIRE, y = proportional_change)) + 
   geom_bar(stat="identity") +
-  geom_errorbar(aes(ymin = difference - sd, ymax = difference + sd, width=0.1)) + 
+  geom_errorbar(aes(ymin = proportional_change - prop.sd, ymax = proportional_change + prop.sd, width=0.1)) + 
   theme_bw() +  
-  ggtitle("Change in Aboveground Biomass\nbetween First and Last 25 Years") + 
+  ggtitle("Proportional Change in Aboveground Biomass\nbetween First and Last 25 Years") + 
   xlab("Fire Threshold") + 
-  ylab (expression(bold(paste("Change in Aboveground Biomass (Kg C", " m"^"-2",")"))))
+  ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
 # dev.off()
   
 #############################################
@@ -298,14 +302,14 @@ subset(dat.nfire, subset = dat.nfire$nfire==min(dat.nfire$nfire))
   # FIGURE 4
   # ---------
 
-  pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/nfire.pdf")
+  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/nfire.pdf")
   ggplot(dat.regime, aes(x = SM_FIRE, y = nfire)) + 
     geom_boxplot() +
     theme_bw() +  
     xlab("Fire Threshold") + 
     ylab (expression(bold(paste("Number of Fires")))) + 
     ggtitle("Number of Fires")
-  dev.off()
+  # dev.off()
   
   # ---------
   
@@ -336,6 +340,8 @@ subset(dat.nfire, subset = dat.nfire$nfire==min(dat.nfire$nfire))
   
   dat.fri <- merge(dat.temp, dat.temp2)
   dat.fri$change <- dat.fri$fire - dat.fri$fire.end
+  dat.fri$prop_change <- dat.fri$change / dat.fri$fire
+  dat.fri$prop_change <- car::recode(dat.all$SLXSAND, "'NaN'='0'") 
   
   # Run ANOVA on number of fires 
   deltafire.aov <- aov(change ~ SM_FIRE, data = dat.fri)
@@ -345,17 +351,6 @@ subset(dat.nfire, subset = dat.nfire$nfire==min(dat.nfire$nfire))
 # ----------------------------------------------------------------------------
 # TEST 1: Look for differences in changes in the fire regime between each run. 
 # ----------------------------------------------------------------------------
-  
-# Which fire settings have significantly different changes in FRI? 
-sm_fire <- c(unique(as.numeric(as.character(dat.temp$SM_FIRE))))
-for(i in sm_fire){
-  dat.tmp1 <- subset(dat.temp, subset = dat.temp$SM_FIRE==i)
-  dat.tmp2 <- subset(dat.temp2, subset = dat.temp2$SM_FIRE==i)
-  test1 <- t.test(dat.tmp1$fire, dat.tmp2$fire, paired = TRUE)
-  print(paste0("Paired t-test for SM_FIRE = ", i))
-  print(test1)
-}
-# Actually, SM_FIRE = 0.04 seems to have changed the most compared to the others. 
 
 # Which fire settings have significantly different changes in number of fires? 
 for(i in sm_fire){
@@ -460,6 +455,19 @@ colnames(dat.sd) <- c("SLXSAND","slice","soil_moist.sd")
 dat.soil <- aggregate(dat.soil[c("soil_moist")], by = dat.soil[c("SLXSAND","slice")], FUN=mean)
 dat.soil <- merge(dat.soil, dat.sd)
 dat.soil$slice <- factor(dat.soil$slice, levels=c("First 25 Years","Last 25 Years"))
+
+# Calculate differences and proportional change in soil moisture
+dat.change <- dat.soil_first[c("SM_FIRE","SLXSAND","RUNID")]
+dat.change$change <- dat.soil_last$soil_moist - dat.soil_first$soil_moist
+dat.change$prop_change <- dat.change$change / dat.soil_first$soil_moist
+
+range(dat.change$prop_change)
+subset(dat.change, subset = dat.change$prop_change==min(dat.change$prop_change))
+subset(dat.change, subset = dat.change$prop_change==max(dat.change$prop_change))
+
+deltaSM.aov <- aov(prop_change ~ SM_FIRE, data = dat.change)
+summary(deltaSM.aov)
+TukeyHSD(x = deltaSM.aov, "SM_FIRE") 
 
 # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff.pdf")
 ggplot(dat.soil, aes(x = SLXSAND, y=soil_moist, fill = slice)) + 
