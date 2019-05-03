@@ -2,22 +2,18 @@
 # OUTPUT ANALYSIS, Forward Runs #
 #################################
 
-# The first part of this analysis is meant to find patterns in the data. 
-# ------------------------------------------------------------------------
+# Load necessary packages
+library(ggplot2)
+# library(dplyr) # I'll learn to use this later, when I'm cleaning up the code
 
-# Load the necessary data. The filepaths wil have to change between computers. 
+
+# Load the necessary data and prepare datatable. The filepaths wil have to change between computers. 
+# --------------------------------------------------------------------------------------------------
+
 # path.google <- "/Volumes/GoogleDrive/My Drive/URF 2018 Butkiewicz"
 dat.all <- read.csv("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_tables/output_runs.v5.csv")
 # dat.all <- read.csv(file.path(path.google, "v5_tables", "output_runs.v5.csv"))
 summary(dat.all)
-
-# Since there will be graphs load ggplot2
-library(ggplot2)
-library(dplyr) # I'll learn to use this later, when I'm cleaning up the code
-
-# ###########################
-# Prepare the full datatable
-# ###########################
 
 # Add columns that individually specify soil and fire values 
 RUNID <- as.character(dat.all$RUNID) # Stores RUNID as a character
@@ -69,21 +65,6 @@ dat.analy$proportional_change <- dat.analy$difference / dat.analy$first_agb
 # Okay! Let's look at a two-way ANOVA for the differences or whatever
 agb.aov2 <- aov(agb ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.last)
 summary(agb.aov2)
-
-# Alternative code
-# dat.first <- subset(dat.agb, subset = dat.agb$year<=min(dat.agb$year)+25) # Create dataframe with only first 25 years
-# dat.last <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-25)
-# colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","first_agb")
-# colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","last_agb")
-# dat.last$year <- dat.last(rep(0:length(dat.last$year), each = 25))
-# dat.last$year <- rep(0:25, each = 25)
-# dat.analy <- merge(dat.last, dat.first)
-# dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb
-# dat.test <- aggregate(dat.analy["difference"], by = dat.analy[c("SLXSAND","SM_FIRE")], FUN = mean)
-# dat.test <- aggregate(dat.analy["difference"], by = dat.analy[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-# mean(dat.test$difference)
-# agb.aov2 <- aov(difference ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.analy)
-# summary(agb.aov2)
 
 # Compare mean agb for first and last 25 years across soil textures and fire settings using ANOVA and Tukey's Mean HSD
 agb_firstsoil.aov <- aov(first_agb ~ SLXSAND, data = dat.analy) # First 25 years across soils
