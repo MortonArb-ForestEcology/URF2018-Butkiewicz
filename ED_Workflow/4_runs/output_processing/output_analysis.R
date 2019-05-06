@@ -35,31 +35,38 @@ dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) 
 # Prepare subset dat.all to a manageable table that examines agb
 # --------------------------------------------------------------
 
-  dat.agb <- aggregate(dat.all[,c("w.agb")], by=dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","fire")], FUN=sum, na.rm = T) # Sum agb across pfts for each RUNID and year
-  colnames(dat.agb) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","agb") # Aggregate gives you a column labeled "x" for some reason, so here we change it to agb
+  dat.agb <- aggregate(dat.all[,c("w.agb","w.dens","w.ba")], by=dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","fire")], FUN=sum, na.rm = T) # Sum agb across pfts for each RUNID and year
+ #  colnames(dat.agb) <- c("SLXSAND","SM_FIRE","RUNID","year","fire","agb") # Aggregate gives you a column labeled "x" for some reason, so here we change it to agb
 
 # Find mean agb for first and last 25 years
 # ------------------------------------------
 
   # Calculate the mean agb for the first 25 years of the simulation
   dat.first <- subset(dat.agb, subset = dat.agb$year<=min(dat.agb$year)+25) # Create dataframe with only first 25 years
-  dat.sd <- aggregate(dat.first["agb"], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
-  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd") # Eases merge in line 49
-  dat.first <- aggregate(dat.first["agb"], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  dat.sd <- aggregate(dat.first[,c("w.agb","w.dens","w.ba")], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
+  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","agb_1.sd","dens_1.sd","ba_1.sd") # Eases merge in line 49
+  dat.first <- aggregate(dat.first[,c("w.agb","w.dens","w.ba")], by = dat.first[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","agb_1","dens_1","ba_1")
   dat.first <- merge(dat.first, dat.sd)
-  colnames(dat.first) <- c("SLXSAND","SM_FIRE","RUNID","first_agb","first_agb.sd") # Rename columns to make merge in line 61 easier
 
   # Calculaate the mean agb for the last 25 years of the simulation
   dat.last <- subset(dat.agb, subset = dat.agb$year>=max(dat.agb$year)-25)
-  dat.sd <- aggregate(dat.last["agb"], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd) # Find mean for each soil texture
-  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
-  dat.last <- aggregate(dat.last["agb"], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  dat.sd <- aggregate(dat.last[,c("w.agb","w.dens","w.ba")], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd) # Find mean for each soil texture
+  colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","agb_L.sd","dens_L.sd","ba_L.sd")
+  dat.last <- aggregate(dat.last[,c("w.agb","w.dens","w.ba")], by = dat.last[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","agb_L","dens_L","ba_L")
   dat.last <- merge(dat.last, dat.sd)
-  colnames(dat.last) <- c("SLXSAND","SM_FIRE","RUNID","last_agb", "last_agb.sd") # Rename columns to make merge in line 61 easier
-  
+
 # Make dataframe to compare first and last means
 dat.analy <- merge(dat.first,dat.last)
-dat.analy$difference <- dat.analy$last_agb - dat.analy$first_agb # Creates column with difference between first and last agb through time. 
+dat.analy$agb.diff <- dat.analy$agb_L - dat.analy$agb_1 # Creates column with difference between first and last agb through time. 
+dat.analy$dens.diff <- dat.analy$dens_L - dat.analy$dens_1
+dat.analy$ba.diff <- dat.analy$ba_L - dat.analy$ba_1
+
+mean(dat.analy$agb.diff)
+mean(dat.analy$dens.diff)
+mean(dat.analy$ba.diff)
+
 dat.analy$proportional_change <- dat.analy$difference / dat.analy$first_agb
 
 # Okay! Let's look at a two-way ANOVA for the differences or whatever
