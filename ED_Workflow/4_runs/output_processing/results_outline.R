@@ -112,21 +112,21 @@ colnames(dat.tmp1) <- c("SLXSAND","SM_FIRE","RUNID","agb_1","agb_1.sd")
   
 # Find mean aboveground biomass for the last 25 years of each simulation
 dat.tmp2 <- subset(dat.analy, subset = dat.analy$year>max(dat.analy$year)-25)
-# dat.sd <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
+dat.sd <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
 colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
-# dat.tmp2 <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-# dat.tmp2 <- merge(dat.tmp2, dat.sd)
+dat.tmp2 <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+dat.tmp2 <- merge(dat.tmp2, dat.sd)
 colnames(dat.tmp2) <- c("SLXSAND","SM_FIRE","RUNID","agb_L","agb_L.sd")
 
-dat.test <- merge(dat.tmp1, dat.tmp2)
-dat.test$diff <- dat.test$agb_L - dat.test$agb_1
-dat.test$pdiff <- dat.test$diff / dat.test$agb_1
+# dat.test <- merge(dat.tmp1, dat.tmp2)
+# dat.test$diff <- dat.test$agb_L - dat.test$agb_1
+# dat.test$pdiff <- dat.test$diff / dat.test$agb_1
 
-test2 <- lme(pdiff ~ SLXSAND*SM_FIRE, random = list(year = ~1), data = dat.test)
-summary(test2)
+# test2 <- lme(pdiff ~ SLXSAND*SM_FIRE, random = list(year = ~1), data = dat.test)
+# summary(test2)
 
-test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
-summary(test)
+# test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
+# summary(test)
   
 # Finish dat.analy table
 dat.analy <- merge(dat.tmp1, dat.tmp2)
@@ -168,6 +168,9 @@ summary(fire.lm2)
 psoil.aov <- aov(p.diff ~ SLXSAND, data = dat.analy)
 summary(psoil.aov)
 
+# Summary statistics
+aggregate()
+
 psoil.lm  <- lm(p.diff ~ SLXSAND, data=dat.analy) # Effects parameterizaiton --> relative effects
 summary(psoil.lm) # None different from each other
 anova(psoil.lm)
@@ -190,9 +193,29 @@ summary(pfire.lm2)
 # Soils Graph
 # ------------
 
+dat.soil <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SLXSAND"], FUN=mean) # Find average agb for each soil texture 
+dat.sd <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SLXSAND"], FUN=sd)
+colnames(dat.sd) <- c("SLXSAND","diff.sd","pdiff.sd") # Here sd stands for "standard deviation"
+dat.soil <- merge(dat.soil, dat.sd) # Include standard deviation
+rm(dat.sd) # Remove unnecessary variables
+
+# Summary statistics
+subset(dat.soil, subset = dat.soil$p.diff==max(dat.soil$p.diff))
+subset(dat.soil, subset = dat.soil$p.diff==min(dat.soil$p.diff))
+
 # -----------
 # Fire Graph
 # -----------
+
+dat.fire <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SM_FIRE"], FUN=mean) # Find average agb for each soil texture 
+dat.sd <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SM_FIRE"], FUN=sd)
+colnames(dat.sd) <- c("SM_FIRE","diff.sd","pdiff.sd") # Here sd stands for "standard deviation"
+dat.fire <- merge(dat.fire, dat.sd) # Include standard deviation
+rm(dat.sd) # Remove unnecessary variables
+
+# Summary statistics
+subset(dat.fire, subset = dat.fire$p.diff==max(dat.fire$p.diff))
+subset(dat.fire, subset = dat.fire$p.diff==min(dat.fire$p.diff))
 
 ##############################
 # IDENTIFY DRIVERS OF CHANGE #
