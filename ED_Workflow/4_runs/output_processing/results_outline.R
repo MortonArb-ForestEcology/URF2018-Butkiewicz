@@ -168,9 +168,6 @@ summary(fire.lm2)
 psoil.aov <- aov(p.diff ~ SLXSAND, data = dat.analy)
 summary(psoil.aov)
 
-# Summary statistics
-aggregate()
-
 psoil.lm  <- lm(p.diff ~ SLXSAND, data=dat.analy) # Effects parameterizaiton --> relative effects
 summary(psoil.lm) # None different from each other
 anova(psoil.lm)
@@ -207,15 +204,15 @@ subset(dat.soil, subset = dat.soil$p.diff==min(dat.soil$p.diff))
 # Fire Graph
 # -----------
 
-dat.fire <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SM_FIRE"], FUN=mean) # Find average agb for each soil texture 
+dat.fri <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SM_FIRE"], FUN=mean) # Find average agb for each soil texture 
 dat.sd <- aggregate(dat.analy[,c("diff","p.diff")], by=dat.analy["SM_FIRE"], FUN=sd)
 colnames(dat.sd) <- c("SM_FIRE","diff.sd","pdiff.sd") # Here sd stands for "standard deviation"
-dat.fire <- merge(dat.fire, dat.sd) # Include standard deviation
+dat.fri <- merge(dat.fri, dat.sd) # Include standard deviation
 rm(dat.sd) # Remove unnecessary variables
 
 # Summary statistics
-subset(dat.fire, subset = dat.fire$p.diff==max(dat.fire$p.diff))
-subset(dat.fire, subset = dat.fire$p.diff==min(dat.fire$p.diff))
+subset(dat.fri, subset = dat.fri$p.diff==max(dat.fri$p.diff))
+subset(dat.fri, subset = dat.fri$p.diff==min(dat.fri$p.diff))
 
 ##############################
 # IDENTIFY DRIVERS OF CHANGE #
@@ -227,8 +224,17 @@ subset(dat.fire, subset = dat.fire$p.diff==min(dat.fire$p.diff))
 
 # Number of fires
 dat.regime <- aggregate(dat.fire["fire"], by = dat.fire[c("SLXSAND","SM_FIRE","RUNID")], FUN = sum)
-dat.regime <- dat.regime[,c("RUNID","SM_FIRE","SLXSAND","fire")] # Remove unnecessary pft column
-colnames(dat.regime) <- c("RUNID","SM_FIRE","SLXSAND","nfire") # Rename columns. Here nfire means "number of fires"
+colnames(dat.regime)
+colnames(dat.regime) <- c("SLXSAND","SM_FIRE","RUNID","nfire") # Rename columns. Here nfire means "number of fires"
+
+# Summary statistics
+range(subset(dat.regime, subset = dat.regime$SM_FIRE==0.04)$nfire)
+subset(dat.regime, subset = dat.$nfire==max(dat.regime$nfire))
+
+# ANOVA and TukeyHSD
+nfire.aov <- aov(nfire ~ SM_FIRE, data = dat.regime)
+summary(nfire.aov)
+TukeyHSD(nfire.aov)
 
 dat.regime1 <- subset(dat.fire, subset = dat.fire$year<min(dat.fire$year)+100)
   length(unique(dat.regime1$year))
@@ -245,34 +251,41 @@ dat.regime1$diff <- dat.regime1$fire.L - dat.regime1$fire.1
 dat.regime1$p.diff <- dat.regime1$diff / dat.regime1$fire.1
 dat.regime1$p.diff <- recode(dat.regime1$p.diff, "'NaN'='0'")
 dat.regime <- merge(dat.regime, dat.regime1)
-  print(colnames(dat.regime))
-  colnames(dat.regime) <- c("RUNID","SM_FIRE","SLXSAND","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
-# dat.analy <- merge(dat.regime, dat.analy)
-  dat.test <- merge(dat.regime, dat.test)
+  colnames(dat.regime)
+  colnames(dat.regime) <- c("SLXSAND","SM_FIRE","SLXSAND","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
+  dat.analy <- merge(dat.regime, dat.analy)
+#  dat.test <- merge(dat.regime, dat.test)
   
-test3 <- lme(pdiff ~ nfire.diff, random = list(year = ~1), data = dat.test)
-summary(test3)
-
-test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
-summary(test)
-
-# Soil Moisture
-dat.soil <- aggregate(dat.all[c("soil_moist")], by = dat.all[,c("SLXSAND","SM_FIRE","RUNID","year")], FUN = mean) # Shouldn't really change the values since they should be the same no matter pft
-
-dat.soil1 <- subset(dat.soil, subset = dat.soil$year<min(dat.soil$year)+25)
-  length(dat.soil1$year)/25
-dat.soil1 <- aggregate(dat.soil1["soil_moist"], by = dat.soil1[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-  colnames(dat.soil1) <- c("SLXSAND","SM_FIRE","RUNID","sm.1")
-dat.soilL <- subset(dat.soil, subset = dat.soil$year>max(dat.soil$year)-25)
-  length(dat.soilL$year)/25
-dat.soilL <- aggregate(dat.soilL["soil_moist"], by = dat.soilL[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-  colnames(dat.soilL) <- c("SLXSAND","SM_FIRE","RUNID","sm.L")
+  aov(nfire.pdiff ~ SM_FIRE, data = dat.regime)
   
-dat.soil <- merge(dat.soil1, dat.soilL)
-dat.soil$sm.diff <- dat.soil$sm.L - dat.soil$sm.1
-dat.soil$sm.pdiff <- dat.soil$sm.diff / dat.soil$sm.1
+  aov(nfire.pdiff ~ SLXSAND, data = dat.regime)
+
+# test3 <- lme(pdiff ~ nfire.diff, random = list(year = ~1), data = dat.test)
+# summary(test3)
+# 
+# test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
+# summary(test)
+
+# SOIL MOISTURE
+dat.sm <- aggregate(dat.all[c("soil_moist")], by = dat.all[,c("SLXSAND","SM_FIRE","RUNID","year")], FUN = mean) # datatable referred to as dat.sm for "soil moisture data"
+
+dat.sm1 <- subset(dat.sm, subset = dat.sm$year<min(dat.sm$year)+25)
+  length(dat.sm1$year)/25
+dat.sm1 <- aggregate(dat.sm1["soil_moist"], by = dat.sm1[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  colnames(dat.sm1) <- c("SLXSAND","SM_FIRE","RUNID","sm.1")
+dat.smL <- subset(dat.sm, subset = dat.sm$year>max(dat.sm$year)-25)
+  length(dat.smL$year)/25
+dat.smL <- aggregate(dat.smL["soil_moist"], by = dat.smL[c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+  colnames(dat.smL) <- c("SLXSAND","SM_FIRE","RUNID","sm.L")
+  
+dat.sm <- merge(dat.sm1, dat.smL)
+dat.sm$sm.diff <- dat.sm$sm.L - dat.sm$sm.1
+dat.sm$sm.pdiff <- dat.sm$sm.diff / dat.sm$sm.1
 
 dat.analy <- merge(dat.soil, dat.analy)
+
+aov(sm.diff ~ SM_FIRE, data = dat.sm)
+aov(sm.diff ~ SM_FIRE, data = dat.)
 
 # ------------------------------------------------------------
 # Statistics on effect of actual fires and moisture on biomass
