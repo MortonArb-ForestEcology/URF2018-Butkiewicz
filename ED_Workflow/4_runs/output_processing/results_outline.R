@@ -59,37 +59,45 @@ dat.fire <- dat.analy[,c("SLXSAND","SM_FIRE","RUNID","year","fire")]
 # ---------------------------------
 
 # # Subset aboveground biomass for the first 25 years of each simulation. 
-# dat.tmp1 <- subset(dat.analy, subset = dat.analy$year<min(dat.analy$year)+25) # Subset first 25 years of the simulation
-# max(dat.tmp1$year) # Check to make sure that the subset worked
+dat.tmp1 <- subset(dat.analy, subset = dat.analy$year<min(dat.analy$year)+25) # Subset first 25 years of the simulation
+length(dat.tmp1$year)/25 # Check to make sure that the subset worked
 # 
 # # ANOVA test to see if they differ between runs
-# agb_1.aov <- aov(agb ~ RUNID, data = dat.tmp1)
-# summary(agb_1.aov)
+agb_1.aov <- aov(agb ~ RUNID, data = dat.tmp1)
+summary(agb_1.aov)
 # agb_1.hsd <- TukeyHSD(agb_1.aov)
 # which(agb_1.hsd$RUNID[,4] > 0.05) 
 # # Only starting points that are not different: s5-f1
 
-test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
-summary(test)
+agb_soil.aov <- aov(agb ~ SLXSAND, data = dat.tmp1)
+summary(agb_soil.aov)
+TukeyHSD(agb_soil.aov)
 
-# Two-tailed ANOVA test
-agb_1.aov2 <- aov(agb ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.tmp1)
-summary(agb_1.aov2)
-agb_1.hsd2 <- TukeyHSD(agb_1.aov2)
+agb_fire.aov <- aov(agb ~ SM_FIRE, data = dat.tmp1)
+summary(agb_fire.aov)
+TukeyHSD(agb_fire.aov)
 
-  # Soils
-  which(agb_1.hsd2$SLXSAND[,c("p adj")] <= 0.05) # Starting biomass significantly different in all soils
-  which(agb_1.hsd2$SLXSAND[,c("p adj")] > 0.05) # No starting biomass is the same
-  agb_1.hsd2$SLXSAND[,c("diff")] # Aboveground biomass always starts off larger in sils with more sand? 
-
-  # Fire
-  which(agb_1.hsd2$SM_FIRE[,c("p adj")] <= 0.05)
-  which(agb_1.hsd2$SM_FIRE[,c("p adj")] > 0.05) # Starting biomass only the same between SM_FIRE = 0.0 and 0.01 (which makes sense since neighter scenario catches fire)
-  agb_1.hsd2$SM_FIRE[,c("diff")] # Biomass significantly lower in scenarios with more fire. 
-  
-  # Interaction
-  which(agb_1.hsd2$`SLXSAND:SM_FIRE`[,c("p adj")] <= 0.05) 
-  which(agb_1.hsd2$`SLXSAND:SM_FIRE`[,c("p adj")] > 0.05) # Interaction not significant in some scenarios
+# test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.analy)
+# summary(test)
+# 
+# # Two-tailed ANOVA test
+# agb_1.aov2 <- aov(agb ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.tmp1)
+# summary(agb_1.aov2)
+# agb_1.hsd2 <- TukeyHSD(agb_1.aov2)
+# 
+#   # Soils
+#   which(agb_1.hsd2$SLXSAND[,c("p adj")] <= 0.05) # Starting biomass significantly different in all soils
+#   which(agb_1.hsd2$SLXSAND[,c("p adj")] > 0.05) # No starting biomass is the same
+#   agb_1.hsd2$SLXSAND[,c("diff")] # Aboveground biomass always starts off larger in sils with more sand? 
+# 
+#   # Fire
+#   which(agb_1.hsd2$SM_FIRE[,c("p adj")] <= 0.05)
+#   which(agb_1.hsd2$SM_FIRE[,c("p adj")] > 0.05) # Starting biomass only the same between SM_FIRE = 0.0 and 0.01 (which makes sense since neighter scenario catches fire)
+#   agb_1.hsd2$SM_FIRE[,c("diff")] # Biomass significantly lower in scenarios with more fire. 
+#   
+#   # Interaction
+#   which(agb_1.hsd2$`SLXSAND:SM_FIRE`[,c("p adj")] <= 0.05) 
+#   which(agb_1.hsd2$`SLXSAND:SM_FIRE`[,c("p adj")] > 0.05) # Interaction not significant in some scenarios
   
 # ----------------------------------------------
 # Differences among absolute changes in biomass
@@ -104,11 +112,21 @@ colnames(dat.tmp1) <- c("SLXSAND","SM_FIRE","RUNID","agb_1","agb_1.sd")
   
 # Find mean aboveground biomass for the last 25 years of each simulation
 dat.tmp2 <- subset(dat.analy, subset = dat.analy$year>max(dat.analy$year)-25)
-dat.sd <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
+# dat.sd <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
 colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
-dat.tmp2 <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
-dat.tmp2 <- merge(dat.tmp2, dat.sd)
+# dat.tmp2 <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
+# dat.tmp2 <- merge(dat.tmp2, dat.sd)
 colnames(dat.tmp2) <- c("SLXSAND","SM_FIRE","RUNID","agb_L","agb_L.sd")
+
+dat.test <- merge(dat.tmp1, dat.tmp2)
+dat.test$diff <- dat.test$agb_L - dat.test$agb_1
+dat.test$pdiff <- dat.test$diff / dat.test$agb_1
+
+test2 <- lme(pdiff ~ SLXSAND*SM_FIRE, random = list(year = ~1), data = dat.test)
+summary(test2)
+
+test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
+summary(test)
   
 # Finish dat.analy table
 dat.analy <- merge(dat.tmp1, dat.tmp2)
@@ -206,7 +224,14 @@ dat.regime1$p.diff <- recode(dat.regime1$p.diff, "'NaN'='0'")
 dat.regime <- merge(dat.regime, dat.regime1)
   print(colnames(dat.regime))
   colnames(dat.regime) <- c("RUNID","SM_FIRE","SLXSAND","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
-dat.analy <- merge(dat.regime, dat.analy)
+# dat.analy <- merge(dat.regime, dat.analy)
+  dat.test <- merge(dat.regime, dat.test)
+  
+test3 <- lme(pdiff ~ nfire.diff, random = list(year = ~1), data = dat.test)
+summary(test3)
+
+test <- lme(agb ~ SLXSAND*SM_FIRE, random=list(year=~1), data = dat.tmp1)
+summary(test)
 
 # Soil Moisture
 dat.soil <- aggregate(dat.all[c("soil_moist")], by = dat.all[,c("SLXSAND","SM_FIRE","RUNID","year")], FUN = mean) # Shouldn't really change the values since they should be the same no matter pft
