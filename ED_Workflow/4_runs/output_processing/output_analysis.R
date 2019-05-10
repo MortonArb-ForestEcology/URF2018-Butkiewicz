@@ -67,7 +67,7 @@ mean(dat.analy$agb.diff)
 mean(dat.analy$dens.diff)
 mean(dat.analy$ba.diff)
 
-dat.analy$proportional_change <- dat.analy$difference / dat.analy$first_agb
+dat.analy$proportional_change <- dat.analy$agb.diff / dat.analy$agb_1
 
 # Okay! Let's look at a two-way ANOVA for the differences or whatever
 agb.aov2 <- aov(agb ~ SLXSAND + SM_FIRE + SLXSAND:SM_FIRE, data = dat.last)
@@ -259,7 +259,6 @@ ggplot(dat.fire, aes(x = SM_FIRE, y = proportional_change)) +
     
 # Prepare datatable with fire regimes for each scenario
 dat.regime <- aggregate(dat.agb[c("fire")], by=dat.agb[c("RUNID","SM_FIRE","SLXSAND")], FUN=sum) # Find fire regime
-dat.regime <- dat.regime[,c("RUNID","SM_FIRE","SLXSAND","fire")] # Remove unnecessary pft column
 colnames(dat.regime) <- c("RUNID","SM_FIRE","SLXSAND","nfire") # Rename columns. Here nfire means "number of fires"
 
 subset(dat.regime, subset = dat.regime$nfire==max(dat.regime$nfire))
@@ -453,9 +452,19 @@ range(dat.change$prop_change)
 subset(dat.change, subset = dat.change$prop_change==min(dat.change$prop_change))
 subset(dat.change, subset = dat.change$prop_change==max(dat.change$prop_change))
 
+deltaSM.aov <- aov(change ~ SM_FIRE, data = dat.change)
+summary(deltaSM.aov)
+
 deltaSM.aov <- aov(prop_change ~ SM_FIRE, data = dat.change)
 summary(deltaSM.aov)
-TukeyHSD(x = deltaSM.aov, "SM_FIRE") 
+
+deltaSM.aov <- aov(prop_change ~ SLXSAND, data = dat.change)
+summary(deltaSM.aov)
+TukeyHSD(x = deltaSM.aov) 
+
+deltaSM.aov <- aov(prop_change ~ SLXSAND, data = dat.change)
+summary(deltaSM.aov)
+TukeyHSD(x = deltaSM.aov) 
 
 # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/soilmoist_diff.pdf")
 ggplot(dat.soil, aes(x = SLXSAND, y=soil_moist, fill = slice)) + 

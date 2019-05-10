@@ -252,13 +252,9 @@ dat.regime1$p.diff <- dat.regime1$diff / dat.regime1$fire.1
 dat.regime1$p.diff <- recode(dat.regime1$p.diff, "'NaN'='0'")
 dat.regime <- merge(dat.regime, dat.regime1)
   colnames(dat.regime)
-  colnames(dat.regime) <- c("SLXSAND","SM_FIRE","SLXSAND","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
+  colnames(dat.regime) <- c("SLXSAND","SM_FIRE","RUNID","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
   dat.analy <- merge(dat.regime, dat.analy)
 #  dat.test <- merge(dat.regime, dat.test)
-  
-  aov(nfire.pdiff ~ SM_FIRE, data = dat.regime)
-  
-  aov(nfire.pdiff ~ SLXSAND, data = dat.regime)
 
 # test3 <- lme(pdiff ~ nfire.diff, random = list(year = ~1), data = dat.test)
 # summary(test3)
@@ -280,16 +276,33 @@ dat.smL <- aggregate(dat.smL["soil_moist"], by = dat.smL[c("SLXSAND","SM_FIRE","
   
 dat.sm <- merge(dat.sm1, dat.smL)
 dat.sm$sm.diff <- dat.sm$sm.L - dat.sm$sm.1
-dat.sm$sm.pdiff <- dat.sm$sm.diff / dat.sm$sm.1
 
-dat.analy <- merge(dat.soil, dat.analy)
+dat.analy <- merge(dat.sm, dat.analy)
 
-aov(sm.diff ~ SM_FIRE, data = dat.sm)
-aov(sm.diff ~ SM_FIRE, data = dat.)
+final.test <- lm(p.diff ~ sm.diff*nfire.diff, data = dat.analy)
+summary(final.test)
+aov(final.test)
+
+final.test2 <- lm(p.diff ~ sm.diff+nfire.diff, data = dat.analy)
+summary(final.test2)
+
+final.test3 <- lm(p.diff ~ sm.1*nfire, data = dat.analy)
+summary(final.test3)
+
+final.test4 <- lm(diff ~ sm.diff*nfire.diff, data = dat.analy)
+summary(final.test4)
+
+final.test5 <- lm(diff ~ sm.diff+nfire.diff, data = dat.analy)
+summary(final.test5)
+
+final.test6 <- lm(diff ~ sm.1*nfire, data = dat.analy)
+summary(final.test6)
+
+final.test7 <- lm(diff ~ sm.1+nfire, data = dat.analy)
+summary(final.test7)
 
 # ------------------------------------------------------------
 # Statistics on effect of actual fires and moisture on biomass
 # ------------------------------------------------------------
 
-soil.lm  <- lm(diff ~ sm.diff, data=dat.analy)
-summary(soil.lm) # This doesn't make any sense. 
+lm(~ sm.diff*nfire.diff, data = dat.analy)
