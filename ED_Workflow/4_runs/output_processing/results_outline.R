@@ -13,7 +13,8 @@ dat.all <- read.csv(file.path(path.google, "v5_tables", "output_runs.v5.csv")) #
 summary(dat.all) 
 # When reading the datatable: 
 # RUNID = the identity of the treatment. Coded so that the first half (s#) corresponds to a soil texture and the second half (f#) corresponds to a fire setting. 
-# year = from 0 to 214. 0 corresponds to the year 1800 CE and 214 to 2014 CE. 
+# year = from 0 to 214. 0 corresponds to the year 1800 CE and 214 to 2014 CE.
+# yearCE = calendar year, CE represents the "CE" or "Common Era" tag. 
 # w.agb = Aboveground Biomass (kg C m-2)
 # w.dens = Density (plants m-2)
 # w.dbh = Diameter at Breast Height (cm)
@@ -23,6 +24,9 @@ summary(dat.all)
 # w.ba.tree = Basal Area of Trees with DBH > 10 cm (cm2 m-2)
 # soil_moist = Soil Moisture, proportion of saturation
 # fire = Binary variable describing whether or not fire occured in that year of the simulation. 0 = no fire occurred, 1 = fire occured. 
+
+# Add actual years
+dat.all$year <- dat.all$year+1800
 
 # Add columns that individually specify treatment values
 RUNID <- as.character(dat.all$RUNID) # Stores RUNID as a character
@@ -47,7 +51,8 @@ dat.fire <- dat.analy[,c("SLXSAND","SM_FIRE","RUNID","year","fire")]
 
 # Subset aboveground biomass for the first 25 years of each simulation. 
 dat.tmp1 <- subset(dat.analy, subset = dat.analy$year<min(dat.analy$year)+25) # Subset first 25 years of the simulation
-length(dat.tmp1$year)/25 # Check to make sure that the subset worked
+  length(dat.tmp1$year)/25 # Check to make sure that the subset worked, divide by 25 for 25 runs
+  range(dat.tmp1$year)
 dat.sd <- aggregate(dat.tmp1["agb"], by = dat.tmp1[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
 colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd") # agb_1 refers to mean aboveground biomass for the first 25 years of the simulation. 
 dat.tmp1 <- aggregate(dat.tmp1["agb"], by = dat.tmp1[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
@@ -56,6 +61,8 @@ colnames(dat.tmp1) <- c("SLXSAND","SM_FIRE","RUNID","agb_1","agb_1.sd")
 
 # Subset aboveground biomass for the last 25 years of each simulation
 dat.tmp2 <- subset(dat.analy, subset = dat.analy$year>max(dat.analy$year)-25)
+  length(dat.tmp2$year)/25 # Check to make sure that the subset worked, divide by 25 for 25 runs
+  range(dat.tmp2$year)
 dat.sd <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sd)
 colnames(dat.sd) <- c("SLXSAND","SM_FIRE","RUNID","sd")
 dat.tmp2 <- aggregate(dat.tmp2["agb"], by = dat.tmp2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = mean)
@@ -96,13 +103,15 @@ colnames(dat.regime) <- c("SLXSAND","SM_FIRE","RUNID","nfire") # Rename columns.
 # Derive change in number of fires through 100 year window
 # First look at first 100 year window (1800-1900)
 dat.regime1 <- subset(dat.fire, subset = dat.fire$year<min(dat.fire$year)+100)
-length(unique(dat.regime1$year))
+  length(unique(dat.regime1$year))
+  range(dat.regime1$year)
 dat.regime1 <- aggregate(dat.regime1["fire"], by = dat.regime1[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sum)
 colnames(dat.regime1) <- c("SLXSAND","SM_FIRE","RUNID","fire.1")
 
 # Derive number of fires during last 100 year window (1914-2014)
 dat.regime2 <- subset(dat.fire, subset = dat.fire$year>max(dat.fire$year)-100)
-length(unique(dat.regime2$year))
+  length(unique(dat.regime2$year))
+  range(dat.regime2$year)
 dat.regime2 <- aggregate(dat.regime2["fire"], by = dat.regime2[,c("SLXSAND","SM_FIRE","RUNID")], FUN = sum)
 colnames(dat.regime2) <- c("SLXSAND","SM_FIRE","RUNID","fire.L")
 dat.regime1 <- merge(dat.regime1, dat.regime2)
@@ -117,33 +126,81 @@ rm(dat.fire, dat.regime, dat.regime1, dat.regime2) # Remove unnecessary variable
 
 ###################
 
+# ##################
+# Summary Statistics
+# ##################
+
+print(paste0("Average Change in Aboveground Biomass: ",round(mean(dat.analy$p.diff)*100, digits = -1)," ± ",round(sd(dat.analy$p.diff)*100, digits = -1)," %")) # I rounded it to reporting conventions with only one significant figure in the standard deviation. 
+
+print(paste0("Average Aboveground Biomass across First 25 Years: ",round(mean(dat.analy$agb_1), digits = 1)," ± ",round(sd(dat.analy$agb_1), digits = 1)," kg C m-2"))
+
+print(paste0("Average Aboveground Biomass across First 25 Years: ",round(mean(dat.analy$agb_L), digits = 1)," ± ",round(sd(dat.analy$agb_L), digits = 1)," kg C m-2"))
+
+print(paste0("Average Change in Soil Moisture: ",round(mean(dat.analy$sm.diff)*100, digits = 1)," ± ",round(sd(dat.analy$sm.diff)*100, digits = 1)," % saturation"))
+
+# Summary statistics for fire
+range(dat.analy$nfire) # Range of number of fires throughout scenario
+subset(dat.analy, subset = dat.analy$nfire == max(dat.analy$nfire)) # Returns which scenario caught fire the most
+nrow(subset(dat.analy, subset = dat.analy$nfire == min(dat.analy$nfire))) # Returns how many scenarios did not catch fire
+
 # #################
 # Statistical Tests
 # #################
 
-test.lm <- lm(p.diff ~ sm.diff*nfire.diff, data = dat.analy) # Test the interactive effects of change in soil moisture and fire on proportional change in biomass
-summary(test.lm)
+# Make treatments continuous variables
+summary(dat.analy)
+dat.analy$SM_FIRE <- as.numeric(as.character(dat.analy$SM_FIRE))
+dat.analy$SLXSAND <- as.numeric(as.character(dat.analy$SLXSAND))
 
-test2.lm <- lm(p.diff ~ sm.diff+nfire.diff, data = dat.analy) # Test the additive effects of change in soil moisture and fire on proportional change in biomass
-summary(test2.lm)
+# Effects of treatments on change in biomass
+treatment.lm <- lm(p.diff ~ sm.1*nfire, data = dat.analy)
+summary(treatment.lm) # Soil significantly affects proportional changes in agb, p = 0.02, fire does not affect proportional change in agb (p = 0.2), and there is no interaction between the two variables (p = 0.4092)
 
-test3.lm <- lm(p.diff ~ sm.1*nfire, data = dat.analy) # Test the interactive effects of initial soil moisture and number of fires on absolute change in biomass
-summary(test3.lm)
+test1.lm <- lm(p.diff ~ sm.1, data = dat.analy)
+summary(test1.lm) # Soil does NOT significantlyl affect proportional change in agb, p = 0.2
+test2.lm <- lm(p.diff ~ nfire, data = dat.analy)
+summary(test2.lm) # Number of fires DOES significantly affect proportional change in agb, p < 0.01
+test3.lm <- lm(p.diff ~ sm.1 + nfire, data = dat.analy)
+summary(test3.lm) # Soil and fire both significantly affect proportional change in agb, p < 0.01
 
-test4.lm <- lm(diff ~ sm.diff*nfire.diff, data = dat.analy) # Test the interactive effects of change in soil moisture and change in fire on absolute change in biomass
-summary(test4.lm)
+# Some notes: the output should have the (Intercept) at ~ 1.77. This means that the average ecosystem, regardless of soil moisture and number of fires, will increase by 177%. That's probably due to Carbon and other effects of climate. The slope of sm.1 should be around 3.53, significantly different from 0. Nfire has a slope of 0.01, which is not significantly different from 0. Combining soil moisture and number of fires has a slope of 0.03, which is not significantly different from 0.
+# List t*, n, and p value) 
 
-test5.lm <- lm(diff ~ sm.diff+nfire.diff, data = dat.analy) # Test the additive effects of change in soil moisture and change in fire on absolute change in biomass
-summary(test5.lm)
-
-test6.lm <- lm(diff ~ sm.1*nfire, data = dat.analy) # Test the interactive effects of initial soil moisture and number of fires on absolute change in biomass
-summary(test6.lm)
-
-test7.lm <- lm(diff ~ sm.1+nfire, data = dat.analy) # Test the additive effects of initial soil moisture and number of fires on absolute change in biomass
-summary(test7.lm)
-
-test8.lm <- lm(nfire.pdiff ~ sm.diff, data = dat.analy) # Test the effects of change in soil moisture on proportional change in fire occurrence
-summary(test8.lm)
+# pdiff.lm <- lm(p.diff ~ SLXSAND*SM_FIRE, data = dat.analy)
+# summary(pdiff.lm)
+# 
+# sm.lm <- lm(sm.1 ~ SLXSAND, data = dat.analy)
+# summary(sm.lm)
+# 
+# pdiff.lm <- lm(p.diff ~ sm.diff*nfire.diff, data = dat.analy) # Test the interactive effects of change in soil moisture and fire on proportional change in biomass
+# summary(pdiff.lm)
+# 
+# pdiff.lm2 <- lm(p.diff ~ sm.diff+nfire.diff, data = dat.analy) # Test the additive effects of change in soil moisture and fire on proportional change in biomass
+# summary(pdiff.lm2)
+# 
+# pdiff.lm3 <- lm(p.diff ~ sm.1*nfire, data = dat.analy) # Test the interactive effects of initial soil moisture and number of fires on absolute change in biomass
+# summary(pdiff.lm3)
+# 
+# diff.lm <- lm(diff ~ sm.diff*nfire.diff, data = dat.analy) # Test the interactive effects of change in soil moisture and change in fire on absolute change in biomass
+# summary(diff.lm)
+# 
+# diff.lm2 <- lm(diff ~ sm.diff+nfire.diff, data = dat.analy) # Test the additive effects of change in soil moisture and change in fire on absolute change in biomass
+# summary(diff.lm2)
+# 
+# diff.lm3 <- lm(diff ~ sm.1*nfire, data = dat.analy) # Test the interactive effects of initial soil moisture and number of fires on absolute change in biomass
+# summary(diff.lm3)
+# 
+# diff.lm4 <- lm(diff ~ sm.1+nfire, data = dat.analy) # Test the additive effects of initial soil moisture and number of fires on absolute change in biomass
+# summary(diff.lm4)
+# 
+# nfire.lm <- lm(nfire.pdiff ~ sm.diff, data = dat.analy) # Test the effects of change in soil moisture on proportional change in fire occurrence
+# summary(nfire.lm)
+# 
+# nfire.lm2 <- lm(nfire.diff ~ sm.diff * SM_FIRE, data = dat.analy)
+# summary(nfire.lm2)
+# 
+# nfire.lm <- lm(nfire ~ sm.1 * SM_FIRE, data = dat.analy)
+# summary(nfire.lm)
 
 # #######################
 # Figures for Publication
@@ -184,26 +241,23 @@ ggplot(dat.fig1, aes(x = SM_FIRE, y = agb, fill=SLXSAND)) +
 # Demonstrates results of 
 
 ggplot(dat.analy, aes(x = sm.1, y = p.diff)) + 
-  # facet_grid(time_slice ~ .) + 
   geom_point() +
-  # geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
   theme_bw() + 
-  # scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-  # ggtitle("Aboveground")+ 
+  stat_smooth(method = "lm", col = "orange") + 
   xlab("Soil Moisture") + 
   ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
+
 # -------
 
 # Figure 2b
 # --------
 
+nfire.lm <- lm(p.diff ~ nfire, data = dat.analy)
+summary(nfire.lm)
 ggplot(dat.analy, aes(x = nfire, y = p.diff)) + 
-  # facet_grid(time_slice ~ .) + 
   geom_point() +
-  # geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
   theme_bw() + 
-  # scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-  # ggtitle("Aboveground")+ 
+  stat_smooth(method = "lm", col = "orange") + 
   xlab("Total Number of Fires") + 
   ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
 # ---------
