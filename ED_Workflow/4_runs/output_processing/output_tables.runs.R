@@ -151,9 +151,33 @@ for(RUNID in all.runs){ #Looks at each individual RUNID (scenario).
       dat.out <- rbind(dat.out, dat.site)
     }
     
+    # units dataframe
+    if(y==1 & RUNID==all.runs[1]){
+      dat.README <- data.frame(pft = ncT$var$PFT_name$units,
+                               agb = ncT$var$Cohort_AbvGrndBiom$units,
+                               dens = ncT$var$Cohort_Density$units,
+                               dbh = ncT$var$Cohort_DBH$units,
+                               ba = ncT$var$Cohort_BasalArea$units,
+                               soil_moist = )
+      
+      data.frame(RUNID=RUNID,
+                 year=y, # Year 0 indicates the year 1800
+                 patchID = ncvar_get(ncT, "Cohort_PatchID")[,7], #Identifies each cohort based on patch. 
+                 pft   = ncvar_get(ncT, "Cohort_PFT")[,7], 
+                 agb   = ncvar_get(ncT, "Cohort_AbvGrndBiom")[,7], # kgC/m2
+                 dens  = ncvar_get(ncT, "Cohort_Density")[,7], # trees/m2
+                 dbh   = ncvar_get(ncT, "Cohort_DBH")[,7], # DBH/tree
+                 ba    = ncvar_get(ncT, "Cohort_BasalArea")[,7])
+      
+      nc_close(ncT)
+    } else {
+      nc_close(ncT)
+    }
+    
     nc_close(ncT)
     
   } # End y loop. 
 } # End RUNID loop. 
 
-write.csv(dat.out,paste0("./output_runs.v5.csv"), row.names=F) # Writes site-level output to separate csv. 
+write.csv(dat.out,paste0("./output_runs.v5.csv"), row.names=F) # Writes site-level output to separate csv.
+write.csv(dat.README,paste0("./output_units.v5.csv"))
