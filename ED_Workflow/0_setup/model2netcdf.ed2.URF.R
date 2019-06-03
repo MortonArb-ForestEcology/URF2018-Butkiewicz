@@ -639,8 +639,8 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
   # -------
   # Site-Level Soil Characteristics by depth
   # -------
-  nc_var[["SoilMoist"]] <- ncdf4::ncvar_def("SoilMoist", units = "kg m-2", dim = list(lon, lat, zg, t), missval = -999, 
-                                            longname = "Average Layer Soil Moisture")
+  nc_var[["SoilMoist"]] <- ncdf4::ncvar_def("SoilMoist", units = "m3 m-3", dim = list(lon, lat, zg, t), missval = -999, 
+                                            longname = "Average Layer Soil Moisture (Volumetric)")
   out <- checkTemp("SoilTemp")
   nc_var[["SoilTemp"]] <- ncdf4::ncvar_def("SoilTemp", units = "K", dim = list(lon, lat, zg, t), missval = -999, 
                                            longname = "Average Layer Soil Temperature")
