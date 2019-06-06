@@ -43,7 +43,6 @@ dat.all$SM_FIRE <- car::recode(dat.all$SM_FIRE, "'1'='0.04'; '2'='0.03'; '3'='0.
 dat.all$SM_FIRE <- factor(dat.all$SM_FIRE, levels=c(0, 0.01, 0.02, 0.03, 0.04)) #stores SM_FIRE as a factor and telling it what order we should always list things in
 
 # Possible changes to soil moisture to convert from m3 H2O m-3 to kg H2O m-3
-dat.all$soil_moist <- dat.all$soil_moist*1000 # Density of water is 1000 kg m-3, so this converts m3 H2O to kg H2O 
 
 # Prepare datatable that will be used for analyzing aboveground biomass
 dat.analy <- aggregate(dat.all[,c("w.agb")], by=dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","fire")], FUN=sum, na.rm = T) # Sum agb across pfts for each RUNID and year
@@ -125,7 +124,7 @@ dat.regime <- merge(dat.regime, dat.regime1)
 colnames(dat.regime)
 colnames(dat.regime) <- c("SLXSAND","SM_FIRE","RUNID","nfire","nfire.1","nfire.L","nfire.diff","nfire.pdiff")
 dat.analy <- merge(dat.regime, dat.analy)
-rm(dat.fire, dat.regime, dat.regime1, dat.regime2) # Remove unnecessary variables
+rm(dat.fire, dat.regime1, dat.regime2) # Remove unnecessary variables
 
 # README for dat.analy: 
   # SLXSAND refers to the proportion of sand present in the soil. The rest is filled with clay. So a SLXSAND
@@ -211,7 +210,7 @@ range(dat.analy$p.diff)
 # Load necessary package
 library(ggplot2)
 
-# Figure 1
+  # Figure 1
   # ---------
   # Summarizes aboveground biomass during the first and last 25 years of the simulation
   
@@ -224,71 +223,69 @@ library(ggplot2)
                                agb = dat.analy$agb_L,
                                sd = dat.analy$agb_L.sd,
                                time_slice = "Last 25 Years"))
+  dat.fig1$SM_FIRE <- as.character(dat.analy$SM_FIRE) # Make parameters categorical for bar chart
+  dat.fig1$SLXSAND <- as.character(dat.analy$SLXSAND) # Make parameters categorical 
   
-  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/agb_all_runs.pdf")
+  
+  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/Figure_1/agb_all_runs.pdf")
   ggplot(dat.fig1, aes(x = SM_FIRE, y = agb, fill=SLXSAND)) + 
     facet_grid(time_slice ~ .) + 
     geom_bar(stat="identity", position="dodge") +
     geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
     theme_bw() + 
     scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-    # ggtitle("Aboveground")+ 
-    xlab("Fire Threshold") + 
+    # ggtitle("Average Aboveground Biomass from First and Last 25 Years")+ 
+    xlab("Flammability") + 
     ylab (expression(bold(paste("Aboveground Biomass (Kg C", " m"^"-2",")"))))
   # dev.off()
+  rm(dat.fig1)
   # ---------
   
-  # Figure 2a
+  # Figure 2
   # --------
-  # Demonstrates results of 
+  # Demonstrates changes in soil moisture over first and last 25 years based on soil texture (and fire, I hope)
   
-  ggplot(dat.analy, aes(x = sm.1, y = p.diff)) + 
-    geom_point() +
+  # Prepare dataframe
+  dat.fig2 <- dat.all[,c("SLXSAND","SM_FIRE","RUNID","year","soil_moist")]
+  dat.fig2 <- rbind(data.frame(subset(dat.fig2, subset = dat.fig2$year < min(dat.fig2$year) + 25),
+                               time_slice = "First 25 Years"),
+                    data.frame(subset(dat.fig2, subset = dat.fig2$year > max(dat.fig2$year) - 25),
+                               time_slice = "Last 25 Years"))
+   
+  # Graph it
+  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/Figure_2/soil_moist_runs.pdf")
+  ggplot(dat.fig2, aes(x = SLXSAND, y = soil_moist, fill = time_slice)) + 
+    geom_boxplot(position = position_dodge(width=1), lwd=0.7) +
+    facet_grid(SM_FIRE ~ .) +
     theme_bw() + 
-    stat_smooth(method = "lm", col = "orange") + 
-    xlab("Soil Moisture") + 
-    ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
+    scale_fill_manual(name = "Time Slice", values = c("olivedrab4","orange")) + 
+    xlab("Sand Fraction") + 
+    ylab (expression(bold(paste("Soil Moisture (m"^"3"," m"^"-3",")"))))
+  # dev.off()
+  rm(dat.fig2)
   
   # -------
   
-  # Figure 2b
+  # Figure 3
   # --------
+  # Demonstrates differences in the total number of fires
+  dat.fig3 <- rbind(data.frame(dat.regime[,c("SLXSAND","SM_FIRE","RUNID")],
+                               nfire = dat.regime$nfire.1,
+                               time_slice = "1800-1899"),
+                   data.frame(dat.regime[,c("SLXSAND","SM_FIRE","RUNID")], 
+                              nfire = dat.regime$nfire.L,
+                              time_slice = "1915-2014"))
   
-  nfire.lm <- lm(p.diff ~ nfire, data = dat.analy)
-  summary(nfire.lm)
-  ggplot(dat.analy, aes(x = nfire, y = p.diff)) + 
-    geom_point() +
-    theme_bw() + 
-    stat_smooth(method = "lm", col = "orange") + 
-    xlab("Total Number of Fires") + 
-    ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
-  # ---------
+  # Graph the figure
+  # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/Figure_3/nfire_all_runs.pdf")
+  ggplot(dat.fig3, aes(x = SM_FIRE, y = nfire, fill = time_slice)) + 
+    facet_grid(SLXSAND ~ .) + 
+    geom_bar(stat = "identity", position = "dodge") +
+    theme_bw() +
+    scale_fill_manual(name = "Years", values = c("olivedrab4","orange")) + 
+    xlab("Flammability") + 
+    ylab("Number of Fires")
+  # dev.off()
+  rm(dat.fig3, dat.regime)
   
-  # Figure 3a
-  # ---------
   
-  ggplot(dat.analy, aes(x = sm.diff, y = p.diff)) + 
-    # facet_grid(time_slice ~ .) + 
-    geom_point() +
-    # geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
-    theme_bw() + 
-    # scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-    # ggtitle("Aboveground")+ 
-    stat_smooth(method = "lm", col = "orange") + 
-    xlab("Change in Soil Moisture") + 
-    ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
-  # ---------
-  
-  # Figure 3b
-  # ---------
-  ggplot(dat.analy, aes(x = nfire.diff, y = p.diff)) + 
-    # facet_grid(time_slice ~ .) + 
-    geom_point() +
-    # geom_errorbar(aes(ymin = agb - sd, ymax = agb + sd, width=0.1), position = position_dodge(0.9)) + 
-    theme_bw() + 
-    # scale_fill_manual(name = "Sand\nFraction", values = c("olivedrab4","olivedrab3","lightgoldenrod3","gold3","orange")) +
-    # ggtitle("Aboveground")+ 
-    stat_smooth(method = "lm", col = "orange") + 
-    xlab("Change in Number of Fires") + 
-    ylab (expression(bold(paste("Proportional Change in Aboveground Biomass"))))
-  # --------
