@@ -74,7 +74,7 @@ colnames(dat.tmp2) <- c("SLXSAND","SM_FIRE","RUNID","agb_L","agb_L.sd")
 dat.analy <- merge(dat.tmp1, dat.tmp2)
 rm(dat.tmp1, dat.tmp2, dat.sd) # Remove unnecessary variables
 dat.analy$diff <- dat.analy$agb_L - dat.analy$agb_1
-dat.analy$p.diff <- dat.analy$diff / dat.analy$agb_1 # p.diff stands for proportional difference
+dat.analy$p.diff <- (dat.analy$diff / dat.analy$agb_1) * 100 # p.diff stands for proportional difference
 
 # Derive soil moisture
 
@@ -127,7 +127,7 @@ dat.analy <- merge(dat.regime, dat.analy)
 rm(dat.fire, dat.regime1, dat.regime2) # Remove unnecessary variables
 
 # README for dat.analy: 
-  # SLXSAND refers to the proportion of sand present in the soil. The rest is filled with clay. So a SLXSAND
+  # SLXSAND refers to the prop'''''''''''''''''''''ortion of sand present in the soil. The rest is filled with clay. So a SLXSAND
   # value of 0.38 means that the soil is 38% sand and 62% clay. 
   # SM_FIRE refers to the flammability of the ecosystem. Higher SM_FIRE values (up to 0.04) mean that the
   # ecosystem is more flammable. Lower values (down to 0.00) mean that the ecosystem is less flammable.
@@ -144,7 +144,7 @@ rm(dat.fire, dat.regime1, dat.regime2) # Remove unnecessary variables
   # agb_1 refers to the average aboveground biomass over the first 25 years of the simulation. 
   # agb_L refers to the average aboveground biomass over the last 25 years of the simulation. 
   # diff refers to the absolute change in average aboveground biomass between the first and last 25 years of the simulation. 
-  # p.diff refers to the proportional change in average aboveground biomass between the first and last 25 years of the simulation. 
+  # p.diff refers to the proportional change in average aboveground biomass between the first and last 25 years of the simulation and is measured in % agb
 
 ###################
 
@@ -251,15 +251,15 @@ library(ggplot2)
                                time_slice = "First 25 Years"),
                     data.frame(subset(dat.fig2, subset = dat.fig2$year > max(dat.fig2$year) - 25),
                                time_slice = "Last 25 Years"))
-   
+  dat.fig2$SLXSAND <- car::recode(dat.fig2$SLXSAND, "'0.93'='93'; '0.8'='80'; '0.66'='66'; '0.52'='52'; '0.38'='38'")
+  
   # Graph it
   # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/Figure_2/soil_moist_runs.pdf")
   ggplot(dat.fig2, aes(x = SLXSAND, y = soil_moist, fill = time_slice)) + 
     geom_boxplot(position = position_dodge(width=1), lwd=0.7) +
-    facet_grid(SM_FIRE ~ .) +
     theme_bw() + 
     scale_fill_manual(name = "Time Slice", values = c("olivedrab4","orange")) + 
-    xlab("Sand Fraction") + 
+    xlab("% Sand") + 
     ylab (expression(bold(paste("Soil Moisture (m"^"3"," m"^"-3",")"))))
   # dev.off()
   rm(dat.fig2)
@@ -275,6 +275,8 @@ library(ggplot2)
                    data.frame(dat.regime[,c("SLXSAND","SM_FIRE","RUNID")], 
                               nfire = dat.regime$nfire.L,
                               time_slice = "1915-2014"))
+  dat.fig3$SLXSAND <- car::recode(dat.fig3$SLXSAND, "'0.93'='93% sand'; '0.8'='80% sand'; '0.66'='66% sand'; '0.52'='52% sand'; '0.38'='38% sand'") # Recode soil ID's as soil texture values
+  
   
   # Graph the figure
   # pdf("/Users/Cori/Research/Forests_on_the_Edge/URF 2018 Butkiewicz/v5_graphs/Figure_3/nfire_all_runs.pdf")
